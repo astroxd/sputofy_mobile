@@ -1,1 +1,0 @@
-# sputofy_mobile
