@@ -12,16 +12,28 @@ void main() {
   runApp(MyApp());
 }
 
+// class MyApp extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     return BlocProvider<MusicBloc>(
+//       create: (context) => MusicBloc(),
+//       child: MaterialApp(
+//         title: 'Sputofy',
+//         theme: ThemeData(visualDensity: VisualDensity.adaptivePlatformDensity),
+//         home: HomePage(),
+//       ),
+//     );
+//   }
+// }
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<MusicBloc>(
-      create: (context) => MusicBloc(),
-      child: MaterialApp(
-        title: 'Sputofy',
-        theme: ThemeData(visualDensity: VisualDensity.adaptivePlatformDensity),
-        home: HomePage(),
+    return MaterialApp(
+      title: 'Sputofy',
+      theme: ThemeData(
+        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
+      home: HomePage(),
     );
   }
 }
@@ -58,6 +70,9 @@ class _HomePageState extends State<HomePage> {
     _player.onPlayerCompletion.listen((event) {
       skipToNext();
     });
+    // _player.onAudioPositionChanged.listen((Duration p) {
+    //   position = p;
+    // });
   }
 
   void skipToNext() {
@@ -104,7 +119,11 @@ class _HomePageState extends State<HomePage> {
                 ),
               ],
             ),
-            _buildWidgetButtonPlayAll(),
+            _buildWidgetButtonPlayAll(
+              paddingBottom,
+              widthScreen,
+              heigthScreen,
+            ),
           ],
         ),
       ),
@@ -290,7 +309,8 @@ class _HomePageState extends State<HomePage> {
               (durationSecond < 10 ? "0$durationSecond" : "$durationSecond");
           return GestureDetector(
             onTap: () {
-              // _showMiniPlayer(music, widthScreen, heigthScreen, paddingBottom);
+              _showMiniPlayer(context, widthScreen, heigthScreen, paddingBottom,
+                  music, _player, cache, indexMusicSelected);
               setState(() {
                 if (index != indexMusicSelected) {
                   // _player.stop();
@@ -338,22 +358,32 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _showMiniPlayer(music, widthScreen, heigthScreen, paddingBottom) {
+  void _showMiniPlayer(
+      BuildContext context,
+      double widthScreen,
+      double heigthScreen,
+      double paddingBottom,
+      Music music,
+      AudioPlayer _player,
+      AudioCache cache,
+      int indexMusicSelected) {
     showBottomSheet(
-        context: context,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(24.0),
-            topRight: Radius.circular(24.0),
-          ),
+      context: context,
+      builder: (context) {
+        return WidgetMiniPlayer(music, widthScreen, heigthScreen, paddingBottom,
+            _player, cache, indexMusicSelected);
+      },
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(24.0),
+          topRight: Radius.circular(24.0),
         ),
-        builder: (context) {
-          return WidgetMiniPlayer(
-              music, widthScreen, heigthScreen, paddingBottom, _player, cache);
-        });
+      ),
+    );
   }
 
-  Widget _buildWidgetButtonPlayAll() {
+  Widget _buildWidgetButtonPlayAll(
+      double paddingBottom, double widthScreen, double heigthScreen) {
     return Align(
       alignment: Alignment.center,
       child: Container(
@@ -385,6 +415,8 @@ class _HomePageState extends State<HomePage> {
               _isPlaying = true;
               indexMusicSelected = 0;
             });
+            _showMiniPlayer(context, widthScreen, heigthScreen, paddingBottom,
+                listMusic[0], _player, cache, indexMusicSelected);
           },
         ),
       ),
@@ -399,16 +431,17 @@ class WidgetMiniPlayer extends StatefulWidget {
   final double paddingBottom;
   final AudioPlayer _player;
   final AudioCache cache;
+  final int indexMusicSelected;
 
   WidgetMiniPlayer(this.music, this.widthScreen, this.heigthScreen,
-      this.paddingBottom, this._player, this.cache);
+      this.paddingBottom, this._player, this.cache, this.indexMusicSelected);
   @override
   _WidgetMiniPlayerState createState() => _WidgetMiniPlayerState();
 }
 
 class _WidgetMiniPlayerState extends State<WidgetMiniPlayer> {
   Duration position = new Duration();
-  Duration songLength = new Duration();
+  Duration musicLength = new Duration();
 
   @override
   void initState() {
@@ -419,10 +452,9 @@ class _WidgetMiniPlayerState extends State<WidgetMiniPlayer> {
     });
     widget._player.onDurationChanged.listen((Duration d) {
       setState(() {
-        songLength = d;
+        musicLength = d;
       });
     });
-
     super.initState();
   }
 
@@ -434,20 +466,19 @@ class _WidgetMiniPlayerState extends State<WidgetMiniPlayer> {
           context: context,
           builder: (context) {
             // return WidgetDetailMusicPlayer();
-            return; //
           },
-          isScrollControlled: true,
           isDismissible: false,
+          isScrollControlled: true,
         );
       },
-      // child: BlocProvider(
       child: Container(
         width: widget.widthScreen,
         padding: EdgeInsets.only(
-            left: 16.0,
-            top: 4.0,
-            right: 16.0,
-            bottom: widget.paddingBottom > 0 ? widget.paddingBottom : 16.0),
+          left: 16.0,
+          top: 4.0,
+          right: 16.0,
+          bottom: widget.paddingBottom > 0 ? widget.paddingBottom : 16.0,
+        ),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.only(
@@ -477,10 +508,9 @@ class _WidgetMiniPlayerState extends State<WidgetMiniPlayer> {
                     children: <Widget>[
                       Text(
                         "Now Playing",
-                        style: Theme.of(context)
-                            .textTheme
-                            .subtitle2
-                            .merge(TextStyle(color: Colors.grey)),
+                        style: Theme.of(context).textTheme.subtitle2.merge(
+                              TextStyle(color: Colors.grey),
+                            ),
                       ),
                       Text(
                         '${widget.music.title}',
@@ -497,10 +527,11 @@ class _WidgetMiniPlayerState extends State<WidgetMiniPlayer> {
                       child: SleekCircularSlider(
                         appearance: CircularSliderAppearance(
                           customWidths: CustomSliderWidths(
-                              progressBarWidth: 2.0,
-                              trackWidth: 1.0,
-                              handlerSize: 1.0,
-                              shadowWidth: 1.0),
+                            progressBarWidth: 2.0,
+                            trackWidth: 1.0,
+                            handlerSize: 1.0,
+                            shadowWidth: 1.0,
+                          ),
                           infoProperties: InfoProperties(
                             modifier: (value) => '',
                           ),
@@ -513,22 +544,22 @@ class _WidgetMiniPlayerState extends State<WidgetMiniPlayer> {
                           startAngle: -90.0,
                         ),
                         min: 0.0,
-                        max: songLength.inSeconds.toDouble(),
+                        max: musicLength.inSeconds.toDouble(),
                         initialValue: position.inSeconds.toDouble(),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 32.0,
+                      height: 32.0,
+                      child: Icon(
+                        Icons.pause,
+                        size: 20.0,
                       ),
                     )
                   ],
-                ),
-                SizedBox(
-                  width: 32.0,
-                  height: 32.0,
-                  // child: Icon(
-                  //   isPlaying ? Icons.pause : Icons.play_arrow,
-                  //   size: 20.0,
-                  // ),
-                ),
+                )
               ],
-            )
+            ),
           ],
         ),
       ),
