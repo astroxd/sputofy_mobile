@@ -63,16 +63,15 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void initState() {
-    super.initState();
     _player = AudioPlayer();
     cache = AudioCache(fixedPlayer: _player);
 
     _player.onPlayerCompletion.listen((event) {
+      print("cacac");
       skipToNext();
     });
-    // _player.onAudioPositionChanged.listen((Duration p) {
-    //   position = p;
-    // });
+
+    super.initState();
   }
 
   void skipToNext() {
@@ -80,6 +79,9 @@ class _HomePageState extends State<HomePage> {
     if (indexMusicSelected != lastSong) {
       indexMusicSelected++;
       cache.play(listMusic[indexMusicSelected].path);
+      print("${listMusic[indexMusicSelected]}");
+      _showMiniPlayer(context, listMusic[indexMusicSelected]);
+
       // _player.play(songList[songIndex]);//FILEPICKING
       setState(() {
         _isPlaying = true;
@@ -103,6 +105,7 @@ class _HomePageState extends State<HomePage> {
     double widthScreen = mediaQueryData.size.width;
     double heigthScreen = mediaQueryData.size.height;
     double paddingBottom = mediaQueryData.padding.bottom;
+
     return Scaffold(
       body: Container(
         width: widthScreen,
@@ -309,8 +312,7 @@ class _HomePageState extends State<HomePage> {
               (durationSecond < 10 ? "0$durationSecond" : "$durationSecond");
           return GestureDetector(
             onTap: () {
-              _showMiniPlayer(context, widthScreen, heigthScreen, paddingBottom,
-                  music, _player, cache, indexMusicSelected);
+              _showMiniPlayer(context, music); //TODO
               setState(() {
                 if (index != indexMusicSelected) {
                   // _player.stop();
@@ -358,20 +360,11 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _showMiniPlayer(
-      BuildContext context,
-      double widthScreen,
-      double heigthScreen,
-      double paddingBottom,
-      Music music,
-      AudioPlayer _player,
-      AudioCache cache,
-      int indexMusicSelected) {
+  void _showMiniPlayer(BuildContext context, Music music) {
     showBottomSheet(
       context: context,
       builder: (context) {
-        return WidgetMiniPlayer(music, widthScreen, heigthScreen, paddingBottom,
-            _player, cache, indexMusicSelected);
+        return WidgetMiniPlayer(music, _player);
       },
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
@@ -415,8 +408,8 @@ class _HomePageState extends State<HomePage> {
               _isPlaying = true;
               indexMusicSelected = 0;
             });
-            _showMiniPlayer(context, widthScreen, heigthScreen, paddingBottom,
-                listMusic[0], _player, cache, indexMusicSelected);
+            // _showMiniPlayer(context, widthScreen, heigthScreen, paddingBottom,//TODO
+            // listMusic[0]);
           },
         ),
       ),
@@ -426,15 +419,11 @@ class _HomePageState extends State<HomePage> {
 
 class WidgetMiniPlayer extends StatefulWidget {
   final Music music;
-  final double widthScreen;
-  final double heigthScreen;
-  final double paddingBottom;
   final AudioPlayer _player;
-  final AudioCache cache;
-  final int indexMusicSelected;
-
-  WidgetMiniPlayer(this.music, this.widthScreen, this.heigthScreen,
-      this.paddingBottom, this._player, this.cache, this.indexMusicSelected);
+  WidgetMiniPlayer(
+    this.music,
+    this._player,
+  );
   @override
   _WidgetMiniPlayerState createState() => _WidgetMiniPlayerState();
 }
@@ -443,20 +432,21 @@ class _WidgetMiniPlayerState extends State<WidgetMiniPlayer> {
   Duration position = new Duration();
   Duration musicLength = new Duration();
 
-  @override
-  void initState() {
-    widget._player.onAudioPositionChanged.listen((Duration p) {
-      setState(() {
-        position = p;
-      });
-    });
-    widget._player.onDurationChanged.listen((Duration d) {
-      setState(() {
-        musicLength = d;
-      });
-    });
-    super.initState();
-  }
+  // @override
+  // void initState() {
+  //   widget._player.onAudioPositionChanged.listen((Duration p) {
+  //     setState(() {
+  //       position = p;
+  //     });
+  //   });
+  //   widget._player.onDurationChanged.listen((Duration d) {
+  //     setState(() {
+  //       musicLength = d;
+  //     });
+  //   });
+
+  //   super.initState();
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -465,19 +455,26 @@ class _WidgetMiniPlayerState extends State<WidgetMiniPlayer> {
         showModalBottomSheet(
           context: context,
           builder: (context) {
-            // return WidgetDetailMusicPlayer();
+            //   return WidgetDetailMusicPlayer(
+            //       widget._isPlaying,
+            //       widget.music,
+            //       widget._player,
+            //       widget.cache,
+            //       widget.indexMusicSelected,
+            //       widget.listMusic);
+            return Container();
           },
           isDismissible: false,
           isScrollControlled: true,
         );
       },
       child: Container(
-        width: widget.widthScreen,
+        width: 400.0,
         padding: EdgeInsets.only(
           left: 16.0,
           top: 4.0,
           right: 16.0,
-          bottom: widget.paddingBottom > 0 ? widget.paddingBottom : 16.0,
+          bottom: 16.0,
         ),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -544,8 +541,10 @@ class _WidgetMiniPlayerState extends State<WidgetMiniPlayer> {
                           startAngle: -90.0,
                         ),
                         min: 0.0,
-                        max: musicLength.inSeconds.toDouble(),
-                        initialValue: position.inSeconds.toDouble(),
+                        // max: musicLength.inSeconds.toDouble(),
+                        // initialValue: position.inSeconds.toDouble(),
+                        max: 100.0,
+                        initialValue: 3.0,
                       ),
                     ),
                     SizedBox(
@@ -573,4 +572,207 @@ class Music {
   int durationSecond;
   String path;
   Music(this.title, this.artist, this.durationSecond, this.path);
+}
+
+class WidgetDetailMusicPlayer extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    MediaQueryData mediaQueryData = MediaQuery.of(context);
+    double widthScreen = mediaQueryData.size.width;
+    double heightScreen = mediaQueryData.size.height;
+    double paddingBottom = mediaQueryData.padding.bottom;
+
+    return Container(
+      width: widthScreen,
+      height: heightScreen,
+      child: Stack(
+        children: <Widget>[
+          _buildWidgetBackgroundCoverAlbum(widthScreen, heightScreen),
+          _buildWidgetContainerContent(widthScreen, heightScreen),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 16.0),
+            width: widthScreen,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: <Widget>[
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      SizedBox(height: 128.0 + 16.0),
+                      Container(
+                        width: 72.0,
+                        padding: EdgeInsets.symmetric(vertical: 4.0),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.5),
+                          borderRadius: BorderRadius.all(Radius.circular(16.0)),
+                        ),
+                        child: Icon(Icons.keyboard_arrow_down, color: Colors.white),
+                      ),
+                      SizedBox(height: 24.0),
+                      ClipRRect(
+                        child: Image.asset(
+                          'assets/images/img_cover_album_red_taylor_swift.jpeg',
+                          width: widthScreen / 1.5,
+                        ),
+                        borderRadius: BorderRadius.all(Radius.circular(48.0)),
+                      ),
+                    ],
+                  ),
+                ),
+                WidgetDetailTitleMusic(),
+                SizedBox(height: 16.0),
+                WidgetProgressMusic(),
+                SizedBox(height: 16.0),
+                _buildWidgetPlayerController(),
+                SizedBox(height: 16.0),
+                SizedBox(height: paddingBottom > 0 ? paddingBottom : 16.0),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWidgetPlayerController() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Icon(Icons.skip_previous, color: Colors.white, size: 32.0),
+        SizedBox(width: 36.0),
+        Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.blueGrey[800],
+          ),
+          padding: EdgeInsets.all(16.0),
+          child: BlocBuilder<MusicBloc, MusicState>(
+            builder: (context, state) {
+              bool isPlaying = true;
+              if (state is MusicEndProgress) {
+                isPlaying = false;
+              }
+              return Icon(isPlaying ? Icons.pause : Icons.play_arrow, color: Colors.white, size: 32.0);
+            },
+          ),
+        ),
+        SizedBox(width: 36.0),
+        Icon(Icons.skip_next, color: Colors.white, size: 32.0),
+      ],
+    );
+  }
+
+  Widget _buildWidgetContainerContent(double widthScreen, double heightScreen) {
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Container(
+        width: widthScreen,
+        height: heightScreen / 1.4,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.only(topLeft: Radius.circular(48.0), topRight: Radius.circular(48.0)),
+          gradient: LinearGradient(
+            begin: Alignment.bottomRight,
+            end: Alignment.topLeft,
+            colors: [
+              Colors.blueGrey[300],
+              Colors.white,
+            ],
+            stops: [0.1, 0.9],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWidgetBackgroundCoverAlbum(double widthScreen, double heightScreen) {
+    return Container(
+      width: widthScreen,
+      height: heightScreen / 2,
+      decoration: BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/images/img_cover_album_red_taylor_swift.jpeg'),
+          fit: BoxFit.cover,
+        ),
+      ),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(
+          sigmaX: 5.0,
+          sigmaY: 5.0,
+        ),
+        child: Container(
+          color: Colors.white.withOpacity(0.0),
+        ),
+      ),
+    );
+  }
+}
+
+// ignore: must_be_immutable
+class WidgetProgressMusic extends StatelessWidget {
+  double _progress = 0;
+  int _durationProgress = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<MusicBloc, MusicState>(builder: (context, state) {
+      if (state is MusicUpdateProgress) {
+        _progress = state.progressMusic / 100;
+        _durationProgress = state.progressSecond;
+      }
+      int minute = _durationProgress ~/ 60;
+      int second = minute > 0 ? _durationProgress % 60 : _durationProgress;
+      String strDuration = (minute < 10 ? '0$minute' : '$minute') + ':' + (second < 10 ? '0$second' : '$second');
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: <Widget>[
+          LinearProgressIndicator(
+            value: _progress,
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            backgroundColor: Colors.blueGrey[800],
+          ),
+          Text(strDuration),
+        ],
+      );
+    });
+  }
+}
+
+class WidgetDetailTitleMusic extends StatefulWidget {
+  @override
+  _WidgetDetailTitleMusicState createState() => _WidgetDetailTitleMusicState();
+}
+
+class _WidgetDetailTitleMusicState extends State<WidgetDetailTitleMusic> {
+  bool _isRepeatOne = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Text(BlocProvider.of<MusicBloc>(context).music.title, style: Theme.of(context).textTheme.title),
+              Text(BlocProvider.of<MusicBloc>(context).music.artist,
+                  style: Theme.of(context).textTheme.subtitle.merge(TextStyle(color: Colors.blueGrey))),
+            ],
+          ),
+        ),
+        GestureDetector(
+          onTap: () {
+            setState(() => _isRepeatOne = !_isRepeatOne);
+          },
+          child: Icon(
+            Icons.repeat_one,
+            color: _isRepeatOne ? Color(0xFFAE1947) : Color(0xFF000000),
+          ),
+        ),
+      ],
+    );
+  }
 }
