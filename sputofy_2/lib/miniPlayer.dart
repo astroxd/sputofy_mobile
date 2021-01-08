@@ -358,7 +358,6 @@ class WidgetProgressMusic extends StatelessWidget {
       children: <Widget>[
         _buildWidgetSlider(),
         Row(
-          //TODO
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
