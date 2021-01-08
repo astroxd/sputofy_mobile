@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sputofy_2/appBar.dart';
 
 import 'package:sputofy_2/model/audioPlayer.dart';
+import 'package:sputofy_2/playlistList.dart';
 
 void main() {
   runApp(MyApp());
@@ -38,7 +38,7 @@ class _HomePageState extends State<HomePage> {
     MediaQueryData mediaQueryData = MediaQuery.of(context);
     double widthScreen = mediaQueryData.size.width;
     return Scaffold(
-        appBar: CustomAppBar(index),
+        appBar: CustomAppBar(index, pageController),
         body: PageView(
           controller: pageController,
           onPageChanged: (value) {
@@ -50,7 +50,7 @@ class _HomePageState extends State<HomePage> {
             Container(
               color: Colors.amber,
             ),
-            Container(color: Colors.brown),
+            PlaylistList(),
           ],
         ));
   }
@@ -58,17 +58,58 @@ class _HomePageState extends State<HomePage> {
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final int index;
+  final PageController pageController;
 
   @override
   final Size preferredSize;
 
-  CustomAppBar(this.index) : preferredSize = Size.fromHeight(60.0);
+  CustomAppBar(this.index, this.pageController)
+      : preferredSize = Size.fromHeight(60.0);
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Container(
-        color: index == 0 ? Colors.red : Colors.blue,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Align(
+            alignment: Alignment.center,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 48.0),
+              child: GestureDetector(
+                onTap: () {
+                  pageController.animateToPage(0,
+                      duration: Duration(microseconds: 250),
+                      curve: Curves.bounceInOut);
+                },
+                child: Icon(
+                  Icons.list,
+                  size: 64.0,
+                  color: Colors.red,
+                ),
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.center,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 48.0),
+              child: GestureDetector(
+                onTap: () {
+                  pageController.animateToPage(1,
+                      duration: Duration(microseconds: 250),
+                      curve: Curves.bounceInOut);
+                },
+                child: Icon(
+                  Icons.list,
+                  size: 64.0,
+                  color: Colors.red,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

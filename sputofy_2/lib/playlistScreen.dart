@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sputofy_2/miniPlayer.dart';
 import 'package:sputofy_2/model/audioPlayer.dart';
+import 'package:sputofy_2/playlistList.dart';
 
 class PlaylistScreen extends StatelessWidget {
   @override
@@ -76,22 +77,15 @@ class PlaylistScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
                   GestureDetector(
-                    onTap: null,
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
                     child: Icon(Icons.arrow_back, color: Colors.white),
                   ),
                   GestureDetector(
                     onTap: null,
                     child: Icon(Icons.plus_one, color: Colors.white),
                   )
-                  // IconButton(
-                  //     icon: Icon(
-                  //       Icons.arrow_back,
-                  //       color: Colors.white,
-                  //     ),
-                  //     onPressed: null),
-                  // IconButton(
-                  //     icon: Icon(Icons.plus_one, color: Colors.white),
-                  //     onPressed: null)
                 ],
               ),
             ),
