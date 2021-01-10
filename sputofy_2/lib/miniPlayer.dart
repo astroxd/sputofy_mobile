@@ -20,6 +20,7 @@ void showMiniPlayer(BuildContext context) {
           topRight: Radius.circular(24.0),
         ),
       ),
+      backgroundColor: Colors.red,
     );
     controller.closed.then(
       (value) {

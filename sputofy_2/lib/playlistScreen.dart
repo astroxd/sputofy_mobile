@@ -4,9 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sputofy_2/miniPlayer.dart';
 import 'package:sputofy_2/model/audioPlayer.dart';
-import 'package:sputofy_2/playlistList.dart';
 
 class PlaylistScreen extends StatelessWidget {
+  final int index;
+
+  PlaylistScreen(this.index);
+
   @override
   Widget build(BuildContext context) {
     MediaQueryData mediaQueryData = MediaQuery.of(context);
@@ -79,6 +82,9 @@ class PlaylistScreen extends StatelessWidget {
                   GestureDetector(
                     onTap: () {
                       Navigator.pop(context);
+                      // Navigator.maybePop(context);
+                      // Navigator.replaceRouteBelow(context, anchorRoute: null);
+                      // showMiniPlayer(context);
                     },
                     child: Icon(Icons.arrow_back, color: Colors.white),
                   ),
@@ -127,7 +133,7 @@ class PlaylistScreen extends StatelessWidget {
                   height: 4.0,
                 ),
                 Text(
-                  "22 songs 1 hr 30 min",
+                  "$index songs 1 hr 30 min",
                   style: Theme.of(context).textTheme.subtitle2.merge(
                         TextStyle(color: Colors.grey),
                       ),
@@ -231,7 +237,6 @@ class PlaylistScreen extends StatelessWidget {
             return GestureDetector(
               onTap: () {
                 if (index != audioPlayer.indexSongSelected) {
-                  audioPlayer.indexSongSelected = index;
                   audioPlayer.playSong(index);
                 } else if (index == audioPlayer.indexSongSelected) {
                   audioPlayer.resumeSong();

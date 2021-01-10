@@ -52,7 +52,8 @@ class MyAudio extends ChangeNotifier {
   }
 
   playSong(int index) {
-    cache.play(songList[index].path);
+    indexSongSelected = index;
+    cache.play(songList[indexSongSelected].path);
   }
 
   pauseSong() {
