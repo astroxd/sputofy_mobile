@@ -14,6 +14,7 @@ class MyApp extends StatelessWidget {
     return ChangeNotifierProvider<MyAudio>(
       create: (_) => MyAudio(),
       child: MaterialApp(
+        debugShowCheckedModeBanner: false,
         title: 'Sputofy',
         theme: ThemeData(
           visualDensity: VisualDensity.adaptivePlatformDensity,

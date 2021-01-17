@@ -123,9 +123,11 @@ class WidgetMiniPlayer extends StatelessWidget {
                             startAngle: -90.0,
                           ),
                           min: 0.0,
-                          max: audioPlayer.songLength.inSeconds.toDouble(),
+                          max: audioPlayer.songLength?.inSeconds?.toDouble() ??
+                              0.0,
                           initialValue:
-                              audioPlayer.position.inSeconds.toDouble(),
+                              audioPlayer.position?.inSeconds?.toDouble() ??
+                                  0.0,
                         ),
                       ),
                     ),
