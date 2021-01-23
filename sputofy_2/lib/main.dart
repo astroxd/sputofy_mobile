@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sputofy_2/miniPlayer.dart';
 
 import 'package:sputofy_2/model/audioPlayer.dart';
 import 'package:sputofy_2/playlistList.dart';
@@ -39,21 +40,24 @@ class _HomePageState extends State<HomePage> {
     MediaQueryData mediaQueryData = MediaQuery.of(context);
     double widthScreen = mediaQueryData.size.width;
     return Scaffold(
-        appBar: CustomAppBar(index, pageController),
-        body: PageView(
-          controller: pageController,
-          onPageChanged: (value) {
-            setState(() {
-              index = value;
-            });
-          },
-          children: [
-            Container(
-              color: Colors.amber,
-            ),
-            PlaylistList(),
-          ],
-        ));
+      appBar: CustomAppBar(index, pageController),
+      body: PageView(
+        controller: pageController,
+        onPageChanged: (value) {
+          setState(() {
+            index = value;
+          });
+        },
+        children: [
+          Container(
+            color: Colors.amber,
+          ),
+          PlaylistList(),
+        ],
+      ),
+      // bottomSheet: WidgetMiniPlayer(),
+      bottomNavigationBar: WidgetMiniPlayer(),
+    );
   }
 }
 
