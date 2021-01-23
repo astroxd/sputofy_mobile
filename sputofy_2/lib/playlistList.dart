@@ -4,8 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sputofy_2/miniPlayer.dart';
 import 'package:sputofy_2/model/audioPlayer.dart';
+import 'package:sputofy_2/model/playlistModel.dart';
 import 'package:sputofy_2/palette.dart';
 import 'package:sputofy_2/playlistScreen.dart';
+
+import 'package:sputofy_2/utils/Database.dart';
 
 class PlaylistList extends StatefulWidget {
   @override
@@ -326,7 +329,9 @@ class _NewPlaylistDialogState extends State<NewPlaylistDialog> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
                 GestureDetector(
-                  onTap: null,
+                  onTap: () async {
+                    print(await DBProvider.db.getPlaylist());
+                  },
                   child: Container(
                     width: 180,
                     height: 50,
@@ -347,7 +352,13 @@ class _NewPlaylistDialogState extends State<NewPlaylistDialog> {
                   ),
                 ),
                 GestureDetector(
-                  onTap: null,
+                  onTap: () {
+                    var playlist = Playlist(
+                      "title",
+                      "cacca",
+                    );
+                    DBProvider.db.insertPlaylist(playlist);
+                  },
                   child: Container(
                     width: 150,
                     height: 50,
@@ -372,4 +383,16 @@ class _NewPlaylistDialogState extends State<NewPlaylistDialog> {
       ),
     );
   }
+
+  // void aggiungi() {
+  //   var playlist = Playlist(
+  //     "title",
+  //     "cacca",
+  //   );
+  //   DBProvider.db.insertPlaylist(playlist);
+  // // }
+
+  // printalo() async {
+  //   print(await DBProvider.db.getPlaylist());
+  // }
 }

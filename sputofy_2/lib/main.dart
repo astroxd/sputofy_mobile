@@ -4,8 +4,12 @@ import 'package:sputofy_2/miniPlayer.dart';
 
 import 'package:sputofy_2/model/audioPlayer.dart';
 import 'package:sputofy_2/playlistList.dart';
+import 'package:sputofy_2/test.dart';
+import 'package:sputofy_2/utils/Database.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await DBProvider.db.initDB();
   runApp(MyApp());
 }
 
@@ -21,6 +25,7 @@ class MyApp extends StatelessWidget {
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
         home: HomePage(),
+        // home: test(),
       ),
     );
   }
@@ -56,7 +61,7 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       // bottomSheet: WidgetMiniPlayer(),
-      bottomNavigationBar: WidgetMiniPlayer(),
+      // bottomNavigationBar: WidgetMiniPlayer(),
     );
   }
 }
