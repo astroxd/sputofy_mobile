@@ -3,21 +3,25 @@ import 'package:provider/provider.dart';
 import 'package:sputofy_2/miniPlayer.dart';
 
 import 'package:sputofy_2/model/audioPlayer.dart';
+import 'package:sputofy_2/model/databaseValues.dart';
 import 'package:sputofy_2/playlistList.dart';
 import 'package:sputofy_2/test.dart';
 import 'package:sputofy_2/utils/Database.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await DBProvider.db.initDB();
+void main() {
+  // WidgetsFlutterBinding.ensureInitialized();
+  // await DBProvider.db.initDB();
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<MyAudio>(
-      create: (_) => MyAudio(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => MyAudio()),
+        ChangeNotifierProvider(create: (_) => DatabaseValue()),
+      ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Sputofy',
@@ -44,6 +48,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     MediaQueryData mediaQueryData = MediaQuery.of(context);
     double widthScreen = mediaQueryData.size.width;
+    DatabaseValue().getDatabaseName();
     return Scaffold(
       appBar: CustomAppBar(index, pageController),
       body: PageView(

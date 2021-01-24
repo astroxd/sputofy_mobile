@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sputofy_2/miniPlayer.dart';
 import 'package:sputofy_2/model/audioPlayer.dart';
+import 'package:sputofy_2/model/databaseValues.dart';
 import 'package:sputofy_2/model/playlistModel.dart';
 import 'package:sputofy_2/palette.dart';
 import 'package:sputofy_2/playlistScreen.dart';
@@ -91,91 +92,97 @@ class _PlaylistListState extends State<PlaylistList> {
   }
 
   Widget _buildWidgetPlaylistList() {
+    print("cacca");
     return Expanded(
-      child: GridView.count(
-        crossAxisCount: 2,
-        children: List.generate(7, (index) {
-          return GestureDetector(
-            onTap: () => Navigator.push(context,
-                MaterialPageRoute(builder: (context) => PlaylistScreen(index))),
-            child: Container(
-              alignment: Alignment.center,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Stack(
-                    children: <Widget>[
-                      Container(
-                        width: 150,
-                        height: 150,
-                        decoration: BoxDecoration(
-                          image: DecorationImage(
-                            image: AssetImage('cover.jpeg'),
-                          ),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          Provider.of<MyAudio>(context, listen: false)
-                              .playSong(0);
-                          showMiniPlayer(context);
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 112, left: 112),
-                          child: Container(
-                            decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.blueGrey[800]),
-                            child: Consumer<MyAudio>(
-                              builder: (context, audioPlayer, child) {
-                                if (audioPlayer.isPlaying) {
-                                  return Icon(
-                                    Icons.pause,
-                                    color: Colors.white,
-                                    size: 32.0,
-                                  );
-                                } else {
-                                  return Icon(
-                                    Icons.play_arrow,
-                                    color: Colors.white,
-                                    size: 32.0,
-                                  );
-                                }
-                              },
+      child: Consumer<DatabaseValue>(
+        builder: (context, database, child) => GridView.count(
+          crossAxisCount: 2,
+          children: List.generate(database.playlistNames.length, (index) {
+            return GestureDetector(
+              onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => PlaylistScreen(index))),
+              child: Container(
+                alignment: Alignment.center,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Stack(
+                      children: <Widget>[
+                        Container(
+                          width: 150,
+                          height: 150,
+                          decoration: BoxDecoration(
+                            image: DecorationImage(
+                              image: AssetImage('cover.jpeg'),
                             ),
                           ),
                         ),
-                      )
-                    ],
-                  ),
-                  Container(
-                    width: 150,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        Text(
-                          'Playlist',
-                          style: Theme.of(context).textTheme.subtitle2.merge(
-                                TextStyle(color: Colors.black, fontSize: 14.0),
-                              ),
-                        ),
                         GestureDetector(
-                          child: Icon(Icons.more_vert),
+                          onTap: () {
+                            Provider.of<MyAudio>(context, listen: false)
+                                .playSong(0);
+                            showMiniPlayer(context);
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 112, left: 112),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.blueGrey[800]),
+                              child: Consumer<MyAudio>(
+                                builder: (context, audioPlayer, child) {
+                                  if (audioPlayer.isPlaying) {
+                                    return Icon(
+                                      Icons.pause,
+                                      color: Colors.white,
+                                      size: 32.0,
+                                    );
+                                  } else {
+                                    return Icon(
+                                      Icons.play_arrow,
+                                      color: Colors.white,
+                                      size: 32.0,
+                                    );
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
                         )
                       ],
                     ),
-                  ),
-                  Text(
-                    '1000 songs',
-                    style: Theme.of(context).textTheme.headline4.merge(
-                          TextStyle(color: Colors.black, fontSize: 14.0),
-                        ),
-                  ),
-                ],
+                    Container(
+                      width: 150,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: <Widget>[
+                          Text(
+                            'Playlist',
+                            style: Theme.of(context).textTheme.subtitle2.merge(
+                                  TextStyle(
+                                      color: Colors.black, fontSize: 14.0),
+                                ),
+                          ),
+                          GestureDetector(
+                            child: Icon(Icons.more_vert),
+                          )
+                        ],
+                      ),
+                    ),
+                    Text(
+                      '1000 songs',
+                      style: Theme.of(context).textTheme.headline4.merge(
+                            TextStyle(color: Colors.black, fontSize: 14.0),
+                          ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          );
-        }),
+            );
+          }),
+        ),
       ),
     );
 
@@ -273,11 +280,12 @@ class NewPlaylistDialog extends StatefulWidget {
 }
 
 class _NewPlaylistDialogState extends State<NewPlaylistDialog> {
-  final controller = TextEditingController(text: "cacca");
+  final textController = TextEditingController(text: "cacca");
+  final dbProvider = DBProvider.instance;
 
   @override
   void dispose() {
-    controller.dispose();
+    textController.dispose();
     super.dispose();
   }
 
@@ -313,7 +321,7 @@ class _NewPlaylistDialogState extends State<NewPlaylistDialog> {
             ),
             SizedBox(height: 8.0),
             TextField(
-              controller: controller,
+              controller: textController,
               autofocus: true,
               cursorColor: accentColor,
               cursorHeight: 20.0,
@@ -329,9 +337,8 @@ class _NewPlaylistDialogState extends State<NewPlaylistDialog> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
                 GestureDetector(
-                  onTap: () async {
-                    print(await DBProvider.db.getPlaylist());
-                  },
+                  onTap: _delete,
+                  // () => Navigator.of(context).pop(),
                   child: Container(
                     width: 180,
                     height: 50,
@@ -352,13 +359,7 @@ class _NewPlaylistDialogState extends State<NewPlaylistDialog> {
                   ),
                 ),
                 GestureDetector(
-                  onTap: () {
-                    var playlist = Playlist(
-                      "title",
-                      "cacca",
-                    );
-                    DBProvider.db.insertPlaylist(playlist);
-                  },
+                  onTap: _insert,
                   child: Container(
                     width: 150,
                     height: 50,
@@ -384,15 +385,47 @@ class _NewPlaylistDialogState extends State<NewPlaylistDialog> {
     );
   }
 
-  // void aggiungi() {
-  //   var playlist = Playlist(
-  //     "title",
-  //     "cacca",
-  //   );
-  //   DBProvider.db.insertPlaylist(playlist);
-  // // }
+  void _insert() async {
+    List playlistNames =
+        await Provider.of<DatabaseValue>(context, listen: false)
+            .getDatabaseName();
+    bool isIn = false;
 
-  // printalo() async {
-  //   print(await DBProvider.db.getPlaylist());
-  // }
+    for (int i = 0; i < playlistNames.length; i++) {
+      if (textController.text == playlistNames[i]) {
+        isIn = true;
+        break;
+      }
+    }
+
+    if (isIn) {
+      print("gia esiste");
+    } else {
+      Map<String, dynamic> row = {
+        DBProvider.columnName: textController.text,
+        DBProvider.columnSongPath: ''
+      };
+
+      final id = await dbProvider.insert(row);
+      print("Inserita $id");
+      Navigator.of(context).pop();
+    }
+  }
+
+  void _query() async {
+    final allRows = await dbProvider.queryAllRows();
+    print("query all rows:");
+    allRows.forEach((row) => print(row['id']));
+    print(allRows[0]['name']);
+  }
+
+  _delete() async {
+    // // Assuming that the number of rows is the id for the last row.
+    // final id = await Provider.of<DatabaseValue>(context, listen: false)
+    //     .getDatabaseName();
+    // final rowsDeleted = await dbProvider.delete(id);
+
+    // print('deleted $rowsDeleted row(s): row $id');
+    Provider.of<DatabaseValue>(context, listen: false).deletePlaylist();
+  }
 }
