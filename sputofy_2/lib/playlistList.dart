@@ -17,6 +17,7 @@ class PlaylistList extends StatefulWidget {
 }
 
 class _PlaylistListState extends State<PlaylistList> {
+  final dbProvider = DBProvider.instance;
   @override
   Widget build(BuildContext context) {
     MediaQueryData mediaQueryData = MediaQuery.of(context);
@@ -92,99 +93,109 @@ class _PlaylistListState extends State<PlaylistList> {
   }
 
   Widget _buildWidgetPlaylistList() {
-    print("cacca");
     return Expanded(
-      child: Consumer<DatabaseValue>(
-        builder: (context, database, child) => GridView.count(
-          crossAxisCount: 2,
-          children: List.generate(database.playlistNames.length, (index) {
-            return GestureDetector(
-              onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => PlaylistScreen(index))),
-              child: Container(
-                alignment: Alignment.center,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Stack(
-                      children: <Widget>[
-                        Container(
-                          width: 150,
-                          height: 150,
-                          decoration: BoxDecoration(
-                            image: DecorationImage(
-                              image: AssetImage('cover.jpeg'),
-                            ),
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            Provider.of<MyAudio>(context, listen: false)
-                                .playSong(0);
-                            showMiniPlayer(context);
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 112, left: 112),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.blueGrey[800]),
-                              child: Consumer<MyAudio>(
-                                builder: (context, audioPlayer, child) {
-                                  if (audioPlayer.isPlaying) {
-                                    return Icon(
-                                      Icons.pause,
-                                      color: Colors.white,
-                                      size: 32.0,
-                                    );
-                                  } else {
-                                    return Icon(
-                                      Icons.play_arrow,
-                                      color: Colors.white,
-                                      size: 32.0,
-                                    );
-                                  }
-                                },
+        child: FutureBuilder(
+      future: dbProvider.queryRowCount(),
+      builder: (context, snapshot) {
+        Widget retVal;
+        if (snapshot.connectionState == ConnectionState.done) {
+          retVal = GridView.count(
+            crossAxisCount: 2,
+            children: List.generate(snapshot.data, (index) {
+              return GestureDetector(
+                onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => PlaylistScreen(index))),
+                child: Container(
+                  alignment: Alignment.center,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Stack(
+                        children: <Widget>[
+                          Container(
+                            width: 150,
+                            height: 150,
+                            decoration: BoxDecoration(
+                              image: DecorationImage(
+                                image: AssetImage('cover.jpeg'),
                               ),
                             ),
                           ),
-                        )
-                      ],
-                    ),
-                    Container(
-                      width: 150,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: <Widget>[
-                          Text(
-                            'Playlist',
-                            style: Theme.of(context).textTheme.subtitle2.merge(
-                                  TextStyle(
-                                      color: Colors.black, fontSize: 14.0),
-                                ),
-                          ),
                           GestureDetector(
-                            child: Icon(Icons.more_vert),
+                            onTap: () {
+                              Provider.of<MyAudio>(context, listen: false)
+                                  .playSong(0);
+                              showMiniPlayer(context);
+                            },
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.only(top: 112, left: 112),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.blueGrey[800]),
+                                child: Consumer<MyAudio>(
+                                  builder: (context, audioPlayer, child) {
+                                    if (audioPlayer.isPlaying) {
+                                      return Icon(
+                                        Icons.pause,
+                                        color: Colors.white,
+                                        size: 32.0,
+                                      );
+                                    } else {
+                                      return Icon(
+                                        Icons.play_arrow,
+                                        color: Colors.white,
+                                        size: 32.0,
+                                      );
+                                    }
+                                  },
+                                ),
+                              ),
+                            ),
                           )
                         ],
                       ),
-                    ),
-                    Text(
-                      '1000 songs',
-                      style: Theme.of(context).textTheme.headline4.merge(
-                            TextStyle(color: Colors.black, fontSize: 14.0),
-                          ),
-                    ),
-                  ],
+                      Container(
+                        width: 150,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: <Widget>[
+                            Text(
+                              'Playlist',
+                              style:
+                                  Theme.of(context).textTheme.subtitle2.merge(
+                                        TextStyle(
+                                            color: Colors.black,
+                                            fontSize: 14.0),
+                                      ),
+                            ),
+                            GestureDetector(
+                              child: Icon(Icons.more_vert),
+                            )
+                          ],
+                        ),
+                      ),
+                      Text(
+                        '1000 songs',
+                        style: Theme.of(context).textTheme.headline4.merge(
+                              TextStyle(color: Colors.black, fontSize: 14.0),
+                            ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          }),
-        ),
-      ),
-    );
+              );
+            }),
+          );
+        } else {
+          retVal = CircularProgressIndicator();
+        }
+        return retVal;
+      },
+    ));
 
     // return Expanded(
     //   child: GridView.count(
