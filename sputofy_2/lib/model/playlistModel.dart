@@ -1,18 +1,22 @@
 class Playlist {
-  final String title;
-  final String path;
+  int id;
+  String name;
+  String songPath;
 
-  Playlist(this.title, this.path);
+  Playlist(this.id, this.name, this.songPath);
 
   Map<String, dynamic> toMap() {
-    return {
-      'title': title,
-      'path': path,
+    var map = <String, dynamic>{
+      'id': id,
+      'name': name,
+      'song_path': songPath,
     };
+    return map;
   }
 
-  @override
-  String toString() {
-    return 'Playlist{title: $title, path: $path}';
+  Playlist.fromMap(Map<String, dynamic> map) {
+    id = map['id'];
+    name = map['name'];
+    songPath = map['song_path'];
   }
 }

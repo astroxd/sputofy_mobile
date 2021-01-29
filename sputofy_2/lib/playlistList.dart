@@ -10,6 +10,7 @@ import 'package:sputofy_2/palette.dart';
 import 'package:sputofy_2/playlistScreen.dart';
 
 import 'package:sputofy_2/utils/Database.dart';
+import 'package:sqflite/sqflite.dart';
 
 class PlaylistList extends StatefulWidget {
   @override
@@ -17,7 +18,6 @@ class PlaylistList extends StatefulWidget {
 }
 
 class _PlaylistListState extends State<PlaylistList> {
-  final dbProvider = DBProvider.instance;
   @override
   Widget build(BuildContext context) {
     MediaQueryData mediaQueryData = MediaQuery.of(context);
@@ -94,191 +94,113 @@ class _PlaylistListState extends State<PlaylistList> {
 
   Widget _buildWidgetPlaylistList() {
     return Expanded(
-        child: FutureBuilder(
-      future: dbProvider.queryRowCount(),
-      builder: (context, snapshot) {
-        Widget retVal;
-        if (snapshot.connectionState == ConnectionState.done) {
-          retVal = GridView.count(
-            crossAxisCount: 2,
-            children: List.generate(snapshot.data, (index) {
-              return GestureDetector(
-                onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => PlaylistScreen(index))),
-                child: Container(
-                  alignment: Alignment.center,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+      child: FutureBuilder(
+        future: Provider.of<DatabaseValue>(context).playlists,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return playlistList(snapshot.data);
+          } else {
+            return CircularProgressIndicator();
+          }
+        },
+      ),
+    );
+  }
+
+  Widget playlistList(List<Playlist> playlists) {
+    return GridView.count(
+      crossAxisCount: 2,
+      children: List.of(
+        playlists.map(
+          (playlist) => GestureDetector(
+            onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => PlaylistScreen(playlist.id))),
+            child: Container(
+              alignment: Alignment.center,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Stack(
                     children: <Widget>[
-                      Stack(
-                        children: <Widget>[
-                          Container(
-                            width: 150,
-                            height: 150,
-                            decoration: BoxDecoration(
-                              image: DecorationImage(
-                                image: AssetImage('cover.jpeg'),
-                              ),
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              Provider.of<MyAudio>(context, listen: false)
-                                  .playSong(0);
-                              showMiniPlayer(context);
-                            },
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.only(top: 112, left: 112),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Colors.blueGrey[800]),
-                                child: Consumer<MyAudio>(
-                                  builder: (context, audioPlayer, child) {
-                                    if (audioPlayer.isPlaying) {
-                                      return Icon(
-                                        Icons.pause,
-                                        color: Colors.white,
-                                        size: 32.0,
-                                      );
-                                    } else {
-                                      return Icon(
-                                        Icons.play_arrow,
-                                        color: Colors.white,
-                                        size: 32.0,
-                                      );
-                                    }
-                                  },
-                                ),
-                              ),
-                            ),
-                          )
-                        ],
-                      ),
                       Container(
                         width: 150,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: <Widget>[
-                            Text(
-                              'Playlist',
-                              style:
-                                  Theme.of(context).textTheme.subtitle2.merge(
-                                        TextStyle(
-                                            color: Colors.black,
-                                            fontSize: 14.0),
-                                      ),
-                            ),
-                            GestureDetector(
-                              child: Icon(Icons.more_vert),
-                            )
-                          ],
+                        height: 150,
+                        decoration: BoxDecoration(
+                          image: DecorationImage(
+                            image: AssetImage('cover.jpeg'),
+                          ),
                         ),
                       ),
-                      Text(
-                        '1000 songs',
-                        style: Theme.of(context).textTheme.headline4.merge(
-                              TextStyle(color: Colors.black, fontSize: 14.0),
+                      GestureDetector(
+                        onTap: () {
+                          Provider.of<MyAudio>(context, listen: false)
+                              .playSong(0);
+                          showMiniPlayer(context);
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 112, left: 112),
+                          child: Container(
+                            decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.blueGrey[800]),
+                            child: Consumer<MyAudio>(
+                              builder: (context, audioPlayer, child) {
+                                if (audioPlayer.isPlaying) {
+                                  return Icon(
+                                    Icons.pause,
+                                    color: Colors.white,
+                                    size: 32.0,
+                                  );
+                                } else {
+                                  return Icon(
+                                    Icons.play_arrow,
+                                    color: Colors.white,
+                                    size: 32.0,
+                                  );
+                                }
+                              },
                             ),
-                      ),
+                          ),
+                        ),
+                      )
                     ],
                   ),
-                ),
-              );
-            }),
-          );
-        } else {
-          retVal = CircularProgressIndicator();
-        }
-        return retVal;
-      },
-    ));
-
-    // return Expanded(
-    //   child: GridView.count(
-    //     padding: EdgeInsets.only(left: 20.0),
-    //     crossAxisCount: 2,
-    //     children: List.generate(
-    //       5,
-    //       (index) {
-    //         return GestureDetector(
-    //           onTap: () => Navigator.push(
-    //             context,
-    //             MaterialPageRoute(
-    //               builder: (context) => PlaylistScreen(),
-    //             ),
-    //           ),
-    //           child: Column(
-    //             children: <Widget>[
-    //               Stack(
-    //                 children: <Widget>[
-    //                   Container(
-    //                     width: 165.0,
-    //                     height: 150.0,
-    //                     decoration: BoxDecoration(
-    //                       image: DecorationImage(
-    //                         image: AssetImage("cover.jpeg"),
-    //                       ),
-    //                     ),
-    //                   ),
-    //                   Align(
-    //                     alignment: Alignment.bottomRight,
-    //                     child: Padding(
-    //                       padding:
-    //                           const EdgeInsets.only(top: 115.0, right: 30.0),
-    //                       child: GestureDetector(
-    //                         onTap: () => print("play"),
-    //                         child: Container(
-    //                           decoration: BoxDecoration(
-    //                             shape: BoxShape.circle,
-    //                             color: Colors.blueGrey[800],
-    //                           ),
-    //                           child: Icon(Icons.play_arrow,
-    //                               color: Colors.white, size: 32.0),
-    //                         ),
-    //                       ),
-    //                     ),
-    //                   ),
-    //                 ],
-    //               ),
-    //               Row(
-    //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    //                 children: <Widget>[
-    //                   Padding(
-    //                     padding: const EdgeInsets.only(top: 0.0, left: 10.0),
-    //                     child: Text(
-    //                       'Playlist',
-    //                       style: Theme.of(context).textTheme.subtitle2.merge(
-    //                             TextStyle(color: Colors.black, fontSize: 14.0),
-    //                           ),
-    //                     ),
-    //                   ),
-    //                   GestureDetector(
-    //                     onTap: () => print("more vert"),
-    //                     child: Padding(
-    //                       padding: const EdgeInsets.only(top: 0.0, right: 21.0),
-    //                       child: Icon(Icons.more_vert_outlined),
-    //                     ),
-    //                   ),
-    //                 ],
-    //               ),
-    //               Text(
-    //                 "data",
-    //                 style: Theme.of(context)
-    //                     .textTheme
-    //                     .headline6
-    //                     .merge(TextStyle(fontSize: 8.0)),
-    //               )
-    //             ],
-    //           ),
-    //         );
-    //       },
-    //     ),
-    //   ),
-    // );
+                  Container(
+                    width: 150,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        Text(
+                          playlist.name,
+                          style: Theme.of(context).textTheme.subtitle2.merge(
+                                TextStyle(color: Colors.black, fontSize: 14.0),
+                              ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            Provider.of<DatabaseValue>(context, listen: false)
+                                .deletePlaylist(playlist.id);
+                          },
+                          child: Icon(Icons.more_vert),
+                        )
+                      ],
+                    ),
+                  ),
+                  Text(
+                    '${playlist.songPath.length} songs',
+                    style: Theme.of(context).textTheme.headline4.merge(
+                          TextStyle(color: Colors.black, fontSize: 14.0),
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -291,8 +213,12 @@ class NewPlaylistDialog extends StatefulWidget {
 }
 
 class _NewPlaylistDialogState extends State<NewPlaylistDialog> {
-  final textController = TextEditingController(text: "cacca");
-  final dbProvider = DBProvider.instance;
+  var textController = TextEditingController(text: "cacca");
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   void dispose() {
@@ -348,8 +274,7 @@ class _NewPlaylistDialogState extends State<NewPlaylistDialog> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
                 GestureDetector(
-                  onTap: _delete,
-                  // () => Navigator.of(context).pop(),
+                  onTap: () => Navigator.of(context).pop(),
                   child: Container(
                     width: 180,
                     height: 50,
@@ -397,13 +322,14 @@ class _NewPlaylistDialogState extends State<NewPlaylistDialog> {
   }
 
   void _insert() async {
-    List playlistNames =
-        await Provider.of<DatabaseValue>(context, listen: false)
-            .getDatabaseName();
+    List<Playlist> playlists =
+        await Provider.of<DatabaseValue>(context, listen: false).playlists;
+    // print(playlists.map((e) => print(e.name.toString())));
+    int max = playlists.length;
     bool isIn = false;
 
-    for (int i = 0; i < playlistNames.length; i++) {
-      if (textController.text == playlistNames[i]) {
+    for (int i = 0; i < max; i++) {
+      if (textController.text == playlists[i].name) {
         isIn = true;
         break;
       }
@@ -412,31 +338,10 @@ class _NewPlaylistDialogState extends State<NewPlaylistDialog> {
     if (isIn) {
       print("gia esiste");
     } else {
-      Map<String, dynamic> row = {
-        DBProvider.columnName: textController.text,
-        DBProvider.columnSongPath: ''
-      };
+      Playlist playlist = Playlist(null, textController.text, '');
+      Provider.of<DatabaseValue>(context, listen: false).savePlaylist(playlist);
 
-      final id = await dbProvider.insert(row);
-      print("Inserita $id");
       Navigator.of(context).pop();
     }
-  }
-
-  void _query() async {
-    final allRows = await dbProvider.queryAllRows();
-    print("query all rows:");
-    allRows.forEach((row) => print(row['id']));
-    print(allRows[0]['name']);
-  }
-
-  _delete() async {
-    // // Assuming that the number of rows is the id for the last row.
-    // final id = await Provider.of<DatabaseValue>(context, listen: false)
-    //     .getDatabaseName();
-    // final rowsDeleted = await dbProvider.delete(id);
-
-    // print('deleted $rowsDeleted row(s): row $id');
-    Provider.of<DatabaseValue>(context, listen: false).deletePlaylist();
   }
 }

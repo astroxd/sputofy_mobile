@@ -1,33 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:sputofy_2/model/playlistModel.dart';
 import 'package:sputofy_2/utils/Database.dart';
 
 class DatabaseValue extends ChangeNotifier {
-  final dbProvider = DBProvider.instance;
-  List<String> playlistNames = [];
-  List<int> playlistIds = [];
+  Future<List<Playlist>> playlists;
+  var dbHelper = DBHelper();
 
-  // DatabaseValue() {
-  //   List<String> playlistNames = getDatabaseValue();
-  // }
-
-  getDatabaseName() async {
-    playlistNames.clear();
-    final allRows = await dbProvider.queryAllRows();
-    allRows.forEach((row) {
-      playlistNames.add(row['name']);
-    });
+  DatabaseValue() {
+    playlists = dbHelper.getPlaylist();
     notifyListeners();
-    return playlistNames;
   }
 
-  deletePlaylist() async {
-    playlistIds.clear();
-    final allRows = await dbProvider.queryAllRows();
-    allRows.forEach((row) {
-      playlistIds.add(row['id']);
-    });
-    final rowsDeleted = await dbProvider.delete(playlistIds.length);
-    getDatabaseName();
+  void savePlaylist(Playlist playlist) {
+    dbHelper.save(playlist);
+    playlists = dbHelper.getPlaylist();
+    // notifyListeners();
+  }
+
+  void deletePlaylist(int id) {
+    dbHelper.delete(id);
+    playlists = dbHelper.getPlaylist();
+    notifyListeners();
   }
 }
