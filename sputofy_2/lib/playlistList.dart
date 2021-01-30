@@ -2,15 +2,13 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sputofy_2/main.dart';
 import 'package:sputofy_2/miniPlayer.dart';
 import 'package:sputofy_2/model/audioPlayer.dart';
 import 'package:sputofy_2/model/databaseValues.dart';
 import 'package:sputofy_2/model/playlistModel.dart';
 import 'package:sputofy_2/palette.dart';
 import 'package:sputofy_2/playlistScreen.dart';
-
-import 'package:sputofy_2/utils/Database.dart';
-import 'package:sqflite/sqflite.dart';
 
 class PlaylistList extends StatefulWidget {
   @override
@@ -23,18 +21,17 @@ class _PlaylistListState extends State<PlaylistList> {
     MediaQueryData mediaQueryData = MediaQuery.of(context);
     double widthScreen = mediaQueryData.size.width;
     double paddingBottom = mediaQueryData.padding.bottom;
-    return Scaffold(
-      body: Container(
-        width: widthScreen,
-        child: Column(
-          children: <Widget>[
-            _buildWidgetButtonController(widthScreen),
-            _buildWidgetPlaylistList(),
-            SizedBox(
-              height: 50,
-            )
-          ],
-        ),
+    return Container(
+      color: mainColor,
+      width: widthScreen,
+      child: Column(
+        children: <Widget>[
+          _buildWidgetButtonController(widthScreen),
+          _buildWidgetPlaylistList(),
+          SizedBox(
+            height: 50,
+          )
+        ],
       ),
     );
   }
@@ -109,96 +106,101 @@ class _PlaylistListState extends State<PlaylistList> {
 
   Widget playlistList(List<Playlist> playlists) {
     return GridView.count(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
       crossAxisCount: 2,
+      childAspectRatio: 170 / 210,
       children: List.of(
         playlists.map(
           (playlist) => GestureDetector(
             onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => PlaylistScreen(playlist.id))),
-            child: Container(
-              alignment: Alignment.center,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Stack(
-                    children: <Widget>[
-                      Container(
-                        width: 150,
-                        height: 150,
-                        decoration: BoxDecoration(
-                          image: DecorationImage(
-                            image: AssetImage('cover.jpeg'),
-                          ),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          Provider.of<MyAudio>(context, listen: false)
-                              .playSong(0);
-                          showMiniPlayer(context);
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 112, left: 112),
-                          child: Container(
-                            decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.blueGrey[800]),
-                            child: Consumer<MyAudio>(
-                              builder: (context, audioPlayer, child) {
-                                if (audioPlayer.isPlaying) {
-                                  return Icon(
-                                    Icons.pause,
-                                    color: Colors.white,
-                                    size: 32.0,
-                                  );
-                                } else {
-                                  return Icon(
-                                    Icons.play_arrow,
-                                    color: Colors.white,
-                                    size: 32.0,
-                                  );
-                                }
-                              },
-                            ),
-                          ),
-                        ),
-                      )
-                    ],
-                  ),
-                  Container(
-                    width: 150,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        Text(
-                          playlist.name,
-                          style: Theme.of(context).textTheme.subtitle2.merge(
-                                TextStyle(color: Colors.black, fontSize: 14.0),
-                              ),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            Provider.of<DatabaseValue>(context, listen: false)
-                                .deletePlaylist(playlist.id);
-                          },
-                          child: Icon(Icons.more_vert),
-                        )
-                      ],
-                    ),
-                  ),
-                  Text(
-                    '${playlist.songPath.length} songs',
-                    style: Theme.of(context).textTheme.headline4.merge(
-                          TextStyle(color: Colors.black, fontSize: 14.0),
-                        ),
-                  ),
-                ],
-              ),
-            ),
+                    builder: (context) =>
+                        PlaylistScreen(playlist.songPath.length))),
+            child: playlistTile(playlist),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget playlistTile(Playlist playlist) {
+    return Container(
+      alignment: Alignment.center,
+      child: Column(
+        children: <Widget>[
+          Container(
+            width: 170.0,
+            height: 170.0,
+            child: Stack(
+              children: [
+                Image.asset('cover.jpeg'),
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 4.0, bottom: 2.0),
+                    child: Consumer<MyAudio>(
+                      builder: (context, audioplayer, child) => GestureDetector(
+                        onTap: () {
+                          audioplayer.playSong(0);
+                          showMiniPlayer(context);
+                        },
+                        child: Icon(
+                          audioplayer.isPlaying
+                              ? Icons.pause_circle_filled
+                              : Icons.play_circle_filled_sharp,
+                          size: 36.0,
+                          color: accentColor,
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              ],
+            ),
+          ),
+          Container(
+            width: 170,
+            height: 52,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: <Widget>[
+                    Container(
+                      width: 140,
+                      child: Text(
+                        playlist.name,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                            color: accentColor,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Provider.of<DatabaseValue>(context, listen: false)
+                            .deletePlaylist(playlist.id);
+                      },
+                      child: Icon(
+                        Icons.more_vert,
+                        color: accentColor,
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  "${playlist.songPath.length} songs",
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                  style: TextStyle(color: accentColor, fontSize: 14),
+                ),
+              ],
+            ),
+          )
+        ],
       ),
     );
   }
