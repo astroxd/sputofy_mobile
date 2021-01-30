@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'package:sputofy_2/model/audioPlayer.dart';
 import 'package:sputofy_2/model/databaseValues.dart';
+import 'package:sputofy_2/model/playlistModel.dart';
 import 'package:sputofy_2/palette.dart';
 import 'package:sputofy_2/playlistList.dart';
 
@@ -25,7 +26,6 @@ class MyApp extends StatelessWidget {
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
         home: HomePage(),
-        // home: test(),
       ),
     );
   }
@@ -45,7 +45,7 @@ class _HomePageState extends State<HomePage> {
     MediaQueryData mediaQueryData = MediaQuery.of(context);
     double widthScreen = mediaQueryData.size.width;
     return Scaffold(
-      appBar: CustomAppBar(index),
+      appBar: CustomAppBar(index, widthScreen, context),
       body: Column(
         children: <Widget>[
           PageButtons(widthScreen, index, pageController),
@@ -79,16 +79,17 @@ class _HomePageState extends State<HomePage> {
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final int index;
+  final double widthScreen;
+  final BuildContext context;
 
   @override
   final Size preferredSize;
 
-  CustomAppBar(this.index) : preferredSize = Size.fromHeight(95.0);
+  CustomAppBar(this.index, this.widthScreen, this.context)
+      : preferredSize = Size.fromHeight(95.0);
 
   @override
   Widget build(BuildContext context) {
-    MediaQueryData mediaQueryData = MediaQuery.of(context);
-    double widthScreen = mediaQueryData.size.width;
     return Container(
       padding: const EdgeInsets.only(top: 8.0, left: 16.0, right: 16.0),
       color: secondaryColor,
@@ -115,7 +116,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 ),
                 GestureDetector(
                   onTap: () {
-                    index == 0 ? cacca() : popo();
+                    index == 0
+                        ? cacca()
+                        : _showNewPlaylistDialog(widthScreen, context);
                   },
                   child: Icon(
                     index == 0 ? Icons.menu_rounded : Icons.library_add,
@@ -134,8 +137,162 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     print(0);
   }
 
-  popo() {
-    print(1);
+  void _showNewPlaylistDialog(double widthScreen, BuildContext context) {
+    showModalBottomSheet(
+      isScrollControlled: true,
+      context: context,
+      builder: (context) =>
+          NewPlaylistDialog(MediaQuery.of(context).viewInsets),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(24.0),
+          topRight: Radius.circular(24.0),
+        ),
+      ),
+      backgroundColor: mainColor,
+    );
+  }
+}
+
+class NewPlaylistDialog extends StatefulWidget {
+  NewPlaylistDialog(this.padding);
+  final EdgeInsets padding;
+
+  @override
+  _NewPlaylistDialogState createState() => _NewPlaylistDialogState();
+}
+
+class _NewPlaylistDialogState extends State<NewPlaylistDialog> {
+  var textController = TextEditingController(text: "cacca");
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    textController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: widget.padding,
+      child: Container(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Center(
+              child: Text(
+                "Playlist Title",
+                style: Theme.of(context).textTheme.headline6.merge(
+                      TextStyle(
+                        color: accentColor,
+                      ),
+                    ),
+              ),
+            ),
+            SizedBox(height: 10.0),
+            Text(
+              "Enter playlist title",
+              style: Theme.of(context).textTheme.subtitle1.merge(
+                    TextStyle(
+                      color: accentColor,
+                      fontSize: 16,
+                    ),
+                  ),
+            ),
+            SizedBox(height: 8.0),
+            TextField(
+              controller: textController,
+              autofocus: true,
+              cursorColor: accentColor,
+              cursorHeight: 20.0,
+              decoration: InputDecoration(
+                focusedBorder: InputBorder.none,
+                filled: true,
+                fillColor: secondaryColor,
+              ),
+            ),
+            SizedBox(height: 8.0),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: Container(
+                    width: 180,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: secondaryColor,
+                      borderRadius: BorderRadius.all((Radius.circular(24.0))),
+                    ),
+                    child: Center(
+                      child: Text(
+                        "Cancel",
+                        style: Theme.of(context).textTheme.headline6.merge(
+                              TextStyle(
+                                color: accentColor,
+                              ),
+                            ),
+                      ),
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: _insert,
+                  child: Container(
+                    width: 150,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: accentColor,
+                      borderRadius: BorderRadius.all((Radius.circular(24.0))),
+                    ),
+                    child: Center(
+                      child: Text(
+                        "Save",
+                        style: Theme.of(context).textTheme.headline6.merge(
+                              TextStyle(color: Colors.black),
+                            ),
+                      ),
+                    ),
+                  ),
+                )
+              ],
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _insert() async {
+    List<Playlist> playlists =
+        await Provider.of<DatabaseValue>(context, listen: false).playlists;
+    // print(playlists.map((e) => print(e.name.toString())));
+    int max = playlists.length;
+    bool isIn = false;
+
+    for (int i = 0; i < max; i++) {
+      if (textController.text == playlists[i].name) {
+        isIn = true;
+        break;
+      }
+    }
+
+    if (isIn) {
+      print("gia esiste");
+    } else {
+      Playlist playlist = Playlist(null, textController.text, '');
+      Provider.of<DatabaseValue>(context, listen: false).savePlaylist(playlist);
+
+      Navigator.of(context).pop();
+    }
   }
 }
 
