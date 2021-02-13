@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sputofy_2/mainPage.dart';
 
 import 'package:sputofy_2/model/audioPlayer.dart';
 import 'package:sputofy_2/model/databaseValues.dart';
@@ -58,9 +59,8 @@ class _HomePageState extends State<HomePage> {
                 });
               },
               children: [
-                Container(
-                  color: mainColor,
-                ),
+                // MainPage(),
+                FilePickerDemo(),
                 PlaylistList(),
                 // Container(
                 //   color: mainColor,

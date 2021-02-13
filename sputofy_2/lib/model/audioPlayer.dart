@@ -15,9 +15,14 @@ class MyAudio extends ChangeNotifier {
   bool isRepeatOne = false;
 
   List<Music> songList = [
-    Music('song3', 'Taylor Swift', 9, 'song3.mp3'),
+    Music('Song3', 'Taylor Swift', 9, 'song3.mp3'),
+    Music('Song2', 'Taylor Swift', 264, 'song2.mp3'),
+    Music('Song1', 'Taylor Swift', 239, 'song1.mp3'),
     Music('song2', 'Taylor Swift', 264, 'song2.mp3'),
     Music('song1', 'Taylor Swift', 239, 'song1.mp3'),
+    Music('song2', 'Taylor Swift', 264, 'song2.mp3'),
+    Music('song1', 'Taylor Swift', 239, 'song1.mp3'),
+    Music('songtest', 'Taylor Swift', 2390, 'song3.mp3'),
   ];
   AudioPlayer _player = AudioPlayer();
   AudioCache cache;
@@ -116,6 +121,21 @@ class MyAudio extends ChangeNotifier {
         (durationMinute < 10 ? '0$durationMinute' : '$durationMinute') +
             ':' +
             (durationSecond < 10 ? "0$durationSecond" : "$durationSecond");
+  }
+
+  getPlaylistLength() {
+    int totalTimeSeconds = 0;
+    String totalTime = '0 hours';
+    for (var i = 0; i < songList.length; i++) {
+      totalTimeSeconds += songList[i].durationSecond;
+    }
+    if (totalTimeSeconds < 3600) {
+      return totalTime =
+          ("${(totalTimeSeconds / 60).toStringAsFixed(1)} minutes");
+    } else {
+      return totalTime =
+          ("${(totalTimeSeconds / 3600).toStringAsFixed(1)} hours");
+    }
   }
 }
 

@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'dart:ui';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sputofy_2/app_icons.dart';
@@ -332,8 +334,11 @@ class PlaylistScreen extends StatelessWidget {
         width: widthScreen,
         child: Column(
           children: <Widget>[
-            _buildWidgetPlaylistInfo(widthScreen),
-            _buildWidgetPlaylistMusic()
+            _buildWidgetPlaylistInfo(widthScreen, context),
+            _buildWidgetPlaylistMusic(context),
+            SizedBox(
+              height: 75, //TODO se cambia la bottom bar questo deve cambiare
+            )
           ],
         ),
         color: mainColor,
@@ -341,7 +346,36 @@ class PlaylistScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildWidgetPlaylistInfo(double widthScreen) {
+  Widget _buildWidgetPlaylistInfo(double widthScreen, BuildContext context) {
+    _showPopupMenu() {
+      showMenu<String>(
+        context: context,
+        position: RelativeRect.fromLTRB(25.0, 25.0, 0.0,
+            0.0), //position where you want to show the menu on screen
+        color: mainColor,
+        items: [
+          PopupMenuItem(
+            child: const Text("Cancel Playlist"),
+            value: '1',
+            textStyle: TextStyle(color: Colors.red, fontSize: 18),
+          ),
+          PopupMenuItem<String>(child: const Text('menu option 2'), value: '2'),
+          PopupMenuItem<String>(child: const Text('menu option 3'), value: '3'),
+        ],
+        elevation: 8.0,
+      ).then<void>((String itemSelected) {
+        if (itemSelected == null) return;
+
+        if (itemSelected == "1") {
+          //code here
+        } else if (itemSelected == "2") {
+          //code here
+        } else {
+          //code here
+        }
+      });
+    }
+
     return Container(
       width: widthScreen,
       color: secondaryColor,
@@ -354,10 +388,20 @@ class PlaylistScreen extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
-                  Icon(Icons.arrow_back_ios),
-                  Icon(
-                    Icons.more_vert,
-                    color: accentColor,
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                    child: Icon(Icons.arrow_back_ios),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      _showPopupMenu();
+                    },
+                    child: Icon(
+                      Icons.more_vert,
+                      color: accentColor,
+                    ),
                   )
                 ],
               ),
@@ -366,8 +410,6 @@ class PlaylistScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.only(left: 32.0, top: 16.0, right: 32.0),
             child: Row(
-              // mainAxisAlignment: MainAxisAlignment.start,
-              // crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Container(
                   width: 140,
@@ -403,15 +445,23 @@ class PlaylistScreen extends StatelessWidget {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: <Widget>[
-                            GestureDetector(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                    color: mainColor,
-                                    borderRadius: BorderRadius.circular(12.0)),
-                                child: Icon(
-                                  Icons.play_arrow,
-                                  size: 32.0,
-                                  color: accentColor,
+                            Consumer<MyAudio>(
+                              builder: (context, audioPlayer, child) =>
+                                  GestureDetector(
+                                onTap: () {
+                                  audioPlayer.playSong(0);
+                                  showMiniPlayer(context);
+                                },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                      color: mainColor,
+                                      borderRadius:
+                                          BorderRadius.circular(12.0)),
+                                  child: Icon(
+                                    Icons.play_arrow,
+                                    size: 32.0,
+                                    color: accentColor,
+                                  ),
                                 ),
                               ),
                             ),
@@ -457,12 +507,15 @@ class PlaylistScreen extends StatelessWidget {
                       color: mainColor,
                       child: Padding(
                         padding: const EdgeInsets.only(left: 16.0, top: 16.0),
-                        child: Text(
-                          "13 songs, 1.32 hours",
-                          style: TextStyle(fontSize: 16.0, color: accentColor),
+                        child: Consumer<MyAudio>(
+                          builder: (context, audioPlayer, child) => Text(
+                            "${audioPlayer.songList.length} Songs ${audioPlayer.getPlaylistLength()}",
+                            style:
+                                TextStyle(fontSize: 16.0, color: accentColor),
+                          ),
                         ),
                       ),
-                    )
+                    ),
                   ],
                 ),
                 Padding(
@@ -511,11 +564,40 @@ class PlaylistScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildWidgetPlaylistMusic() {
+  Widget _buildWidgetPlaylistMusic(BuildContext context) {
+    _showPopupMenu(Offset offset) async {
+      double left = offset.dx;
+      double top = offset.dy;
+      await showMenu<String>(
+        context: context,
+        position: RelativeRect.fromLTRB(left, top, 0.0,
+            0.0), //position where you want to show the menu on screen
+        color: mainColor,
+        items: [
+          PopupMenuItem(
+            child: const Text("Remove song"),
+            value: '1',
+            textStyle: TextStyle(color: Colors.red, fontSize: 18),
+          )
+        ],
+        elevation: 6.0,
+      ).then<void>((String itemSelected) {
+        if (itemSelected == null) return;
+
+        if (itemSelected == "1") {
+          //code here
+        } else if (itemSelected == "2") {
+          //code here
+        } else {
+          //code here
+        }
+      });
+    }
+
     return Consumer<MyAudio>(
       builder: (context, audioPlayer, child) => Expanded(
         child: ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          padding: EdgeInsets.zero,
           itemBuilder: (context, index) {
             Music song = audioPlayer.songList[index];
             int durationMinute =
@@ -536,40 +618,69 @@ class PlaylistScreen extends StatelessWidget {
                 showMiniPlayer(context);
               },
               child: Container(
+                margin: EdgeInsets.only(left: 16.0),
                 decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(color: Colors.black),
-                  ),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    border: Border(
+                  bottom: BorderSide(color: Colors.black, width: .5),
+                )),
+                padding:
+                    const EdgeInsets.only(top: 16.0, bottom: 16.0, right: 16.0),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
                     Expanded(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Text(
-                            song.title,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w500,
-                              color: audioPlayer.indexSongSelected == index
-                                  ? accentColor
-                                  : Colors.black,
-                            ),
+                            '${index + 1}',
+                            style: TextStyle(fontSize: 20, color: accentColor),
                           ),
-                          Text(
-                            '${song.artist}',
-                            style: TextStyle(color: thirdColor),
+                          SizedBox(
+                            width: 10.0,
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                song.title,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 20,
+                                  color: audioPlayer.indexSongSelected == index
+                                      ? accentColor
+                                      : Colors.black,
+                                ),
+                              ),
+                              Text(
+                                song.artist,
+                                style: TextStyle(
+                                    color: secondaryColor, fontSize: 14),
+                              ),
+                            ],
                           ),
                         ],
                       ),
                     ),
-                    Text("$strDuration"),
-                    Icon(
-                      Icons.more_vert,
-                      color: accentColor,
+                    Text(
+                      "$strDuration",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 20,
+                      ),
+                    ),
+                    SizedBox(
+                      width: 8,
+                    ),
+                    GestureDetector(
+                      onTapDown: (TapDownDetails details) {
+                        _showPopupMenu(details.globalPosition);
+                      },
+                      child: Icon(
+                        Icons.more_vert,
+                        color: accentColor,
+                        size: 24,
+                      ),
                     ),
                   ],
                 ),
