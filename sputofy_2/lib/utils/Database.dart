@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
+import 'package:sputofy_2/model/folderPathmodel.dart';
 import 'package:sputofy_2/model/playlistModel.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
@@ -79,6 +80,8 @@ class DBHelper {
   static const String SONGPATH = 'song_path';
   static const String TABLE = 'Playlist';
   static const String DB_NAME = 'Playlist.db';
+  static const String TABLE2 = 'folder_path';
+  static const String PATH = 'path';
 
   Future<Database> get db async {
     if (_db != null) {
@@ -96,6 +99,11 @@ class DBHelper {
   }
 
   _onCreate(Database db, int version) async {
+    await db.execute('''
+      CREATE TABLE $TABLE2 (       
+        $PATH TEXT PRIMARY KEY
+      )
+      ''');
     await db.execute('''
       CREATE TABLE $TABLE (       
         $ID INTEGER PRIMARY KEY,
@@ -137,5 +145,23 @@ class DBHelper {
   Future close() async {
     var dbClient = await db;
     dbClient.close();
+  }
+
+  Future<List<FolderPath>> getFolderPath() async {
+    var dbClient = await db;
+    List<Map> maps = await dbClient.query(TABLE2, columns: [PATH]);
+    List<FolderPath> paths = [];
+    if (maps.length > 0) {
+      for (int i = 0; i < maps.length; i++) {
+        paths.add(FolderPath.fromMap(maps[i]));
+      }
+    }
+    return paths;
+  }
+
+  Future<FolderPath> saveFolder(FolderPath folderPath) async {
+    var dbClient = await db;
+    await dbClient.insert(TABLE2, folderPath.toMap());
+    return folderPath;
   }
 }

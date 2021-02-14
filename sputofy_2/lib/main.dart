@@ -59,8 +59,8 @@ class _HomePageState extends State<HomePage> {
                 });
               },
               children: [
-                // MainPage(),
-                FilePickerDemo(),
+                MainPage(),
+                // FilePickerDemo(),
                 PlaylistList(),
                 // Container(
                 //   color: mainColor,
