@@ -8,6 +8,8 @@ import 'package:path/path.dart';
 import 'package:provider/provider.dart';
 import 'package:sputofy_2/model/databaseValues.dart';
 import 'package:sputofy_2/model/folderPathmodel.dart';
+import 'package:sputofy_2/palette.dart';
+import 'package:sputofy_2/utils/CustomExpansionTile.dart';
 import 'package:sqflite/sqflite.dart';
 
 class MainPage extends StatefulWidget {
@@ -67,6 +69,7 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
+  ///Prende tutta la lista ma alla fine carica l'ultimo elemento[loadFolderItem]
   loadFolderItem(List<String> paths) {
     List<FileSystemEntity> files;
     for (String path in paths) {
@@ -76,13 +79,24 @@ class _MainPageState extends State<MainPage> {
     setState(() {
       itemList = files;
     });
+    return files;
   }
 
-  getFolder(BuildContext context) {
+  getFolder(BuildContext context) async {
     FilePicker.platform.getDirectoryPath().then((String folder) {
-      Provider.of<DatabaseValue>(context, listen: false)
-          .saveFolder(FolderPath(folder));
+      if (folder != null) {
+        //TODO vedi se ha elementi mp3, se non li ha non lo salvare, se li ha salvalo,
+        //ma quando carica devi far caricare solo gli elementi mp3
+        Provider.of<DatabaseValue>(context, listen: false)
+            .saveFolder(FolderPath(folder));
+      }
     });
+  }
+
+  loadSingleFolderItem(String path) {
+    Directory folder = Directory(path);
+    List<FileSystemEntity> files = folder.listSync();
+    return files;
   }
 
   @override
@@ -94,6 +108,7 @@ class _MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: mainColor,
       body: Column(
         children: <Widget>[
           Center(
@@ -108,26 +123,42 @@ class _MainPageState extends State<MainPage> {
               child: Text("Aggiungi Folder"),
             ),
           ),
-          FutureBuilder(
-            future: Provider.of<DatabaseValue>(context).paths,
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                return snapshot.data.length == 0
-                    ? CircularProgressIndicator()
-                    : Expanded(
-                        child: ListView.builder(
-                          itemCount: snapshot.data.length,
-                          itemBuilder: (context, index) {
-                            return ListTile(
-                              title: Text("${snapshot.data[index].path}"),
-                            );
-                          },
+          Expanded(
+            child: FutureBuilder(
+              future: Provider.of<DatabaseValue>(context).paths,
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  return ListView.builder(
+                    itemCount: snapshot.data.length,
+                    itemBuilder: (context, index) {
+                      return GestureDetector(
+                        onLongPress: () =>
+                            Provider.of<DatabaseValue>(context, listen: false)
+                                .deleteFolder(snapshot.data[index].path),
+                        child: Theme(
+                          data: ThemeData(
+                              accentColor: secondaryColor,
+                              unselectedWidgetColor: secondaryColor),
+                          child: CustomExpansionTile(
+                            title: Text(
+                              snapshot.data[index].path.toString(),
+                              style: TextStyle(color: accentColor),
+                            ),
+                            subtitle: Text(
+                              "${loadSingleFolderItem(snapshot.data[index].path).length} songs",
+                              style: TextStyle(fontSize: 14, color: thirdColor),
+                            ),
+                            children: [Text("Children$index")],
+                          ),
                         ),
                       );
-              } else {
-                return CircularProgressIndicator();
-              }
-            },
+                    },
+                  );
+                } else {
+                  return CircularProgressIndicator();
+                }
+              },
+            ),
           ),
           // itemList != null
           //     ? Expanded(
@@ -141,29 +172,104 @@ class _MainPageState extends State<MainPage> {
           //         ),
           //       )
           //     : Text("cacca"),
-          lista != null
-              ? Expanded(
-                  child: ListView.builder(
-                    itemCount: lista.length,
-                    itemBuilder: (context, index) {
-                      return ListTile(
-                        title: Text(
-                            "${lista[index].name.replaceAll(('.' + lista[index].name.split('.').last), '')}"),
-                      );
-                    },
-                  ),
-                )
-              : Text("cacca"),
+          // lista != null
+          //     ? Expanded(
+          //         child: ListView.builder(
+          //           itemCount: lista.length,
+          //           itemBuilder: (context, index) {
+          //             return ListTile(
+          //               title: Text(
+          //                   "${lista[index].name.replaceAll(('.' + lista[index].name.split('.').last), '')}"),
+          //             );
+          //           },
+          //         ),
+          //       )
+          //     : Text("cacca"),
         ],
       ),
     );
   }
-
-  void premuto() {
-    print("premuto");
-  }
 }
 
+// class ExpandableContainer extends StatefulWidget {
+//   final Widget collapsedChild;
+//   final Widget expandedChild;
+
+//   const ExpandableContainer({Key key, this.collapsedChild, this.expandedChild})
+//       : super(key: key);
+//   @override
+//   ExpandableContainerState createState() => ExpandableContainerState();
+// }
+
+// class ExpandableContainerState extends State<ExpandableContainer> {
+//   bool isExpanded = true;
+//   @override
+//   Widget build(BuildContext context) {
+//     return GestureDetector(
+//       onTap: () {
+//         setState(() {
+//           isExpanded = !isExpanded;
+//         });
+//       },
+//       child: AnimatedContainer(
+//         duration: Duration(milliseconds: 200),
+//         curve: Curves.easeInOut,
+//         child: isExpanded ? widget.expandedChild : widget.collapsedChild,
+//       ),
+//     );
+//   }
+// }
+
+// class CollapsedTile extends StatelessWidget {
+//   final Text title;
+//   final Text subTitle;
+//   final IconData icon;
+//   const CollapsedTile({Key key, this.title, this.subTitle, this.icon})
+//       : super(key: key);
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Column(
+//       children: <Widget>[
+//         Row(
+//           children: <Widget>[
+//             title,
+//             Icon(icon),
+//           ],
+//         ),
+//         subTitle,
+//       ],
+//     );
+//   }
+// }
+
+// class ExpandedTile extends StatelessWidget {
+//   final Text title;
+//   final Text subTitle;
+//   final IconData icon;
+//   final List<Widget> children;
+//   const ExpandedTile(
+//       {Key key, this.title, this.subTitle, this.icon, this.children})
+//       : super(key: key);
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Column(
+//       children: <Widget>[
+//         Row(
+//           children: <Widget>[
+//             title,
+//             Icon(icon),
+//           ],
+//         ),
+//         subTitle,
+//         SingleChildScrollView(
+//           child: Text("prova"),
+//         ),
+//       ],
+//     );
+//   }
+// }
 // class FilePickerDemo extends StatefulWidget {
 //   @override
 //   _FilePickerDemoState createState() => _FilePickerDemoState();

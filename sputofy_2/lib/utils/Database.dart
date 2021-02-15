@@ -79,7 +79,7 @@ class DBHelper {
   static const String NAME = 'name';
   static const String SONGPATH = 'song_path';
   static const String TABLE = 'Playlist';
-  static const String DB_NAME = 'Playlist.db';
+  static const String DB_NAME = 'NewDatabase.db';
   static const String TABLE2 = 'folder_path';
   static const String PATH = 'path';
 
@@ -163,5 +163,10 @@ class DBHelper {
     var dbClient = await db;
     await dbClient.insert(TABLE2, folderPath.toMap());
     return folderPath;
+  }
+
+  Future<int> deleteFolder(String path) async {
+    var dbClient = await db;
+    return await dbClient.delete(TABLE2, where: '$PATH = ?', whereArgs: [path]);
   }
 }
