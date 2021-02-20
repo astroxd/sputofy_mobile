@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:audioplayers/audio_cache.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
@@ -59,6 +61,11 @@ class MyAudio extends ChangeNotifier {
   playSong(int index) {
     indexSongSelected = index;
     cache.play(songList[indexSongSelected].path);
+  }
+
+//TODO
+  pathPlay(FileSystemEntity path) {
+    _player.play(path.path, isLocal: true);
   }
 
   pauseSong() {

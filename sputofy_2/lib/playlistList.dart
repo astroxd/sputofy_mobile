@@ -28,9 +28,7 @@ class _PlaylistListState extends State<PlaylistList> {
         children: <Widget>[
           _buildWidgetButtonController(widthScreen),
           _buildWidgetPlaylistList(),
-          SizedBox(
-            height: 50,
-          ),
+          SizedBox(height: 50),
         ],
       ),
     );

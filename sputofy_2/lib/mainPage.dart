@@ -1,16 +1,14 @@
-import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:path/path.dart';
 import 'package:provider/provider.dart';
+import 'package:sputofy_2/app_icons.dart';
+import 'package:sputofy_2/model/audioPlayer.dart';
 import 'package:sputofy_2/model/databaseValues.dart';
 import 'package:sputofy_2/model/folderPathmodel.dart';
 import 'package:sputofy_2/palette.dart';
 import 'package:sputofy_2/utils/CustomExpansionTile.dart';
-import 'package:sqflite/sqflite.dart';
 
 class MainPage extends StatefulWidget {
   @override
@@ -18,6 +16,7 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
+  //TODO implementa
   List<PlatformFile> lista;
   getSongs() async {
     FilePickerResult result = await FilePicker.platform.pickFiles(
@@ -40,63 +39,36 @@ class _MainPageState extends State<MainPage> {
     }
   }
 
-  List<FileSystemEntity> itemList;
-  getFolderItem() {
-    FilePicker.platform.getDirectoryPath().then((String folder) {
-      print("cacacacacaca$folder");
-      Directory dir = Directory(folder);
-      List<FileSystemEntity> files = dir.listSync();
-      List<FileSystemEntity> lista = files;
-
-      // for (File file in lista) {
-      //   if (file.path.split('.').last != 'mp3') {
-      //     files.remove(file);
-      //   } else {
-      //     debugPrint("##################${file.path}");
-      //   }
-      // }
-      setState(() {
-        itemList = lista;
-      });
-    });
-  }
-
-  loadFolder() {
-    Directory cartella = Directory("/storage/emulated/0/Music");
-    List<FileSystemEntity> canzoni = cartella.listSync();
-    setState(() {
-      itemList = canzoni;
-    });
-  }
-
-  ///Prende tutta la lista ma alla fine carica l'ultimo elemento[loadFolderItem]
-  loadFolderItem(List<String> paths) {
-    List<FileSystemEntity> files;
-    for (String path in paths) {
-      Directory folder = Directory(path);
-      files = folder.listSync();
-    }
-    setState(() {
-      itemList = files;
-    });
-    return files;
-  }
-
-  getFolder(BuildContext context) async {
+  void getFolder(BuildContext context) async {
     FilePicker.platform.getDirectoryPath().then((String folder) {
       if (folder != null) {
-        //TODO vedi se ha elementi mp3, se non li ha non lo salvare, se li ha salvalo,
-        //ma quando carica devi far caricare solo gli elementi mp3
         Provider.of<DatabaseValue>(context, listen: false)
             .saveFolder(FolderPath(folder));
       }
     });
   }
 
-  loadSingleFolderItem(String path) {
+  List<FileSystemEntity> loadSingleFolderItem(String path) {
     Directory folder = Directory(path);
     List<FileSystemEntity> files = folder.listSync();
+    var toRemove = [];
+    for (FileSystemEntity file in files) {
+      if (file is Directory) {
+        toRemove.add(file);
+      }
+      if (!file.path.endsWith('mp3') || file.path.endsWith('ogg')) {
+        toRemove.add(file);
+      }
+    }
+
+    files.removeWhere((e) => toRemove.contains(e));
+
     return files;
+  }
+
+  String getFileName(FileSystemEntity file) {
+    List<String> splittedPath = file.path.split("/");
+    return splittedPath[splittedPath.length - 1].replaceAll(".mp3", "");
   }
 
   @override
@@ -111,81 +83,173 @@ class _MainPageState extends State<MainPage> {
       backgroundColor: mainColor,
       body: Column(
         children: <Widget>[
-          Center(
-            child: MaterialButton(
-              onPressed: () => getSongs(),
-              child: Text("Aggiungi canzoni"),
-            ),
+          _buildWidgetButtonController(context),
+          SizedBox(height: 8.0),
+          _buildWidgetSongList()
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWidgetButtonController(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 12.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(
+                AppIcon.shuffle,
+              ),
+              SizedBox(width: 8.0),
+              Icon(
+                Icons.repeat,
+                size: 28,
+              )
+            ],
           ),
-          Center(
-            child: MaterialButton(
-              onPressed: () => getFolder(context),
-              child: Text("Aggiungi Folder"),
-            ),
-          ),
-          Expanded(
-            child: FutureBuilder(
-              future: Provider.of<DatabaseValue>(context).paths,
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  return ListView.builder(
-                    itemCount: snapshot.data.length,
-                    itemBuilder: (context, index) {
-                      return GestureDetector(
-                        onLongPress: () =>
-                            Provider.of<DatabaseValue>(context, listen: false)
-                                .deleteFolder(snapshot.data[index].path),
-                        child: Theme(
-                          data: ThemeData(
-                              accentColor: secondaryColor,
-                              unselectedWidgetColor: secondaryColor),
-                          child: CustomExpansionTile(
-                            title: Text(
-                              snapshot.data[index].path.toString(),
-                              style: TextStyle(color: accentColor),
-                            ),
-                            subtitle: Text(
-                              "${loadSingleFolderItem(snapshot.data[index].path).length} songs",
-                              style: TextStyle(fontSize: 14, color: thirdColor),
-                            ),
-                            children: [Text("Children$index")],
+          Row(
+            children: <Widget>[
+              Icon(
+                Icons.arrow_downward,
+                size: 28,
+              ),
+              SizedBox(width: 8.0),
+              Icon(
+                Icons.thumbs_up_down_sharp,
+                size: 28,
+              ),
+              SizedBox(width: 8.0),
+              GestureDetector(
+                onTap: () {
+                  getFolder(context);
+                },
+                child: Icon(
+                  Icons.create_new_folder_outlined,
+                  size: 28,
+                ),
+              )
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWidgetSongList() {
+    return Expanded(
+      child: FutureBuilder(
+        future: Provider.of<DatabaseValue>(context).paths,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return ListView.builder(
+              itemCount: snapshot.data.length,
+              itemBuilder: (context, index) {
+                FolderPath folder = snapshot.data[index];
+                List<FileSystemEntity> folderContent =
+                    loadSingleFolderItem(folder.path);
+                return GestureDetector(
+                  onLongPress: () =>
+                      Provider.of<DatabaseValue>(context, listen: false)
+                          .deleteFolder(snapshot.data[index].path),
+                  child: Theme(
+                    data: ThemeData(
+                        accentColor: secondaryColor,
+                        unselectedWidgetColor: secondaryColor),
+                    child: CustomExpansionTile(
+                      initiallyExpanded: true,
+                      title: Text(
+                        folder.path.split("/").last.toString(),
+                        style: TextStyle(color: accentColor),
+                      ),
+                      subtitle: Text(
+                        "${folderContent.length} songs",
+                        style: TextStyle(fontSize: 14, color: thirdColor),
+                      ),
+                      children: [expandedContent(folderContent)],
+                    ),
+                  ),
+                );
+              },
+            );
+          } else {
+            return CircularProgressIndicator();
+          }
+        },
+      ),
+    );
+  }
+
+  Widget expandedContent(List<FileSystemEntity> folderContent) {
+    return Consumer<MyAudio>(
+      builder: (context, audioPlayer, child) => ListView.builder(
+        shrinkWrap: true,
+        itemCount: folderContent.length,
+        itemBuilder: (context, index) {
+          return GestureDetector(
+            onTap: () => audioPlayer.pathPlay(folderContent[index]),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: 16.0),
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Text(
+                          getFileName(folderContent[index]),
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: accentColor,
+                            fontSize: 18,
                           ),
                         ),
-                      );
-                    },
-                  );
-                } else {
-                  return CircularProgressIndicator();
-                }
-              },
+                      ),
+                      SizedBox(width: 16),
+                      Row(
+                        children: <Widget>[
+                          Icon(
+                            Icons.favorite_border_rounded,
+                            size: 28,
+                          ),
+                          SizedBox(
+                            width: 8.0,
+                          ),
+                          Icon(
+                            Icons.more_vert,
+                            size: 28,
+                          )
+                        ],
+                      )
+                    ],
+                  ),
+                ),
+                Divider(
+                  thickness: .5,
+                  color: Colors.black,
+                )
+              ],
             ),
-          ),
-          // itemList != null
-          //     ? Expanded(
-          //         child: ListView.builder(
-          //           itemCount: itemList.length,
-          //           itemBuilder: (context, index) {
-          //             return ListTile(
-          //               title: Text("${itemList[index].path}"),
-          //             );
-          //           },
-          //         ),
-          //       )
-          //     : Text("cacca"),
-          // lista != null
-          //     ? Expanded(
-          //         child: ListView.builder(
-          //           itemCount: lista.length,
-          //           itemBuilder: (context, index) {
-          //             return ListTile(
-          //               title: Text(
-          //                   "${lista[index].name.replaceAll(('.' + lista[index].name.split('.').last), '')}"),
-          //             );
-          //           },
-          //         ),
-          //       )
-          //     : Text("cacca"),
-        ],
+            // child: Container(
+            //   decoration: BoxDecoration(
+            //     border: Border(
+            //       bottom: BorderSide(color: Colors.black, width: .5),
+            //     ),
+            //   ),
+            //   child: Row(
+            //     children: <Widget>[
+            //       Row(
+            //         children: <Widget>[
+            //           Text(getFileName(folderContent[index])),
+            //         ],
+            //       )
+            //     ],
+            //   ),
+            // ),
+          );
+        },
       ),
     );
   }

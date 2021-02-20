@@ -6,18 +6,12 @@ import 'package:sputofy_2/utils/Database.dart';
 class DatabaseValue extends ChangeNotifier {
   Future<List<Playlist>> playlists;
   Future<List<FolderPath>> paths;
-  List<FolderPath> lista;
   var dbHelper = DBHelper();
 
   DatabaseValue() {
     playlists = dbHelper.getPlaylist();
     paths = dbHelper.getFolderPath();
     notifyListeners();
-    funzione();
-  }
-
-  void funzione() async {
-    lista = await dbHelper.getFolderPath();
   }
 
   void savePlaylist(Playlist playlist) {
