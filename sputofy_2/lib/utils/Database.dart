@@ -1,8 +1,10 @@
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sputofy_2/model/folderPathmodel.dart';
 import 'package:sputofy_2/model/playlistModel.dart';
+import 'package:sputofy_2/model/playlistSongsModel.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
@@ -75,13 +77,15 @@ import 'package:path/path.dart';
 
 class DBHelper {
   static Database _db;
+  static const String DB_NAME = 'NewNewNewNewNewNewNewNewDatabase.db';
   static const String ID = 'id';
   static const String NAME = 'name';
-  static const String SONGPATH = 'song_path';
   static const String TABLE = 'Playlist';
-  static const String DB_NAME = 'NewDatabase.db';
   static const String TABLE2 = 'folder_path';
   static const String PATH = 'path';
+  static const String TABLE3 = 'playlist_songs_path';
+  static const String SONGPATH = 'song_path';
+  static const String PLAYLIST_ID = 'id';
 
   Future<Database> get db async {
     if (_db != null) {
@@ -107,10 +111,15 @@ class DBHelper {
     await db.execute('''
       CREATE TABLE $TABLE (       
         $ID INTEGER PRIMARY KEY,
-        $NAME TEXT NOT NULL,
-        $SONGPATH TEXT NOT NULL
+        $NAME TEXT NOT NULL
       )
       ''');
+    await db.execute('''
+      CREATE TABLE $TABLE3 (
+        $PLAYLIST_ID INTEGER NOT NULL,
+        $SONGPATH TEXT NOT NULL
+      )
+    ''');
   }
 
   Future<Playlist> save(Playlist playlist) async {
@@ -121,7 +130,7 @@ class DBHelper {
 
   Future<List<Playlist>> getPlaylist() async {
     var dbClient = await db;
-    List<Map> maps = await dbClient.query(TABLE, columns: [ID, NAME, SONGPATH]);
+    List<Map> maps = await dbClient.query(TABLE, columns: [ID, NAME]);
     List<Playlist> playlists = [];
     if (maps.length > 0) {
       for (int i = 0; i < maps.length; i++) {
@@ -129,6 +138,30 @@ class DBHelper {
       }
     }
     return playlists;
+  }
+
+  Future<List<PlaylistSongs>> getPlaylistSongs(int id) async {
+    var dbClient = await db;
+    List<Map> map = await dbClient.query(TABLE3,
+        columns: [PLAYLIST_ID, SONGPATH],
+        where: '$PLAYLIST_ID = ?',
+        whereArgs: [id]);
+    List<PlaylistSongs> songs = [];
+    if (map.length > 0) {
+      for (int i = 0; i < map.length; i++) {
+        songs.add(PlaylistSongs.fromMap(map[i]));
+      }
+    }
+    return songs;
+  }
+
+  savePlaylistSongs(int playlistId, List<String> songsPath) async {
+    var dbClient = await db;
+    for (int i = 0; i < songsPath.length; i++) {
+      print(songsPath[i]);
+      PlaylistSongs playlistSong = PlaylistSongs(playlistId, songsPath[i]);
+      await dbClient.insert(TABLE3, playlistSong.toMap());
+    }
   }
 
   Future<int> delete(int id) async {

@@ -3,12 +3,18 @@ import 'dart:ui';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
 import 'package:sputofy_2/app_icons.dart';
 import 'package:sputofy_2/main.dart';
 import 'package:sputofy_2/miniPlayer.dart';
 import 'package:sputofy_2/model/audioPlayer.dart';
+import 'package:sputofy_2/model/databaseValues.dart';
+import 'package:sputofy_2/model/playlistModel.dart';
+import 'package:sputofy_2/model/playlistSongsModel.dart';
 import 'package:sputofy_2/palette.dart';
+import 'package:sputofy_2/selectableSonsList.dart';
+import 'package:sqflite/sqflite.dart';
 
 class PlaylistScreen1 extends StatelessWidget {
   final int index;
@@ -322,52 +328,81 @@ class PlaylistScreen1 extends StatelessWidget {
 }
 
 class PlaylistScreen extends StatelessWidget {
-  final int index;
+  final Playlist playlist;
+  PlaylistScreen(this.playlist);
 
-  PlaylistScreen(this.index);
   @override
   Widget build(BuildContext context) {
     MediaQueryData mediaQueryData = MediaQuery.of(context);
     double widthScreen = mediaQueryData.size.width;
+    double safePadding = mediaQueryData.padding.top;
     return Scaffold(
-      body: Container(
-        width: widthScreen,
-        child: Column(
-          children: <Widget>[
-            _buildWidgetPlaylistInfo(widthScreen, context),
-            _buildWidgetPlaylistMusic(context),
-            SizedBox(
-              height: 75, //TODO se cambia la bottom bar questo deve cambiare
-            )
-          ],
+      backgroundColor: mainColor,
+      body: SafeArea(
+        child: FutureBuilder(
+          future: Provider.of<DatabaseValue>(context).playlistSongs,
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return Column(
+                children: <Widget>[
+                  _buildWidgetPlaylistInfo(widthScreen, context, safePadding),
+                  SizedBox(height: 16.0),
+                  // MaterialButton(
+                  //   onPressed: () {
+                  //     Provider.of<DatabaseValue>(context, listen: false)
+                  //         .addSongs(playlist.id, [
+                  //       "/storage/emulated/0/Download/Yahari Ore no Seishun Love Comedy wa Machigatteiru Zoku  OP FULL   [LYRICS]   (1).mp3",
+                  //       "/storage/emulated/0/Download/Darling in the FranXX Ending 3 Full - Beautiful World  XXme.mp3"
+                  //     ]);
+                  //   },
+                  //   child: Text("metti le canzoni"),
+                  // ),
+                  _buildWidgetPlaylistMusic(context, snapshot.data),
+                  SizedBox(
+                    height:
+                        75, //TODO se cambia la bottom bar questo deve cambiare
+                  )
+                ],
+              );
+            } else {
+              return CircularProgressIndicator();
+            }
+          },
         ),
-        color: mainColor,
       ),
     );
   }
 
-  Widget _buildWidgetPlaylistInfo(double widthScreen, BuildContext context) {
+  Widget _buildWidgetPlaylistInfo(
+      double widthScreen, BuildContext context, double safePadding) {
     _showPopupMenu() {
       showMenu<String>(
         context: context,
-        position: RelativeRect.fromLTRB(25.0, 25.0, 0.0,
+        position: RelativeRect.fromLTRB(safePadding, safePadding, 0.0,
             0.0), //position where you want to show the menu on screen
         color: mainColor,
         items: [
           PopupMenuItem(
-            child: const Text("Cancel Playlist"),
+            child: const Text("Add songs"),
             value: '1',
+            textStyle: TextStyle(color: Colors.blue, fontSize: 18),
+          ),
+          PopupMenuItem(
+            child: const Text("Cancel Playlist"),
+            value: '2',
             textStyle: TextStyle(color: Colors.red, fontSize: 18),
           ),
-          PopupMenuItem<String>(child: const Text('menu option 2'), value: '2'),
-          PopupMenuItem<String>(child: const Text('menu option 3'), value: '3'),
         ],
         elevation: 8.0,
       ).then<void>((String itemSelected) {
         if (itemSelected == null) return;
 
         if (itemSelected == "1") {
-          //code here
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SelectableSongList(),
+              ));
         } else if (itemSelected == "2") {
           //code here
         } else {
@@ -381,30 +416,28 @@ class PlaylistScreen extends StatelessWidget {
       color: secondaryColor,
       child: Column(
         children: <Widget>[
-          SafeArea(
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pop(context);
-                    },
-                    child: Icon(Icons.arrow_back_ios),
+          Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pop(context);
+                  },
+                  child: Icon(Icons.arrow_back_ios),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    _showPopupMenu();
+                  },
+                  child: Icon(
+                    Icons.more_vert,
+                    color: accentColor,
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      _showPopupMenu();
-                    },
-                    child: Icon(
-                      Icons.more_vert,
-                      color: accentColor,
-                    ),
-                  )
-                ],
-              ),
+                )
+              ],
             ),
           ),
           Container(
@@ -416,7 +449,7 @@ class PlaylistScreen extends StatelessWidget {
                   height: 140,
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(16.0),
-                    child: Image.asset('cover.jpeg'),
+                    child: Image.asset('cover.jpeg'), //TODO custom image?
                   ),
                 ),
                 SizedBox(
@@ -431,13 +464,12 @@ class PlaylistScreen extends StatelessWidget {
                       Container(
                         height: 108,
                         child: Text(
-                          "Playlistdadaadawdadawdddadawddwadawd",
+                          playlist.name,
                           style: TextStyle(
                               fontSize: 24.0,
                               fontWeight: FontWeight.bold,
                               color: accentColor),
                           overflow: TextOverflow.ellipsis,
-                          softWrap: true,
                           maxLines: 3,
                         ),
                       ),
@@ -564,7 +596,8 @@ class PlaylistScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildWidgetPlaylistMusic(BuildContext context) {
+  Widget _buildWidgetPlaylistMusic(
+      BuildContext context, List<PlaylistSongs> playlistSongs) {
     _showPopupMenu(Offset offset) async {
       double left = offset.dx;
       double top = offset.dy;
@@ -594,102 +627,178 @@ class PlaylistScreen extends StatelessWidget {
       });
     }
 
-    return Consumer<MyAudio>(
-      builder: (context, audioPlayer, child) => Expanded(
-        child: ListView.builder(
-          padding: EdgeInsets.zero,
-          itemBuilder: (context, index) {
-            Music song = audioPlayer.songList[index];
-            int durationMinute =
-                song.durationSecond >= 60 ? song.durationSecond ~/ 60 : 0;
-            int durationSecond = song.durationSecond >= 60
-                ? song.durationSecond % 60
-                : song.durationSecond;
-            String strDuration = "$durationMinute:" +
-                (durationSecond < 10 ? "0$durationSecond" : "$durationSecond");
-
-            return GestureDetector(
-              onTap: () {
-                if (index != audioPlayer.indexSongSelected) {
-                  audioPlayer.playSong(index);
-                } else if (index == audioPlayer.indexSongSelected) {
-                  audioPlayer.resumeSong();
-                }
-                showMiniPlayer(context);
-              },
-              child: Container(
-                margin: EdgeInsets.only(left: 16.0),
-                decoration: BoxDecoration(
-                    border: Border(
-                  bottom: BorderSide(color: Colors.black, width: .5),
-                )),
-                padding:
-                    const EdgeInsets.only(top: 16.0, bottom: 16.0, right: 16.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: <Widget>[
-                    Expanded(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text(
-                            '${index + 1}',
-                            style: TextStyle(fontSize: 20, color: accentColor),
-                          ),
-                          SizedBox(
-                            width: 10.0,
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Text(
-                                song.title,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                  fontSize: 20,
-                                  color: audioPlayer.indexSongSelected == index
-                                      ? accentColor
-                                      : Colors.black,
-                                ),
-                              ),
-                              Text(
-                                song.artist,
-                                style: TextStyle(
-                                    color: secondaryColor, fontSize: 14),
-                              ),
-                            ],
-                          ),
-                        ],
+    return Expanded(
+      child: ListView.builder(
+        itemCount: playlistSongs.length,
+        itemBuilder: (context, index) {
+          String songTitle = playlistSongs[index].songPath.split('/').last;
+          return GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            child: Column(
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: 8.0),
+                  child: Row(
+                    children: <Widget>[
+                      Text(
+                        '${index + 1}',
+                        style: TextStyle(fontSize: 20, color: accentColor),
                       ),
-                    ),
-                    Text(
-                      "$strDuration",
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 20,
+                      SizedBox(width: 10.0),
+                      Expanded(
+                        child: Text(
+                          songTitle,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 20,
+                            // color: audioPlayer.indexSongSelected == index
+                            //     ? accentColor
+                            //     : Colors.black,
+                          ),
+                        ),
                       ),
-                    ),
-                    SizedBox(
-                      width: 8,
-                    ),
-                    GestureDetector(
-                      onTapDown: (TapDownDetails details) {
-                        _showPopupMenu(details.globalPosition);
-                      },
-                      child: Icon(
-                        Icons.more_vert,
-                        color: accentColor,
-                        size: 24,
+                      GestureDetector(
+                        onTapDown: (TapDownDetails details) {
+                          _showPopupMenu(details.globalPosition);
+                        },
+                        child: Icon(
+                          Icons.more_vert,
+                          color: accentColor,
+                          size: 24,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
-          itemCount: audioPlayer.songList.length,
-        ),
+                Divider(
+                  color: Colors.black,
+                )
+              ],
+            ),
+          );
+        },
       ),
+      //
     );
+
+    // return Consumer<MyAudio>(
+    //   builder: (context, audioPlayer, child) => Expanded(
+    //     child: audioPlayer.songList.length == 0
+    //         ? Center(
+    //             child: MaterialButton(
+    //               onPressed: () {
+    //                 Provider.of<DatabaseValue>(context, listen: false)
+    //                     .addSongs(playlist.id, [
+    //                   "/storage/emulated/0/Download/Yahari Ore no Seishun Love Comedy wa Machigatteiru Zoku  OP FULL   [LYRICS]   (1).mp3",
+    //                   "/storage/emulated/0/Download/Darling in the FranXX Ending 3 Full - Beautiful World  XXme.mp3"
+    //                 ]);
+    //                 print("aggiunge");
+    //                 Provider.of<DatabaseValue>(
+    //                   context,
+    //                   listen: false,
+    //                 ).retrieveSongs(playlist.id);
+    //               },
+    //               // Navigator.of(context).push(MaterialPageRoute(
+    //               //   builder: (context) => SelectableSongList(),
+
+    //               child: Text(
+    //                 "è vuoto\naggingi una canzone",
+    //                 style: TextStyle(fontSize: 32),
+    //               ),
+    //             ),
+    //           )
+    //         : ListView.builder(
+    //             itemBuilder: (context, index) {
+    //               Music song = audioPlayer.songList[index];
+    //               int durationMinute =
+    //                   song.durationSecond >= 60 ? song.durationSecond ~/ 60 : 0;
+    //               int durationSecond = song.durationSecond >= 60
+    //                   ? song.durationSecond % 60
+    //                   : song.durationSecond;
+    //               String strDuration = "$durationMinute:" +
+    //                   (durationSecond < 10
+    //                       ? "0$durationSecond"
+    //                       : "$durationSecond");
+
+    //               return GestureDetector(
+    //                 behavior: HitTestBehavior.translucent,
+    //                 onTap: () {
+    //                   if (index != audioPlayer.indexSongSelected) {
+    //                     audioPlayer.playSong(index);
+    //                   } else if (index == audioPlayer.indexSongSelected) {
+    //                     audioPlayer.resumeSong();
+    //                   }
+    //                   showMiniPlayer(context);
+    //                 },
+    //                 child: Column(
+    //                   children: [
+    //                     Padding(
+    //                       padding: const EdgeInsets.symmetric(
+    //                           horizontal: 16.0, vertical: 8.0),
+    //                       child: Row(
+    //                         crossAxisAlignment: CrossAxisAlignment.center,
+    //                         children: <Widget>[
+    //                           Expanded(
+    //                             child: Row(
+    //                               crossAxisAlignment: CrossAxisAlignment.start,
+    //                               children: <Widget>[
+    //                                 Text(
+    //                                   '${index + 1}',
+    //                                   style: TextStyle(
+    //                                       fontSize: 20, color: accentColor),
+    //                                 ),
+    //                                 SizedBox(width: 10.0),
+    //                                 Text(
+    //                                   song.title,
+    //                                   style: TextStyle(
+    //                                     fontWeight: FontWeight.w500,
+    //                                     fontSize: 20,
+    //                                     color: audioPlayer.indexSongSelected ==
+    //                                             index
+    //                                         ? accentColor
+    //                                         : Colors.black,
+    //                                   ),
+    //                                 ),
+    //                               ],
+    //                             ),
+    //                           ),
+    //                           Text(
+    //                             "$strDuration",
+    //                             style: TextStyle(
+    //                               fontWeight: FontWeight.w700,
+    //                               fontSize: 20,
+    //                             ),
+    //                           ),
+    //                           SizedBox(
+    //                             width: 8,
+    //                           ),
+    //                           GestureDetector(
+    //                             onTapDown: (TapDownDetails details) {
+    //                               _showPopupMenu(details.globalPosition);
+    //                             },
+    //                             child: Icon(
+    //                               Icons.more_vert,
+    //                               color: accentColor,
+    //                               size: 24,
+    //                             ),
+    //                           ),
+    //                         ],
+    //                       ),
+    //                     ),
+    //                     Divider(
+    //                       color: Colors.black,
+    //                       thickness: .5,
+    //                       indent: 16.0,
+    //                     ),
+    //                   ],
+    //                 ),
+    //               );
+    //             },
+    //             itemCount: audioPlayer.songList.length,
+    //           ),
+    //   ),
+    // );
   }
 }

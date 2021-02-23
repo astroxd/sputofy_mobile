@@ -95,11 +95,14 @@ class _PlaylistListState extends State<PlaylistList> {
       children: List.of(
         playlists.map(
           (playlist) => GestureDetector(
-            onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) =>
-                        PlaylistScreen(playlist.songPath.length))),
+            onTap: () {
+              Provider.of<DatabaseValue>(context, listen: false)
+                  .retrieveSongs(playlist.id);
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => PlaylistScreen(playlist)));
+            },
             child: playlistTile(playlist),
           ),
         ),
@@ -155,8 +158,7 @@ class _PlaylistListState extends State<PlaylistList> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: <Widget>[
-                    Container(
-                      width: 140,
+                    Expanded(
                       child: Text(
                         playlist.name,
                         overflow: TextOverflow.ellipsis,
@@ -179,7 +181,8 @@ class _PlaylistListState extends State<PlaylistList> {
                   ],
                 ),
                 Text(
-                  "${playlist.songPath.length} songs",
+                  // "${playlist.songPath.length} songs",
+                  "cacca",
                   overflow: TextOverflow.ellipsis,
                   softWrap: false,
                   style: TextStyle(color: accentColor, fontSize: 14),

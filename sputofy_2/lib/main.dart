@@ -46,6 +46,7 @@ class _HomePageState extends State<HomePage> {
     MediaQueryData mediaQueryData = MediaQuery.of(context);
     double widthScreen = mediaQueryData.size.width;
     return Scaffold(
+      backgroundColor: mainColor,
       appBar: CustomAppBar(index, widthScreen, context),
       body: Column(
         children: <Widget>[
@@ -288,7 +289,7 @@ class _NewPlaylistDialogState extends State<NewPlaylistDialog> {
     if (isIn) {
       print("gia esiste");
     } else {
-      Playlist playlist = Playlist(null, textController.text, '');
+      Playlist playlist = Playlist(null, textController.text);
       Provider.of<DatabaseValue>(context, listen: false).savePlaylist(playlist);
 
       Navigator.of(context).pop();
@@ -308,7 +309,6 @@ class PageButtons extends StatelessWidget {
     return Container(
       width: widthScreen,
       height: 40.0,
-      color: mainColor,
       padding: const EdgeInsets.only(left: 16.0, right: 16.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,

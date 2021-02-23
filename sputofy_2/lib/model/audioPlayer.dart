@@ -17,14 +17,14 @@ class MyAudio extends ChangeNotifier {
   bool isRepeatOne = false;
 
   List<Music> songList = [
-    Music('Song3', 'Taylor Swift', 9, 'song3.mp3'),
-    Music('Song2', 'Taylor Swift', 264, 'song2.mp3'),
-    Music('Song1', 'Taylor Swift', 239, 'song1.mp3'),
-    Music('song2', 'Taylor Swift', 264, 'song2.mp3'),
-    Music('song1', 'Taylor Swift', 239, 'song1.mp3'),
-    Music('song2', 'Taylor Swift', 264, 'song2.mp3'),
-    Music('song1', 'Taylor Swift', 239, 'song1.mp3'),
-    Music('songtest', 'Taylor Swift', 2390, 'song3.mp3'),
+    // Music('Song3', 'Taylor Swift', 9, 'song3.mp3'),
+    // Music('Song2', 'Taylor Swift', 264, 'song2.mp3'),
+    // Music('Song1', 'Taylor Swift', 239, 'song1.mp3'),
+    // Music('song2', 'Taylor Swift', 264, 'song2.mp3'),
+    // Music('song1', 'Taylor Swift', 239, 'song1.mp3'),
+    // Music('song2', 'Taylor Swift', 264, 'song2.mp3'),
+    // Music('song1', 'Taylor Swift', 239, 'song1.mp3'),
+    // Music('songtest', 'Taylor Swift', 2390, 'song3.mp3'),
   ];
   AudioPlayer _player = AudioPlayer();
   AudioCache cache;
