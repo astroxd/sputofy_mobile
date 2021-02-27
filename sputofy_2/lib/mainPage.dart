@@ -188,7 +188,7 @@ class _MainPageState extends State<MainPage> {
         itemCount: folderContent.length,
         itemBuilder: (context, index) {
           return GestureDetector(
-            onTap: () => audioPlayer.pathPlay(folderContent[index]),
+            // onTap: () => audioPlayer.pathPlay(folderContent[index]),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

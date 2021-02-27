@@ -113,6 +113,7 @@ class _PlaylistListState extends State<PlaylistList> {
   }
 
   Widget playlistTile(Playlist playlist) {
+    int playingPlaylist;
     return Container(
       alignment: Alignment.center,
       child: Column(
@@ -132,12 +133,18 @@ class _PlaylistListState extends State<PlaylistList> {
                     padding: const EdgeInsets.only(left: 4.0, bottom: 2.0),
                     child: Consumer<MyAudio>(
                       builder: (context, audioplayer, child) => GestureDetector(
-                        onTap: () {
-                          audioplayer.playSong(0);
-                          showMiniPlayer(context);
+                        onTap: () async {
+                          List<PlaylistSongs> playlistSongs =
+                              await Provider.of<DatabaseValue>(context,
+                                      listen: false)
+                                  .getPlaylistSongs(playlist.id);
+                          audioplayer.pathPlay(playlistSongs[0].songPath);
+                          playingPlaylist = playlist.id;
+                          // showMiniPlayer(context);
                         },
                         child: Icon(
-                          audioplayer.isPlaying
+                          audioplayer.isPlaying &&
+                                  playlist.id == playingPlaylist
                               ? Icons.pause_circle_filled
                               : Icons.play_circle_filled_sharp,
                           size: 36.0,

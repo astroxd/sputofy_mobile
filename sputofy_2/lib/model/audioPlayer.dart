@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:audioplayers/audio_cache.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:sputofy_2/model/playlistSongsModel.dart';
 
 class MyAudio extends ChangeNotifier {
   Duration songLength;
@@ -16,25 +17,19 @@ class MyAudio extends ChangeNotifier {
   bool isLoop = false;
   bool isRepeatOne = false;
 
-  List<Music> songList = [
-    // Music('Song3', 'Taylor Swift', 9, 'song3.mp3'),
-    // Music('Song2', 'Taylor Swift', 264, 'song2.mp3'),
-    // Music('Song1', 'Taylor Swift', 239, 'song1.mp3'),
-    // Music('song2', 'Taylor Swift', 264, 'song2.mp3'),
-    // Music('song1', 'Taylor Swift', 239, 'song1.mp3'),
-    // Music('song2', 'Taylor Swift', 264, 'song2.mp3'),
-    // Music('song1', 'Taylor Swift', 239, 'song1.mp3'),
-    // Music('songtest', 'Taylor Swift', 2390, 'song3.mp3'),
-  ];
+  List<PlaylistSongs> songList = [];
   AudioPlayer _player = AudioPlayer();
   AudioCache cache;
+  List<Duration> songDuration = [];
 
   MyAudio() {
+    // print("init");
     initAudio();
+    // loadSongs();
   }
 
   initAudio() {
-    cache = AudioCache(fixedPlayer: _player);
+    // cache = AudioCache(fixedPlayer: _player);
     _player.onDurationChanged.listen((Duration d) {
       songLength = d;
       notifyListeners();
@@ -58,14 +53,32 @@ class MyAudio extends ChangeNotifier {
     });
   }
 
+  loadSongs() async {
+    // songList.forEach((song) => _player.play(song.songPath, isLocal: true));
+    // playSong(0);
+    for (int i = 0; i < songList.length; i++) {
+      playSong(i);
+      int durata = await _player.getDuration();
+      print(durata);
+      // songDuration.add(_player.getDuration());
+      debugPrint(songList[i].songPath);
+    }
+  }
+
+  // playSong(int index) {
+  //   indexSongSelected = index;
+  //   cache.play(songList[indexSongSelected].path);
+  // }
+
   playSong(int index) {
     indexSongSelected = index;
-    cache.play(songList[indexSongSelected].path);
+    _player.play(songList[index].songPath, isLocal: true);
+    // cache.play(songList[index].songPath);
   }
 
 //TODO
-  pathPlay(FileSystemEntity path) {
-    _player.play(path.path, isLocal: true);
+  pathPlay(String path) {
+    _player.play(path, isLocal: true);
   }
 
   pauseSong() {
@@ -116,34 +129,34 @@ class MyAudio extends ChangeNotifier {
             (positionSecond < 10 ? '0$positionSecond' : '$positionSecond');
   }
 
-  getStrDuration() {
-    String strDuration = '00:00';
-    int durationMinute = songList[indexSongSelected].durationSecond >= 60
-        ? songList[indexSongSelected].durationSecond ~/ 60
-        : 0;
-    int durationSecond = songList[indexSongSelected].durationSecond >= 60
-        ? songList[indexSongSelected].durationSecond % 60
-        : songList[indexSongSelected].durationSecond;
-    return strDuration =
-        (durationMinute < 10 ? '0$durationMinute' : '$durationMinute') +
-            ':' +
-            (durationSecond < 10 ? "0$durationSecond" : "$durationSecond");
-  }
+  // getStrDuration() {
+  //   String strDuration = '00:00';
+  //   int durationMinute = songList[indexSongSelected].durationSecond >= 60
+  //       ? songList[indexSongSelected].durationSecond ~/ 60
+  //       : 0;
+  //   int durationSecond = songList[indexSongSelected].durationSecond >= 60
+  //       ? songList[indexSongSelected].durationSecond % 60
+  //       : songList[indexSongSelected].durationSecond;
+  //   return strDuration =
+  //       (durationMinute < 10 ? '0$durationMinute' : '$durationMinute') +
+  //           ':' +
+  //           (durationSecond < 10 ? "0$durationSecond" : "$durationSecond");
+  // }
 
-  getPlaylistLength() {
-    int totalTimeSeconds = 0;
-    String totalTime = '0 hours';
-    for (var i = 0; i < songList.length; i++) {
-      totalTimeSeconds += songList[i].durationSecond;
-    }
-    if (totalTimeSeconds < 3600) {
-      return totalTime =
-          ("${(totalTimeSeconds / 60).toStringAsFixed(1)} minutes");
-    } else {
-      return totalTime =
-          ("${(totalTimeSeconds / 3600).toStringAsFixed(1)} hours");
-    }
-  }
+  // getPlaylistLength() {
+  //   int totalTimeSeconds = 0;
+  //   String totalTime = '0 hours';
+  //   for (var i = 0; i < songList.length; i++) {
+  //     totalTimeSeconds += songList[i].durationSecond;
+  //   }
+  //   if (totalTimeSeconds < 3600) {
+  //     return totalTime =
+  //         ("${(totalTimeSeconds / 60).toStringAsFixed(1)} minutes");
+  //   } else {
+  //     return totalTime =
+  //         ("${(totalTimeSeconds / 3600).toStringAsFixed(1)} hours");
+  //   }
+  // }
 }
 
 class Music {
