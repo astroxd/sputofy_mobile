@@ -10,10 +10,11 @@ import 'package:sputofy_2/main.dart';
 import 'package:sputofy_2/miniPlayer.dart';
 import 'package:sputofy_2/model/audioPlayer.dart';
 import 'package:sputofy_2/model/databaseValues.dart';
+import 'package:sputofy_2/model/folderPathmodel.dart';
 import 'package:sputofy_2/model/playlistModel.dart';
 import 'package:sputofy_2/model/playlistSongsModel.dart';
 import 'package:sputofy_2/palette.dart';
-import 'package:sputofy_2/selectableSonsList.dart';
+import 'package:sputofy_2/selectableSongList.dart';
 import 'package:sqflite/sqflite.dart';
 
 class PlaylistScreen1 extends StatelessWidget {
@@ -345,18 +346,9 @@ class PlaylistScreen extends StatelessWidget {
             if (snapshot.hasData) {
               return Column(
                 children: <Widget>[
-                  _buildWidgetPlaylistInfo(widthScreen, context, safePadding),
+                  _buildWidgetPlaylistInfo(
+                      widthScreen, context, safePadding, snapshot.data),
                   SizedBox(height: 16.0),
-                  // MaterialButton(
-                  //   onPressed: () {
-                  //     Provider.of<DatabaseValue>(context, listen: false)
-                  //         .addSongs(playlist.id, [
-                  //       "/storage/emulated/0/Download/Yahari Ore no Seishun Love Comedy wa Machigatteiru Zoku  OP FULL   [LYRICS]   (1).mp3",
-                  //       "/storage/emulated/0/Download/Darling in the FranXX Ending 3 Full - Beautiful World  XXme.mp3"
-                  //     ]);
-                  //   },
-                  //   child: Text("metti le canzoni"),
-                  // ),
                   _buildWidgetPlaylistMusic(context, snapshot.data),
                   SizedBox(
                     height:
@@ -373,8 +365,8 @@ class PlaylistScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildWidgetPlaylistInfo(
-      double widthScreen, BuildContext context, double safePadding) {
+  Widget _buildWidgetPlaylistInfo(double widthScreen, BuildContext context,
+      double safePadding, List<PlaylistSongs> playlistSongs) {
     _showPopupMenu() {
       showMenu<String>(
         context: context,
@@ -383,13 +375,8 @@ class PlaylistScreen extends StatelessWidget {
         color: mainColor,
         items: [
           PopupMenuItem(
-            child: const Text("Add songs"),
-            value: '1',
-            textStyle: TextStyle(color: Colors.blue, fontSize: 18),
-          ),
-          PopupMenuItem(
             child: const Text("Cancel Playlist"),
-            value: '2',
+            value: '1',
             textStyle: TextStyle(color: Colors.red, fontSize: 18),
           ),
         ],
@@ -398,11 +385,6 @@ class PlaylistScreen extends StatelessWidget {
         if (itemSelected == null) return;
 
         if (itemSelected == "1") {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => SelectableSongList(),
-              ));
         } else if (itemSelected == "2") {
           //code here
         } else {
@@ -498,6 +480,14 @@ class PlaylistScreen extends StatelessWidget {
                               ),
                             ),
                             GestureDetector(
+                              onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => SelectableSongList(
+                                      playlistID: playlist.id,
+                                      playlistSongs: playlistSongs,
+                                    ),
+                                  )),
                               child: Container(
                                 decoration: BoxDecoration(
                                     color: mainColor,
@@ -598,7 +588,7 @@ class PlaylistScreen extends StatelessWidget {
 
   Widget _buildWidgetPlaylistMusic(
       BuildContext context, List<PlaylistSongs> playlistSongs) {
-    _showPopupMenu(Offset offset) async {
+    _showPopupMenu(Offset offset, String songPath) async {
       double left = offset.dx;
       double top = offset.dy;
       await showMenu<String>(
@@ -618,7 +608,8 @@ class PlaylistScreen extends StatelessWidget {
         if (itemSelected == null) return;
 
         if (itemSelected == "1") {
-          //code here
+          Provider.of<DatabaseValue>(context, listen: false)
+              .deletePlaylistSong(playlist.id, songPath);
         } else if (itemSelected == "2") {
           //code here
         } else {
@@ -661,7 +652,8 @@ class PlaylistScreen extends StatelessWidget {
                       ),
                       GestureDetector(
                         onTapDown: (TapDownDetails details) {
-                          _showPopupMenu(details.globalPosition);
+                          _showPopupMenu(details.globalPosition,
+                              playlistSongs[index].songPath);
                         },
                         child: Icon(
                           Icons.more_vert,
@@ -673,6 +665,7 @@ class PlaylistScreen extends StatelessWidget {
                   ),
                 ),
                 Divider(
+                  indent: 16.0,
                   color: Colors.black,
                 )
               ],

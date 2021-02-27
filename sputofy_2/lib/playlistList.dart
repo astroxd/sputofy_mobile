@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import 'package:sputofy_2/miniPlayer.dart';
 import 'package:sputofy_2/model/audioPlayer.dart';
 import 'package:sputofy_2/model/databaseValues.dart';
 import 'package:sputofy_2/model/playlistModel.dart';
+import 'package:sputofy_2/model/playlistSongsModel.dart';
 import 'package:sputofy_2/palette.dart';
 import 'package:sputofy_2/playlistScreen.dart';
 
@@ -169,7 +171,20 @@ class _PlaylistListState extends State<PlaylistList> {
                       ),
                     ),
                     GestureDetector(
-                      onTap: () {
+                      onTap: () async {
+                        // Provider.of<DatabaseValue>(context, listen: false)
+                        //     .retrieveSongs(playlist.id);
+                        List<PlaylistSongs> playlistSongs =
+                            await Provider.of<DatabaseValue>(context,
+                                    listen: false)
+                                .getPlaylistSongs(playlist.id);
+                        List<String> playlistSongsPath = [];
+                        playlistSongs.forEach(
+                            (song) => playlistSongsPath.add(song.songPath));
+
+                        Provider.of<DatabaseValue>(context, listen: false)
+                            .deleteAllPlaylistSongs(
+                                playlist.id, playlistSongsPath);
                         Provider.of<DatabaseValue>(context, listen: false)
                             .deletePlaylist(playlist.id);
                       },

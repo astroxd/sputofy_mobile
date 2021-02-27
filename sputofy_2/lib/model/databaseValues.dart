@@ -17,13 +17,13 @@ class DatabaseValue extends ChangeNotifier {
   }
 
   void savePlaylist(Playlist playlist) {
-    dbHelper.save(playlist);
+    dbHelper.savePlaylist(playlist);
     playlists = dbHelper.getPlaylist();
-    // notifyListeners();
+    notifyListeners();
   }
 
   void deletePlaylist(int id) {
-    dbHelper.delete(id);
+    dbHelper.deletePlaylist(id);
     playlists = dbHelper.getPlaylist();
     notifyListeners();
   }
@@ -54,5 +54,19 @@ class DatabaseValue extends ChangeNotifier {
   void retrieveSongs(int id) async {
     playlistSongs = dbHelper.getPlaylistSongs(id);
     notifyListeners();
+  }
+
+  void deletePlaylistSong(int playlistId, String songPath) {
+    dbHelper.deletePlaylistSong(playlistId, songPath);
+    playlistSongs = dbHelper.getPlaylistSongs(playlistId);
+    notifyListeners();
+  }
+
+  void deleteAllPlaylistSongs(int playlistId, List<String> songPaths) {
+    dbHelper.deleteAllPlaylistSongs(playlistId, songPaths);
+  }
+
+  Future<List<PlaylistSongs>> getPlaylistSongs(int id) async {
+    return await dbHelper.getPlaylistSongs(id);
   }
 }

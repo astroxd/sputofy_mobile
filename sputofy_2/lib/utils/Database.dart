@@ -122,12 +122,7 @@ class DBHelper {
     ''');
   }
 
-  Future<Playlist> save(Playlist playlist) async {
-    var dbClient = await db;
-    playlist.id = await dbClient.insert(TABLE, playlist.toMap());
-    return playlist;
-  }
-
+  /// Playlist function ///
   Future<List<Playlist>> getPlaylist() async {
     var dbClient = await db;
     List<Map> maps = await dbClient.query(TABLE, columns: [ID, NAME]);
@@ -140,6 +135,24 @@ class DBHelper {
     return playlists;
   }
 
+  Future<Playlist> savePlaylist(Playlist playlist) async {
+    var dbClient = await db;
+    playlist.id = await dbClient.insert(TABLE, playlist.toMap());
+    return playlist;
+  }
+
+  Future<int> deletePlaylist(int id) async {
+    var dbClient = await db;
+    return await dbClient.delete(TABLE, where: '$ID = ?', whereArgs: [id]);
+  }
+
+  Future<int> updatePlaylist(Playlist playlist) async {
+    var dbClient = await db;
+    return await dbClient.update(TABLE, playlist.toMap(),
+        where: '$ID = ?', whereArgs: [playlist.id]);
+  }
+
+  /// PlaylistSongs function ///
   Future<List<PlaylistSongs>> getPlaylistSongs(int id) async {
     var dbClient = await db;
     List<Map> map = await dbClient.query(TABLE3,
@@ -155,31 +168,31 @@ class DBHelper {
     return songs;
   }
 
-  savePlaylistSongs(int playlistId, List<String> songsPath) async {
+  Future savePlaylistSongs(int playlistId, List<String> songsPath) async {
     var dbClient = await db;
-    for (int i = 0; i < songsPath.length; i++) {
-      print(songsPath[i]);
-      PlaylistSongs playlistSong = PlaylistSongs(playlistId, songsPath[i]);
+    songsPath.forEach((songPath) async {
+      PlaylistSongs playlistSong = PlaylistSongs(playlistId, songPath);
       await dbClient.insert(TABLE3, playlistSong.toMap());
-    }
+    });
   }
 
-  Future<int> delete(int id) async {
+  Future<int> deletePlaylistSong(int playlistId, String songPath) async {
     var dbClient = await db;
-    return await dbClient.delete(TABLE, where: '$ID = ?', whereArgs: [id]);
+    return await dbClient.delete(TABLE3,
+        where: '$PLAYLIST_ID = ? and $SONGPATH = ?',
+        whereArgs: [playlistId, songPath]);
   }
 
-  Future<int> update(Playlist playlist) async {
+  Future deleteAllPlaylistSongs(int playlistId, List<String> songPaths) async {
     var dbClient = await db;
-    return await dbClient.update(TABLE, playlist.toMap(),
-        where: '$ID = ?', whereArgs: [playlist.id]);
+    songPaths.forEach((songPath) async {
+      await dbClient.delete(TABLE3,
+          where: '$PLAYLIST_ID = ? and $SONGPATH = ?',
+          whereArgs: [playlistId, songPath]);
+    });
   }
 
-  Future close() async {
-    var dbClient = await db;
-    dbClient.close();
-  }
-
+  /// FolderPaths function ///
   Future<List<FolderPath>> getFolderPath() async {
     var dbClient = await db;
     List<Map> maps = await dbClient.query(TABLE2, columns: [PATH]);
@@ -201,5 +214,10 @@ class DBHelper {
   Future<int> deleteFolder(String path) async {
     var dbClient = await db;
     return await dbClient.delete(TABLE2, where: '$PATH = ?', whereArgs: [path]);
+  }
+
+  Future close() async {
+    var dbClient = await db;
+    dbClient.close();
   }
 }
