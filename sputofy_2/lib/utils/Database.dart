@@ -183,13 +183,10 @@ class DBHelper {
         whereArgs: [playlistId, songPath]);
   }
 
-  Future deleteAllPlaylistSongs(int playlistId, List<String> songPaths) async {
+  Future deleteAllPlaylistSongs(int playlistId) async {
     var dbClient = await db;
-    songPaths.forEach((songPath) async {
-      await dbClient.delete(TABLE3,
-          where: '$PLAYLIST_ID = ? and $SONGPATH = ?',
-          whereArgs: [playlistId, songPath]);
-    });
+    await dbClient
+        .delete(TABLE3, where: '$PLAYLIST_ID = ?', whereArgs: [playlistId]);
   }
 
   /// FolderPaths function ///

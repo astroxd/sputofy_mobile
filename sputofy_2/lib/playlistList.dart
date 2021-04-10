@@ -98,8 +98,6 @@ class _PlaylistListState extends State<PlaylistList> {
         playlists.map(
           (playlist) => GestureDetector(
             onTap: () {
-              Provider.of<DatabaseValue>(context, listen: false)
-                  .retrieveSongs(playlist.id);
               Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -114,106 +112,100 @@ class _PlaylistListState extends State<PlaylistList> {
 
   Widget playlistTile(Playlist playlist) {
     int playingPlaylist;
-    return Container(
-      alignment: Alignment.center,
-      child: Column(
-        children: <Widget>[
-          Container(
-            width: 170.0,
-            height: 170.0,
-            child: Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(16.0),
-                  child: Image.asset('cover.jpeg'),
-                ),
-                Align(
-                  alignment: Alignment.bottomRight,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 4.0, bottom: 2.0),
-                    child: Consumer<MyAudio>(
-                      builder: (context, audioplayer, child) => GestureDetector(
-                        onTap: () async {
-                          List<PlaylistSongs> playlistSongs =
-                              await Provider.of<DatabaseValue>(context,
-                                      listen: false)
-                                  .getPlaylistSongs(playlist.id);
-                          audioplayer.pathPlay(playlistSongs[0].songPath);
-                          playingPlaylist = playlist.id;
-                          // showMiniPlayer(context);
-                        },
-                        child: Icon(
-                          audioplayer.isPlaying &&
-                                  playlist.id == playingPlaylist
-                              ? Icons.pause_circle_filled
-                              : Icons.play_circle_filled_sharp,
-                          size: 36.0,
-                          color: accentColor,
-                        ),
+
+    return FutureBuilder(
+      future: Provider.of<DatabaseValue>(context).getPlaylistSongs(playlist.id),
+      builder: (context, playlistSongsSnapshot) {
+        if (playlistSongsSnapshot.hasData) {
+          return Container(
+            alignment: Alignment.center,
+            child: Column(
+              children: <Widget>[
+                Container(
+                  width: 170.0,
+                  height: 170.0,
+                  child: Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16.0),
+                        child: Image.asset('cover.jpeg'),
                       ),
-                    ),
+                      Positioned(
+                        bottom: 5,
+                        right: 5,
+                        child: Consumer<MyAudio>(
+                          builder: (context, audioplayer, child) =>
+                              GestureDetector(
+                            onTap: () {
+                              // audioplayer.pathPlay(
+                              //     playlistSongsSnapshot.data[0].songPath);
+                              playingPlaylist = playlist.id;
+                              // showMiniPlayer(context);
+                            },
+                            child: Icon(
+                              audioplayer.isPlaying &&
+                                      playlist.id == playingPlaylist
+                                  ? Icons.pause_circle_filled
+                                  : Icons.play_circle_filled_sharp,
+                              size: 36.0,
+                              color: accentColor,
+                            ),
+                          ),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+                Container(
+                  width: 170,
+                  padding: const EdgeInsets.symmetric(horizontal: 2.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: <Widget>[
+                          Expanded(
+                            child: Text(
+                              playlist.name,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                  color: accentColor,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              Provider.of<DatabaseValue>(context, listen: false)
+                                  .deleteAllPlaylistSongs(playlist.id);
+                              Provider.of<DatabaseValue>(context, listen: false)
+                                  .deletePlaylist(playlist.id);
+                            },
+                            child: Icon(
+                              Icons.more_vert,
+                              color: accentColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        "${playlistSongsSnapshot.data.length} songs",
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: accentColor, fontSize: 14),
+                      ),
+                    ],
                   ),
                 )
               ],
             ),
-          ),
-          Container(
-            width: 170,
-            height: 52,
-            padding: const EdgeInsets.symmetric(horizontal: 2.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Expanded(
-                      child: Text(
-                        playlist.name,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                            color: accentColor,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: () async {
-                        // Provider.of<DatabaseValue>(context, listen: false)
-                        //     .retrieveSongs(playlist.id);
-                        List<PlaylistSongs> playlistSongs =
-                            await Provider.of<DatabaseValue>(context,
-                                    listen: false)
-                                .getPlaylistSongs(playlist.id);
-                        List<String> playlistSongsPath = [];
-                        playlistSongs.forEach(
-                            (song) => playlistSongsPath.add(song.songPath));
-
-                        Provider.of<DatabaseValue>(context, listen: false)
-                            .deleteAllPlaylistSongs(
-                                playlist.id, playlistSongsPath);
-                        Provider.of<DatabaseValue>(context, listen: false)
-                            .deletePlaylist(playlist.id);
-                      },
-                      child: Icon(
-                        Icons.more_vert,
-                        color: accentColor,
-                      ),
-                    ),
-                  ],
-                ),
-                Text(
-                  // "${playlist.songPath.length} songs",
-                  "cacca",
-                  overflow: TextOverflow.ellipsis,
-                  softWrap: false,
-                  style: TextStyle(color: accentColor, fontSize: 14),
-                ),
-              ],
-            ),
-          )
-        ],
-      ),
+          );
+        } else {
+          return CircularProgressIndicator(
+            backgroundColor: Colors.blue,
+          );
+        }
+      },
     );
   }
 }

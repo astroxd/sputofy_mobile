@@ -341,13 +341,10 @@ class PlaylistScreen extends StatelessWidget {
       backgroundColor: mainColor,
       body: SafeArea(
         child: FutureBuilder(
-          future: Provider.of<DatabaseValue>(context).playlistSongs,
+          future:
+              Provider.of<DatabaseValue>(context).getPlaylistSongs(playlist.id),
           builder: (context, snapshot) {
             if (snapshot.hasData) {
-              Provider.of<MyAudio>(context, listen: false).songList =
-                  snapshot.data;
-              // print(Provider.of<MyAudio>(context, listen: false).songList);
-              // print(Provider.of<MyAudio>(context, listen: false).songDuration);
               return Column(
                 children: <Widget>[
                   _buildWidgetPlaylistInfo(
@@ -463,22 +460,21 @@ class PlaylistScreen extends StatelessWidget {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: <Widget>[
-                            Consumer<MyAudio>(
-                              builder: (context, audioPlayer, child) =>
-                                  GestureDetector(
-                                onTap: () {
-                                  audioPlayer.playSong(0);
-                                },
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                      color: mainColor,
-                                      borderRadius:
-                                          BorderRadius.circular(12.0)),
-                                  child: Icon(
-                                    Icons.play_arrow,
-                                    size: 32.0,
-                                    color: accentColor,
-                                  ),
+                            GestureDetector(
+                              onTap: () async {
+                                Provider.of<MyAudio>(context, listen: false)
+                                    .songList = playlistSongs;
+                                // Provider.of<MyAudio>(context, listen: false)
+                                //     .playSong(0);
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                    color: mainColor,
+                                    borderRadius: BorderRadius.circular(12.0)),
+                                child: Icon(
+                                  Icons.play_arrow,
+                                  size: 32.0,
+                                  color: accentColor,
                                 ),
                               ),
                             ),
@@ -487,9 +483,8 @@ class PlaylistScreen extends StatelessWidget {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => SelectableSongList(
-                                      playlistID: playlist.id,
-                                      playlistSongs: playlistSongs,
-                                    ),
+                                        playlistID: playlist.id,
+                                        playlistSongs: playlistSongs),
                                   )),
                               child: Container(
                                 decoration: BoxDecoration(
@@ -532,12 +527,9 @@ class PlaylistScreen extends StatelessWidget {
                       color: mainColor,
                       child: Padding(
                         padding: const EdgeInsets.only(left: 16.0, top: 16.0),
-                        child: Consumer<MyAudio>(
-                          builder: (context, audioPlayer, child) => Text(
-                            "${audioPlayer.songList.length} Songs",
-                            style:
-                                TextStyle(fontSize: 16.0, color: accentColor),
-                          ),
+                        child: Text(
+                          "TODO Songs",
+                          style: TextStyle(fontSize: 16.0, color: accentColor),
                         ),
                       ),
                     ),
@@ -553,7 +545,8 @@ class PlaylistScreen extends StatelessWidget {
                         GestureDetector(
                           onTap: () {
                             Provider.of<MyAudio>(context, listen: false)
-                                .loadSongs();
+                                .songList = playlistSongs;
+                            //setLoop for all songs TODO
                           },
                           child: Container(
                             padding: const EdgeInsets.all(12.0),
@@ -595,7 +588,7 @@ class PlaylistScreen extends StatelessWidget {
 
   Widget _buildWidgetPlaylistMusic(
       BuildContext context, List<PlaylistSongs> playlistSongs) {
-    _showPopupMenu(Offset offset, String songPath) async {
+    _showPopupMenu(Offset offset, PlaylistSongs song, int index) async {
       double left = offset.dx;
       double top = offset.dy;
       await showMenu<String>(
@@ -615,8 +608,21 @@ class PlaylistScreen extends StatelessWidget {
         if (itemSelected == null) return;
 
         if (itemSelected == "1") {
+          // Provider.of<MyAudio>(context, listen: false)
+          //     .changeListener(context, playlist.id);
+          print(
+              "prima ${Provider.of<MyAudio>(context, listen: false).songList}");
+          Provider.of<MyAudio>(context, listen: false)
+              .songList
+              .forEach((song) => print(song.songPath));
+          Provider.of<MyAudio>(context, listen: false).songList.removeAt(index);
           Provider.of<DatabaseValue>(context, listen: false)
-              .deletePlaylistSong(playlist.id, songPath);
+              .deletePlaylistSong(playlist.id, song.songPath);
+          print(
+              "dopo ${Provider.of<MyAudio>(context, listen: false).songList}");
+          Provider.of<MyAudio>(context, listen: false)
+              .songList
+              .forEach((song) => print(song.songPath));
         } else if (itemSelected == "2") {
           //code here
         } else {
@@ -630,61 +636,67 @@ class PlaylistScreen extends StatelessWidget {
         itemCount: playlistSongs.length,
         itemBuilder: (context, index) {
           String songTitle = playlistSongs[index].songPath.split('/').last;
-          return Consumer<MyAudio>(
-            builder: (context, audioPlayer, child) {
-              print(audioPlayer.songDuration);
-              return GestureDetector(
-                behavior: HitTestBehavior.translucent,
-                onTap: () {
-                  audioPlayer.playSong(index);
-                },
-                child: Column(
-                  children: <Widget>[
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16.0, vertical: 8.0),
-                      child: Row(
-                        children: <Widget>[
-                          Text(
-                            '${index + 1}',
-                            style: TextStyle(fontSize: 20, color: accentColor),
-                          ),
-                          SizedBox(width: 10.0),
-                          Expanded(
-                            child: Text(
-                              songTitle,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontWeight: FontWeight.w500,
-                                fontSize: 20,
-                                color: audioPlayer.indexSongSelected == index
-                                    ? accentColor
-                                    : Colors.black,
-                              ),
-                            ),
-                          ),
-                          GestureDetector(
-                            onTapDown: (TapDownDetails details) {
-                              _showPopupMenu(details.globalPosition,
-                                  playlistSongs[index].songPath);
-                            },
-                            child: Icon(
-                              Icons.more_vert,
-                              color: accentColor,
-                              size: 24,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Divider(
-                      indent: 16.0,
-                      color: Colors.black,
-                    )
-                  ],
-                ),
-              );
+
+          return GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () {
+              Provider.of<MyAudio>(context, listen: false).songList =
+                  playlistSongs;
+              // Provider.of<MyAudio>(context, listen: false).playSong(index);
+              Provider.of<MyAudio>(context, listen: false).pathPlay();
             },
+            child: Column(
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: 8.0),
+                  child: Row(
+                    children: <Widget>[
+                      Text(
+                        '${index + 1}',
+                        style: TextStyle(fontSize: 20, color: accentColor),
+                      ),
+                      SizedBox(width: 10.0),
+                      Expanded(
+                        child: Consumer<MyAudio>(
+                          builder: (context, audioPlayer, child) => Text(
+                            songTitle,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 20,
+                              color: audioPlayer.indexSongSelected == index &&
+                                      audioPlayer
+                                              .songList[
+                                                  audioPlayer.indexSongSelected]
+                                              .songPath ==
+                                          playlistSongs[index].songPath
+                                  ? accentColor
+                                  : Colors.black,
+                            ),
+                          ),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTapDown: (TapDownDetails details) {
+                          _showPopupMenu(details.globalPosition,
+                              playlistSongs[index], index);
+                        },
+                        child: Icon(
+                          Icons.more_vert,
+                          color: accentColor,
+                          size: 24,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Divider(
+                  indent: 16.0,
+                  color: Colors.black,
+                )
+              ],
+            ),
           );
         },
       ),

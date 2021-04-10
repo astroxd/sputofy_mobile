@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:sputofy_2/model/folderPathmodel.dart';
 import 'package:sputofy_2/model/playlistModel.dart';
 import 'package:sputofy_2/model/playlistSongsModel.dart';
@@ -53,6 +54,13 @@ class DatabaseValue extends ChangeNotifier {
 
   void retrieveSongs(int id) async {
     playlistSongs = dbHelper.getPlaylistSongs(id);
+    //DEBUG a quanto pare quando cancella una playlist non aggiorna gli id
+    //quindi se cancelli la playlist 2, la playlist 3 non diventa 2 ma rimane 3
+    //ecco perché funzionano le canzoni
+    List<PlaylistSongs> canzoni = await playlistSongs;
+    print("playlist $id");
+    print(canzoni);
+    canzoni.forEach((canzone) => print(canzone.id));
     notifyListeners();
   }
 
@@ -62,8 +70,8 @@ class DatabaseValue extends ChangeNotifier {
     notifyListeners();
   }
 
-  void deleteAllPlaylistSongs(int playlistId, List<String> songPaths) {
-    dbHelper.deleteAllPlaylistSongs(playlistId, songPaths);
+  void deleteAllPlaylistSongs(int playlistId) {
+    dbHelper.deleteAllPlaylistSongs(playlistId);
   }
 
   Future<List<PlaylistSongs>> getPlaylistSongs(int id) async {

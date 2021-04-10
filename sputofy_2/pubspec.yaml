@@ -36,6 +36,7 @@ dependencies:
   sqflite:
   path_provider:
   just_audio: ^0.6.14+1
+  audio_service: ^0.16.2+1
 
 dev_dependencies:
   flutter_test:

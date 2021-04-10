@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sputofy_2/model/audioPlayer.dart';
 import 'package:sputofy_2/model/databaseValues.dart';
 import 'package:sputofy_2/model/folderPathmodel.dart';
 import 'package:sputofy_2/model/playlistSongsModel.dart';
@@ -68,6 +69,11 @@ class _SelectableSongListState extends State<SelectableSongList> {
                         widget.playlistID,
                         selectedFiles,
                       );
+                      selectedFiles.forEach((file) =>
+                          Provider.of<MyAudio>(context, listen: false)
+                              .songList
+                              .add(PlaylistSongs(widget.playlistID, file)));
+
                       Navigator.of(context).pop();
                     },
               splashColor: Colors.transparent,
