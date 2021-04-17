@@ -42,6 +42,7 @@ class _MainPageState extends State<MainPage> {
   void getFolder(BuildContext context) async {
     FilePicker.platform.getDirectoryPath().then((String folder) {
       if (folder != null) {
+        print(folder);
         Provider.of<DatabaseValue>(context, listen: false)
             .saveFolder(FolderPath(folder));
       }
@@ -62,6 +63,7 @@ class _MainPageState extends State<MainPage> {
     }
 
     files.removeWhere((e) => toRemove.contains(e));
+    files.forEach((file) => print(file.path));
 
     return files;
   }
