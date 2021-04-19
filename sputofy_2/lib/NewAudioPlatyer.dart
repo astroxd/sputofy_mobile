@@ -135,7 +135,7 @@ class _MainScreenState extends State<MainScreen> {
   _showDialogWindow(BuildContext context) {
     showBottomSheet(
       context: context,
-      builder: (context) => MiniPlayer(),
+      builder: (context) => MiniPlayer(_playingMediaItemStream),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(24.0),
@@ -215,6 +215,11 @@ class _MainScreenState extends State<MainScreen> {
           AudioService.queueStream,
           AudioService.currentMediaItemStream,
           (queue, mediaItem) => QueueState(queue, mediaItem));
+  Stream get _playingMediaItemStream =>
+      Rx.combineLatest2<MediaItem, Duration, PlayingMediaItem>(
+          AudioService.currentMediaItemStream,
+          AudioService.positionStream,
+          (mediaItem, position) => PlayingMediaItem(mediaItem, position));
 }
 
 class Song {
@@ -236,6 +241,13 @@ class QueueState {
   final MediaItem mediaItem;
 
   QueueState(this.queue, this.mediaItem);
+}
+
+class PlayingMediaItem {
+  final MediaItem mediaItem;
+  final Duration position;
+
+  PlayingMediaItem(this.mediaItem, this.position);
 }
 
 class AudioPlayerTask extends BackgroundAudioTask {
@@ -440,6 +452,9 @@ class AudioPlayerTask extends BackgroundAudioTask {
 //* URI : content://com.android.externalstorage.documents/document/primary%3ADownload%2Foregairu.mp3
 
 class MiniPlayer extends StatelessWidget {
+  MiniPlayer(this._playingMediaItemStream);
+  final Stream _playingMediaItemStream;
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -456,136 +471,96 @@ class MiniPlayer extends StatelessWidget {
           isScrollControlled: true,
         );
       },
-      child: Container(
-        width: double.infinity,
-        // height: 80.0,
-        padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-        decoration: BoxDecoration(
-          color: accentColor,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(24.0),
-            topRight: Radius.circular(24.0),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            Row(
-              children: <Widget>[
-                SizedBox(
-                  width: 32.0,
-                  height: 32.0,
-                  child: SleekCircularSlider(
-                    appearance: CircularSliderAppearance(
-                      customWidths: CustomSliderWidths(
-                        progressBarWidth: 2.5,
-                        trackWidth: 2.5,
-                        handlerSize: 1.0,
-                        shadowWidth: 1.0,
-                      ),
-                      infoProperties: InfoProperties(modifier: (value) => ''),
-                      customColors: CustomSliderColors(
-                          trackColor: Color.fromRGBO(229, 229, 229, opacity),
-                          progressBarColor: Colors.black),
-                      size: 4.0,
-                      angleRange: 360,
-                      startAngle: -90.0,
-                    ),
-                    min: 0.0,
-                    max: 100.0,
+      child: StreamBuilder(
+          stream: _playingMediaItemStream,
+          builder: (context, snapshot) {
+            if (snapshot.data != null) {
+              final playingMediaItemStream = snapshot.data;
+              final mediaItem = playingMediaItemStream.mediaItem;
+              final position = playingMediaItemStream.position;
+              return Container(
+                width: double.infinity,
+                // height: 80.0,
+                padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+                decoration: BoxDecoration(
+                  color: testColor,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(24.0),
+                    topRight: Radius.circular(24.0),
                   ),
                 ),
-                SizedBox(
-                  width: 16,
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    Text(
-                      "Now playing",
-                      style: Theme.of(context).textTheme.subtitle2.merge(
-                            TextStyle(color: Colors.black),
-                          ),
+                    SleekCircularSlider(
+                      appearance: CircularSliderAppearance(
+                        customWidths: CustomSliderWidths(
+                          progressBarWidth: 2.5,
+                          trackWidth: 2.5,
+                          handlerSize: 1.0,
+                          shadowWidth: 1.0,
+                        ),
+                        infoProperties: InfoProperties(modifier: (value) => ''),
+                        customColors: CustomSliderColors(
+                            trackColor: Color.fromRGBO(229, 229, 229, 1.0),
+                            progressBarColor: Colors.black),
+                        size: 36.0,
+                        angleRange: 360,
+                        startAngle: -90.0,
+                      ),
+                      min: 0.0,
+                      max: mediaItem?.duration?.inSeconds?.toDouble() ?? 0.0,
+                      initialValue: position?.inSeconds?.toDouble() ?? 0.0,
                     ),
-                    Text("Song", style: Theme.of(context).textTheme.headline6),
+                    SizedBox(
+                      width: 10,
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            "Now Playing",
+                            style: Theme.of(context).textTheme.subtitle2.merge(
+                                  TextStyle(color: Colors.black),
+                                ),
+                          ),
+                          Text(
+                            mediaItem?.title ?? "cacca",
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.headline6,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Row(
+                      children: <Widget>[
+                        Icon(
+                          Icons.skip_previous_rounded,
+                          size: 36,
+                        ),
+                        Icon(
+                          Icons.play_arrow_rounded,
+                          size: 36,
+                        ),
+                        Icon(
+                          Icons.skip_next_rounded,
+                          size: 36,
+                        ),
+                      ],
+                    ),
                   ],
                 ),
-              ],
-            ),
-            Container(
-              child: Row(
-                children: <Widget>[
-                  Icon(
-                    Icons.skip_previous_rounded,
-                    size: 36,
-                  ),
-                  Icon(
-                    Icons.play_arrow_rounded,
-                    size: 36,
-                  ),
-                  Icon(
-                    Icons.skip_next_rounded,
-                    size: 36,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        // child: Column(
-        //   mainAxisSize: MainAxisSize.min,
-        //   crossAxisAlignment: CrossAxisAlignment.start,
-        //   children: <Widget>[
-        //     Text(
-        //       "Now playing",
-        //       style: Theme.of(context).textTheme.subtitle2.merge(
-        //             TextStyle(color: Colors.black),
-        //           ),
-        //     ),
-        //     Row(
-        //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        //       children: <Widget>[
-        //         Text("Song", style: Theme.of(context).textTheme.headline6),
-        //         Container(
-        //           child: Row(
-        //             children: <Widget>[
-        //               Icon(
-        //                 Icons.skip_previous_rounded,
-        //                 size: 36,
-        //               ),
-        //               Icon(
-        //                 Icons.play_arrow_rounded,
-        //                 size: 36,
-        //               ),
-        //               Icon(
-        //                 Icons.skip_next_rounded,
-        //                 size: 36,
-        //               ),
-        //             ],
-        //           ),
-        //         )
-        //       ],
-        //     ),
-        //   ],
-        // ),
-      ),
+              );
+            } else {
+              return CircularProgressIndicator();
+            }
+          }),
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // void main() => runApp(new MyApp());
 
