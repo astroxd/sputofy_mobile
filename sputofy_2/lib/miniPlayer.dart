@@ -35,127 +35,128 @@ void showMiniPlayer(BuildContext context) {
 class WidgetMiniPlayer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.blue,
+    // return Container(
+    //   color: Colors.blue,
+    // );
+    return GestureDetector(
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          builder: (context) {
+            // return WidgetDetailMusicPlayer();
+            return Container();
+          },
+          isDismissible: false,
+          isScrollControlled: true,
+        );
+      },
+      child: Container(
+        width: 400.0,
+        padding: EdgeInsets.only(
+          left: 16.0,
+          top: 4.0,
+          right: 16.0,
+          bottom: 16.0,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(24.0),
+            topRight: Radius.circular(24.0),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            Container(
+              width: 28.0,
+              height: 4.0,
+              decoration: BoxDecoration(
+                color: Colors.grey,
+                borderRadius: BorderRadius.all(Radius.circular(99)),
+              ),
+            ),
+            SizedBox(height: 12.0),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        "Now Playing",
+                        style: Theme.of(context).textTheme.subtitle2.merge(
+                              TextStyle(color: Colors.grey),
+                            ),
+                      ),
+                      // Consumer<MyAudio>(
+                      //   builder: (context, audioPlayer, child) => Text(
+                      //     '${audioPlayer.songList[audioPlayer.indexSongSelected].title}',
+                      //     style: Theme.of(context).textTheme.headline6,
+                      //   ),
+                      // ),
+                    ],
+                  ),
+                ),
+                Stack(
+                  children: <Widget>[
+                    SizedBox(
+                      width: 32.0,
+                      height: 32.0,
+                      child: Consumer<MyAudio>(
+                        builder: (context, audioPlayer, child) =>
+                            SleekCircularSlider(
+                          appearance: CircularSliderAppearance(
+                            customWidths: CustomSliderWidths(
+                              progressBarWidth: 2.0,
+                              trackWidth: 1.0,
+                              handlerSize: 1.0,
+                              shadowWidth: 1.0,
+                            ),
+                            infoProperties: InfoProperties(
+                              modifier: (value) => '',
+                            ),
+                            customColors: CustomSliderColors(
+                              trackColor: Colors.grey,
+                              progressBarColor: Colors.black,
+                            ),
+                            size: 4.0,
+                            angleRange: 360,
+                            startAngle: -90.0,
+                          ),
+                          min: 0.0,
+                          max: audioPlayer.songLength?.inSeconds?.toDouble() ??
+                              0.0,
+                          initialValue:
+                              audioPlayer.position?.inSeconds?.toDouble() ??
+                                  0.0,
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 32.0,
+                      height: 32.0,
+                      child: Consumer<MyAudio>(
+                        builder: (context, audioPlayer, child) => Icon(
+                          audioPlayer.isPlaying
+                              ? Icons.pause
+                              : Icons.play_arrow,
+                          size: 20.0,
+                        ),
+                      ),
+                    )
+                  ],
+                )
+              ],
+            ),
+          ],
+        ),
+      ),
     );
-//     return GestureDetector(
-//       onTap: () {
-//         showModalBottomSheet(
-//           context: context,
-//           builder: (context) {
-//             return WidgetDetailMusicPlayer();
-//           },
-//           isDismissible: false,
-//           isScrollControlled: true,
-//         );
-//       },
-//       child: Container(
-//         width: 400.0,
-//         padding: EdgeInsets.only(
-//           left: 16.0,
-//           top: 4.0,
-//           right: 16.0,
-//           bottom: 16.0,
-//         ),
-//         decoration: BoxDecoration(
-//           color: Colors.white,
-//           borderRadius: BorderRadius.only(
-//             topLeft: Radius.circular(24.0),
-//             topRight: Radius.circular(24.0),
-//           ),
-//         ),
-//         child: Column(
-//           mainAxisSize: MainAxisSize.min,
-//           crossAxisAlignment: CrossAxisAlignment.center,
-//           children: <Widget>[
-//             Container(
-//               width: 28.0,
-//               height: 4.0,
-//               decoration: BoxDecoration(
-//                 color: Colors.grey,
-//                 borderRadius: BorderRadius.all(Radius.circular(99)),
-//               ),
-//             ),
-//             SizedBox(height: 12.0),
-//             Row(
-//               crossAxisAlignment: CrossAxisAlignment.center,
-//               children: <Widget>[
-//                 Expanded(
-//                   child: Column(
-//                     crossAxisAlignment: CrossAxisAlignment.start,
-//                     children: <Widget>[
-//                       Text(
-//                         "Now Playing",
-//                         style: Theme.of(context).textTheme.subtitle2.merge(
-//                               TextStyle(color: Colors.grey),
-//                             ),
-//                       ),
-//                       Consumer<MyAudio>(
-//                         builder: (context, audioPlayer, child) => Text(
-//                           '${audioPlayer.songList[audioPlayer.indexSongSelected].title}',
-//                           style: Theme.of(context).textTheme.headline6,
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                 ),
-//                 Stack(
-//                   children: <Widget>[
-//                     SizedBox(
-//                       width: 32.0,
-//                       height: 32.0,
-//                       child: Consumer<MyAudio>(
-//                         builder: (context, audioPlayer, child) =>
-//                             SleekCircularSlider(
-//                           appearance: CircularSliderAppearance(
-//                             customWidths: CustomSliderWidths(
-//                               progressBarWidth: 2.0,
-//                               trackWidth: 1.0,
-//                               handlerSize: 1.0,
-//                               shadowWidth: 1.0,
-//                             ),
-//                             infoProperties: InfoProperties(
-//                               modifier: (value) => '',
-//                             ),
-//                             customColors: CustomSliderColors(
-//                               trackColor: Colors.grey,
-//                               progressBarColor: Colors.black,
-//                             ),
-//                             size: 4.0,
-//                             angleRange: 360,
-//                             startAngle: -90.0,
-//                           ),
-//                           min: 0.0,
-//                           max: audioPlayer.songLength?.inSeconds?.toDouble() ??
-//                               0.0,
-//                           initialValue:
-//                               audioPlayer.position?.inSeconds?.toDouble() ??
-//                                   0.0,
-//                         ),
-//                       ),
-//                     ),
-//                     SizedBox(
-//                       width: 32.0,
-//                       height: 32.0,
-//                       child: Consumer<MyAudio>(
-//                         builder: (context, audioPlayer, child) => Icon(
-//                           audioPlayer.isPlaying
-//                               ? Icons.pause
-//                               : Icons.play_arrow,
-//                           size: 20.0,
-//                         ),
-//                       ),
-//                     )
-//                   ],
-//                 )
-//               ],
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
+  }
+}
 
 // class WidgetDetailMusicPlayer extends StatelessWidget {
 //   @override
@@ -408,5 +409,5 @@ class WidgetMiniPlayer extends StatelessWidget {
 //         ),
 //       ),
 //     );
-  }
-}
+  // }
+// }

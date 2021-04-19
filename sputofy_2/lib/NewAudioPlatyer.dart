@@ -9,9 +9,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:sleek_circular_slider/sleek_circular_slider.dart';
 import 'package:sputofy_2/main.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:audio_session/audio_session.dart';
+import 'package:sputofy_2/palette.dart';
+import 'package:sqflite/utils/utils.dart';
 
 void main() => runApp(new MyApp());
 
@@ -41,6 +44,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: mainColor,
       body: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
@@ -68,7 +72,10 @@ class _MainScreenState extends State<MainScreen> {
                       else
                         MaterialButton(
                           child: Text("Play"),
-                          onPressed: play,
+                          onPressed: () {
+                            _showDialogWindow(context);
+                            play();
+                          },
                           color: Colors.green,
                         ),
                       if (processingState != AudioProcessingState.stopped &&
@@ -104,10 +111,11 @@ class _MainScreenState extends State<MainScreen> {
                             onPressed: () => seek(mediaItem.id),
                             child: mediaItem == currentMediaItem
                                 ? Text(
-                                    currentMediaItem.title,
+                                    "${currentMediaItem.title}---${currentMediaItem.duration.toString()}",
                                     style: TextStyle(color: Colors.blue),
                                   )
-                                : Text(mediaItem.title),
+                                : Text(
+                                    "${mediaItem.title}----${mediaItem.duration.toString()}"),
                           );
                         },
                       ),
@@ -124,33 +132,55 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  //* AudioService lo usi per parlare con la background task
+  _showDialogWindow(BuildContext context) {
+    showBottomSheet(
+      context: context,
+      builder: (context) => MiniPlayer(),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(24.0),
+          topRight: Radius.circular(24.0),
+        ),
+      ),
+      // backgroundColor: Colors.red,
+      elevation: 1.0,
+    );
+  }
 
+  //* AudioService lo usi per parlare con la background task
   List<Song> playlist = [
     Song(
-        id: '/storage/emulated/0/Download/oregairu.mp3',
-        title: 'oregairu',
-        album: 'cacca'),
+      id: '/storage/emulated/0/Download/oregairu.mp3',
+      title: 'oregairu',
+      album: 'cacca',
+      duration: Duration(milliseconds: 273057),
+    ),
     Song(
-        id: '/storage/emulated/0/Download/BLESS YoUr NAME - ChouCho (Highschool DXD BorN OP Full).mp3',
-        title: 'BLESS YoUr NAME - ChouCho (Highschool DXD BorN OP Full)',
-        album: 'cacca'),
+      id: '/storage/emulated/0/Download/BLESS YoUr NAME - ChouCho (Highschool DXD BorN OP Full).mp3',
+      title: 'BLESS YoUr NAME - ChouCho (Highschool DXD BorN OP Full)',
+      album: 'cacca',
+      duration: Duration(milliseconds: 282096),
+    ),
   ];
 
-  start() {
+  start() async {
     final mediaList = [];
     for (var song in playlist) {
       print(song);
-      final mediaItem =
-          MediaItem(id: song.id, album: song.album, title: song.title);
-      print(mediaItem);
+      final mediaItem = MediaItem(
+          id: song.id,
+          album: song.album,
+          title: song.title,
+          duration: song.duration);
       mediaList.add(mediaItem.toJson());
     }
     if (mediaList.isEmpty) return;
     final params = {'data': mediaList};
-    print(params);
     AudioService.start(
-        backgroundTaskEntrypoint: _backgroundTaskEntryPoint, params: params);
+        backgroundTaskEntrypoint: _backgroundTaskEntryPoint,
+        params: params,
+        androidEnableQueue: true,
+        androidNotificationColor: 16762880);
   }
 
   stop() {
@@ -173,6 +203,7 @@ class _MainScreenState extends State<MainScreen> {
 
   add(MediaItem mediaItem) {
     AudioService.addQueueItem(mediaItem);
+    // AudioService.setRating(Rating.newHeartRating(true));
   }
 
   seek(String mediaId) {
@@ -190,8 +221,14 @@ class Song {
   final String id;
   final String title;
   final String album;
+  final Duration duration;
 
-  Song({@required this.id, @required this.title, @required this.album});
+  Song({
+    @required this.id,
+    @required this.title,
+    @required this.album,
+    @required this.duration,
+  });
 }
 
 class QueueState {
@@ -233,8 +270,6 @@ class AudioPlayerTask extends BackgroundAudioTask {
       final mediaItem = MediaItem.fromJson(item);
       _queue.add(mediaItem);
     }
-    print("ok");
-    print(_queue);
   }
 
   Future<void> _setAudioSession() async {
@@ -242,21 +277,21 @@ class AudioPlayerTask extends BackgroundAudioTask {
     await session.configure(AudioSessionConfiguration.music());
   }
 
-  //* Cambia il current item
+  ///* Cambia il current item
   void _broadcaseMediaItemChanges() {
     _audioPlayer.currentIndexStream.listen((index) {
       if (index != null) AudioServiceBackground.setMediaItem(_queue[index]);
     });
   }
 
-  //* Legge quale evento sta facendo e fa aggiornae il badge delle notifiche
+  ///* Legge quale evento sta facendo e fa aggiornae il badge delle notifiche
   void _propogateEventsFromAudioPlayerToAudioServiceClients() {
     _eventSubscription = _audioPlayer.playbackEventStream.listen((event) {
       _broadcastState();
     });
   }
 
-  //* Cambia canzone appena finisce la precedente
+  ///* Cambia canzone appena finisce la precedente
   void _performSpecialProcessingForStateTransitions() {
     _audioPlayer.processingStateStream.listen((state) {
       switch (state) {
@@ -286,26 +321,34 @@ class AudioPlayerTask extends BackgroundAudioTask {
           return AudioSource.uri(uri);
         }).toList(),
       ));
-      _audioPlayer.durationStream.listen((duration) {
-        _updateQueueWithCurrentDuration(duration);
-      });
+
+      // _audioPlayer.durationStream.listen((duration) {
+      //   _updateQueueWithCurrentDuration(duration);
+      // });
     } catch (e) {
       print('Error: $e');
       onStop();
     }
+
+    AudioServiceBackground.setMediaItem(_queue[index]);
   }
 
   ///* Mette la duration al current MediaItem appena lo sta per suonare
-  void _updateQueueWithCurrentDuration(Duration duration) {
-    final songIndex = _audioPlayer.currentIndex;
-    if (duration == null || mediaItem == null) {
-      return;
-    }
-    final modifiedMediaItem = mediaItem.copyWith(duration: duration);
-    _queue[songIndex] = modifiedMediaItem;
-    AudioServiceBackground.setQueue(_queue);
-    AudioServiceBackground.setMediaItem(_queue[songIndex]);
-  }
+  // void _updateQueueWithCurrentDuration(Duration duration) {
+  //   final songIndex = _audioPlayer.currentIndex;
+  //   if (duration == null || mediaItem == null) {
+  //     return;
+  //   }
+  //   final modifiedMediaItem = mediaItem.copyWith(
+  //     duration: duration,
+  //     rating: Rating.newHeartRating(false),
+  //     artUri:
+  //         "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
+  //   );
+  //   _queue[songIndex] = modifiedMediaItem;
+  //   AudioServiceBackground.setQueue(_queue);
+  //   AudioServiceBackground.setMediaItem(_queue[songIndex]);
+  // }
 //* ---------------------------------------------------------------------------
 
   @override
@@ -319,38 +362,26 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   @override
   Future<void> onPlay() async {
-    AudioServiceBackground.setState(
-        controls: [MediaControl.pause, MediaControl.stop],
-        playing: true,
-        systemActions: [MediaAction.seekTo, MediaAction.setRating],
-        processingState: AudioProcessingState.ready);
-
     await _audioPlayer.play();
   }
 
   @override
   Future<void> onPause() async {
-    AudioServiceBackground.setState(
-        controls: [MediaControl.play, MediaControl.stop],
-        playing: false,
-        processingState: AudioProcessingState.ready);
-
     await _audioPlayer.pause();
+    print(_audioPlayer.effectiveIndices.first);
+    print(_audioPlayer.duration.inMilliseconds);
   }
 
   @override
   Future<void> onSeekTo(Duration position) async {
     await _audioPlayer.seek(position);
-    AudioServiceBackground.setState(position: position);
+    // AudioServiceBackground.setState(position: position);
   }
 
   @override
   Future<void> onAddQueueItem(MediaItem mediaItem) async {
-    _queue.forEach((element) {
-      print("${element.id}------${element.duration}");
-    });
-    // _queue.add(mediaItem);
-    // AudioServiceBackground.setQueue(_queue);
+    _queue.add(mediaItem);
+    _loadQueue();
   }
 
   @override
@@ -363,6 +394,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
         : AudioProcessingState.skippingToPrevious;
 
     await _audioPlayer.seek(Duration.zero, index: newIndex);
+    if (!_audioPlayer.playing) await _audioPlayer.play();
   }
 
   ///* Cambia il badge delle notifiche
@@ -374,6 +406,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
         MediaControl.skipToNext,
       ],
       androidCompactActions: [0, 1, 2],
+      systemActions: [MediaAction.setRating, MediaAction.seekTo],
       processingState: _getProcessingState(),
       playing: _audioPlayer.playing,
       position: _audioPlayer.position,
@@ -405,6 +438,154 @@ class AudioPlayerTask extends BackgroundAudioTask {
 //* FILES
 //* path : /data/user/0/com.example.sputofy_2/cache/file_picker/oregairu.mp3
 //* URI : content://com.android.externalstorage.documents/document/primary%3ADownload%2Foregairu.mp3
+
+class MiniPlayer extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          builder: (context) {
+            // return DetailMusicPlayer();
+            return Container(
+              color: Colors.blue,
+            );
+          },
+          isDismissible: false,
+          isScrollControlled: true,
+        );
+      },
+      child: Container(
+        width: double.infinity,
+        // height: 80.0,
+        padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+        decoration: BoxDecoration(
+          color: accentColor,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(24.0),
+            topRight: Radius.circular(24.0),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                SizedBox(
+                  width: 32.0,
+                  height: 32.0,
+                  child: SleekCircularSlider(
+                    appearance: CircularSliderAppearance(
+                      customWidths: CustomSliderWidths(
+                        progressBarWidth: 2.5,
+                        trackWidth: 2.5,
+                        handlerSize: 1.0,
+                        shadowWidth: 1.0,
+                      ),
+                      infoProperties: InfoProperties(modifier: (value) => ''),
+                      customColors: CustomSliderColors(
+                          trackColor: Color.fromRGBO(229, 229, 229, opacity),
+                          progressBarColor: Colors.black),
+                      size: 4.0,
+                      angleRange: 360,
+                      startAngle: -90.0,
+                    ),
+                    min: 0.0,
+                    max: 100.0,
+                  ),
+                ),
+                SizedBox(
+                  width: 16,
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(
+                      "Now playing",
+                      style: Theme.of(context).textTheme.subtitle2.merge(
+                            TextStyle(color: Colors.black),
+                          ),
+                    ),
+                    Text("Song", style: Theme.of(context).textTheme.headline6),
+                  ],
+                ),
+              ],
+            ),
+            Container(
+              child: Row(
+                children: <Widget>[
+                  Icon(
+                    Icons.skip_previous_rounded,
+                    size: 36,
+                  ),
+                  Icon(
+                    Icons.play_arrow_rounded,
+                    size: 36,
+                  ),
+                  Icon(
+                    Icons.skip_next_rounded,
+                    size: 36,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        // child: Column(
+        //   mainAxisSize: MainAxisSize.min,
+        //   crossAxisAlignment: CrossAxisAlignment.start,
+        //   children: <Widget>[
+        //     Text(
+        //       "Now playing",
+        //       style: Theme.of(context).textTheme.subtitle2.merge(
+        //             TextStyle(color: Colors.black),
+        //           ),
+        //     ),
+        //     Row(
+        //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        //       children: <Widget>[
+        //         Text("Song", style: Theme.of(context).textTheme.headline6),
+        //         Container(
+        //           child: Row(
+        //             children: <Widget>[
+        //               Icon(
+        //                 Icons.skip_previous_rounded,
+        //                 size: 36,
+        //               ),
+        //               Icon(
+        //                 Icons.play_arrow_rounded,
+        //                 size: 36,
+        //               ),
+        //               Icon(
+        //                 Icons.skip_next_rounded,
+        //                 size: 36,
+        //               ),
+        //             ],
+        //           ),
+        //         )
+        //       ],
+        //     ),
+        //   ],
+        // ),
+      ),
+    );
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // void main() => runApp(new MyApp());
 
