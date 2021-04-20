@@ -1,6 +1,7 @@
 import 'dart:async';
-import 'package:rxdart/rxdart.dart';
+import 'dart:ffi';
 import 'package:audio_service/audio_service.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ import 'package:sleek_circular_slider/sleek_circular_slider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:sputofy_2/palette.dart';
+import 'package:sputofy_2/utils/customSlider.dart';
 
 void main() => runApp(new MyApp());
 
@@ -239,8 +241,10 @@ class PlayingMediaItem {
   final MediaItem mediaItem;
   final Duration position;
   final PlaybackState playbackState;
+  final double playerVolume;
 
-  PlayingMediaItem(this.mediaItem, this.position, this.playbackState);
+  PlayingMediaItem(
+      this.mediaItem, this.position, this.playbackState, this.playerVolume);
 }
 
 class AudioPlayerTask extends BackgroundAudioTask {
@@ -265,6 +269,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
     _broadcaseMediaItemChanges();
     _propogateEventsFromAudioPlayerToAudioServiceClients();
     _performSpecialProcessingForStateTransitions();
+    _propogateCustomAudioServiceFunctionToAudioServiceClients();
     _loadQueue();
   }
 
@@ -338,6 +343,18 @@ class AudioPlayerTask extends BackgroundAudioTask {
     AudioServiceBackground.setMediaItem(_queue[index]);
   }
 
+  void _propogateCustomAudioServiceFunctionToAudioServiceClients() {
+    AudioService.customEventStream.listen((customEvent) {
+      switch (customEvent.runtimeType) {
+        case double:
+          print("object");
+          break;
+        default:
+          break;
+      }
+    });
+  }
+
   ///* Mette la duration al current MediaItem appena lo sta per suonare
   // void _updateQueueWithCurrentDuration(Duration duration) {
   //   final songIndex = _audioPlayer.currentIndex;
@@ -402,6 +419,17 @@ class AudioPlayerTask extends BackgroundAudioTask {
     if (!_audioPlayer.playing) await _audioPlayer.play();
   }
 
+  @override
+  Future<void> onCustomAction(String funcName, dynamic arguments) async {
+    switch (funcName) {
+      case 'setVolume':
+        _audioPlayer.setVolume(arguments);
+        _audioPlayer.volumeStream;
+
+        break;
+    }
+  }
+
   ///* Cambia il badge delle notifiche
   Future<void> _broadcastState() async {
     await AudioServiceBackground.setState(
@@ -451,7 +479,15 @@ class MiniPlayer extends StatelessWidget {
           AudioService.positionStream,
           AudioService.playbackStateStream,
           (mediaItem, position, playbackState) =>
-              PlayingMediaItem(mediaItem, position, playbackState));
+              PlayingMediaItem(mediaItem, position, playbackState, 0.0));
+  // Stream get _playingMediaItemStream => Rx.combineLatest4<MediaItem, Duration,
+  //         PlaybackState, double, PlayingMediaItem>(
+  //     AudioService.currentMediaItemStream,
+  //     AudioService.positionStream,
+  //     AudioService.playbackStateStream,
+  //     AudioService.customEventStream,
+  //     (mediaItem, position, playbackState, playerVolume) =>
+  //         PlayingMediaItem(mediaItem, position, playbackState, playerVolume));
 
   @override
   Widget build(BuildContext context) {
@@ -505,7 +541,7 @@ class MiniPlayer extends StatelessWidget {
                         startAngle: -90.0,
                       ),
                       min: 0.0,
-                      max: mediaItem?.duration?.inSeconds?.toDouble() ?? 0.0,
+                      max: mediaItem?.duration?.inSeconds?.toDouble() ?? 100.0,
                       initialValue: position?.inSeconds?.toDouble() ?? 0.0,
                     ),
                     SizedBox(
@@ -523,7 +559,7 @@ class MiniPlayer extends StatelessWidget {
                                 ),
                           ),
                           Text(
-                            mediaItem?.title ?? "cacca",
+                            mediaItem?.title ?? "Unknown Title",
                             overflow: TextOverflow.ellipsis,
                             style: Theme.of(context).textTheme.headline6,
                           ),
@@ -571,13 +607,21 @@ class MiniPlayer extends StatelessWidget {
 }
 
 class DetailMusicPlayer extends StatelessWidget {
-  Stream get _playingMediaItemStream =>
-      Rx.combineLatest3<MediaItem, Duration, PlaybackState, PlayingMediaItem>(
-          AudioService.currentMediaItemStream,
-          AudioService.positionStream,
-          AudioService.playbackStateStream,
-          (mediaItem, position, playbackState) =>
-              PlayingMediaItem(mediaItem, position, playbackState));
+  // Stream get _playingMediaItemStream =>
+  //     Rx.combineLatest3<MediaItem, Duration, PlaybackState, PlayingMediaItem>(
+  //         AudioService.currentMediaItemStream,
+  //         AudioService.positionStream,
+  //         AudioService.playbackStateStream,
+  //         (mediaItem, position, playbackState) =>
+  //             PlayingMediaItem(mediaItem, position, playbackState, 0.0));
+  Stream get _playingMediaItemStream => Rx.combineLatest4<MediaItem, Duration,
+          PlaybackState, double, PlayingMediaItem>(
+      AudioService.currentMediaItemStream,
+      AudioService.positionStream,
+      AudioService.playbackStateStream,
+      AudioService?.customEventStream ?? 0.0,
+      (mediaItem, position, playbackState, playerVolume) =>
+          PlayingMediaItem(mediaItem, position, playbackState, playerVolume));
 
   @override
   Widget build(BuildContext context) {
@@ -594,6 +638,7 @@ class DetailMusicPlayer extends StatelessWidget {
               final duration = playingMediaItem.duration;
               final cover = playingMediaItem.artUri;
               final playbackState = playingMediaItemStream.playbackState;
+              final playerVolume = playingMediaItemStream.playerVolume;
 
               return Container(
                 padding: const EdgeInsets.only(
@@ -601,166 +646,184 @@ class DetailMusicPlayer extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: <Widget>[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    Column(
                       children: <Widget>[
-                        Icon(
-                          Icons.arrow_back,
-                          size: 32.0,
-                          color: accentColor,
-                        ),
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: <Widget>[
+                            GestureDetector(
+                              onTap: Navigator.of(context).pop,
+                              child: Icon(
+                                Icons.arrow_back,
+                                size: 32.0,
+                                color: accentColor,
+                              ),
+                            ),
+                            Row(
+                              children: <Widget>[
+                                Icon(
+                                  Icons.volume_down,
+                                  size: 32.0,
+                                ),
+                                Slider(
+                                  value: 1.0,
+                                  max: 10.0,
+                                  min: 1.0,
+                                  onChanged: (double value) {
+                                    AudioService.customAction(
+                                        "setVolume", value);
+                                  },
+                                ),
+                                Icon(
+                                  Icons.volume_up,
+                                  size: 32.0,
+                                ),
+                              ],
+                            ),
                             Icon(
-                              Icons.volume_down,
+                              Icons.more_vert,
                               size: 32.0,
-                            ),
-                            Slider(
-                              value: 1.0,
-                              max: 10.0,
-                              min: 1.0,
-                              onChanged: (double value) {
-                                print(value);
-                              },
-                            ),
-                            Icon(
-                              Icons.volume_up,
-                              size: 32.0,
-                            ),
-                          ],
-                        ),
-                        Icon(
-                          Icons.more_vert,
-                          size: 32.0,
-                          color: accentColor,
-                        ),
-                      ],
-                    ),
-                    SizedBox(
-                      height: 32.0,
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 72),
-                      child: ClipRRect(
-                        child: cover != null
-                            ? Image.network(cover)
-                            : Image.asset("cover.jpeg"),
-                      ),
-                    ),
-                    SizedBox(
-                      height: 10.0,
-                    ),
-                    Text(
-                      playingMediaItem.title,
-                      style: TextStyle(color: accentColor, fontSize: 18),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 3,
-                    ),
-                    Text(
-                      playingMediaItem?.artist ?? "Unknown artist",
-                      style: TextStyle(color: secondaryColor, fontSize: 20),
-                    ),
-                    SizedBox(
-                      height: 32.0,
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        GestureDetector(
-                          onTap: AudioService.skipToPrevious,
-                          child: Icon(
-                            Icons.skip_previous,
-                            size: 64,
-                          ),
-                        ),
-                        SizedBox(
-                          width: 24.0,
-                        ),
-                        GestureDetector(
-                          onTap: playbackState.playing
-                              ? AudioService.pause
-                              : AudioService.play,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: secondaryColor,
-                              borderRadius: BorderRadius.circular(32.0),
-                            ),
-                            child: Icon(
-                              playbackState.playing
-                                  ? Icons.pause
-                                  : Icons.play_arrow,
-                              size: 64,
                               color: accentColor,
                             ),
+                          ],
+                        ),
+                        SizedBox(
+                          height: 32.0,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 72),
+                          child: ClipRRect(
+                            child: cover != null
+                                ? Image.network(cover)
+                                : Image.asset("cover.jpeg"),
                           ),
                         ),
                         SizedBox(
-                          width: 24.0,
+                          height: 32.0,
                         ),
-                        GestureDetector(
-                          onTap: AudioService.skipToNext,
-                          child: Icon(
-                            Icons.skip_next,
-                            size: 64,
+                        SizedBox(
+                          height: 62.0,
+                          child: Text(
+                            playingMediaItem.title,
+                            style: TextStyle(color: accentColor, fontSize: 18),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 3,
                           ),
+                        ),
+                        SizedBox(
+                          height: 16.0,
+                        ),
+                        Text(
+                          playingMediaItem?.artist ?? "Unknown artist",
+                          style: TextStyle(color: secondaryColor, fontSize: 20),
                         ),
                       ],
                     ),
-                    SizedBox(
-                      height: 32.0,
-                    ),
-                    // Divider(
-                    //   color: Colors.red,
-                    // ),
-                    Slider(
-                      activeColor: Colors.red,
-                      value: position.inSeconds.toDouble(),
-                      max: duration.inSeconds.toDouble(),
-                      min: 0.0,
-                      onChanged: (double value) {
-                        AudioService.seekTo(Duration(seconds: value.toInt()));
-                      },
-                    ),
-                    SizedBox(
-                      height: 24.0,
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    Column(
                       children: <Widget>[
-                        Icon(Icons.loop, size: 32),
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: <Widget>[
-                            Text(
-                              getStrPosition(position),
-                              style:
-                                  TextStyle(color: accentColor, fontSize: 32),
+                            GestureDetector(
+                              onTap: AudioService.skipToPrevious,
+                              child: Icon(
+                                Icons.skip_previous,
+                                size: 64,
+                              ),
                             ),
                             SizedBox(
-                              width: 3.0,
+                              width: 24.0,
                             ),
-                            Text(
-                              "|",
-                              style: TextStyle(
-                                  color: secondaryColor, fontSize: 32),
+                            GestureDetector(
+                              onTap: playbackState.playing
+                                  ? AudioService.pause
+                                  : AudioService.play,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: secondaryColor,
+                                  borderRadius: BorderRadius.circular(32.0),
+                                ),
+                                child: Icon(
+                                  playbackState.playing
+                                      ? Icons.pause
+                                      : Icons.play_arrow,
+                                  size: 64,
+                                  color: accentColor,
+                                ),
+                              ),
                             ),
                             SizedBox(
-                              width: 3.0,
+                              width: 24.0,
                             ),
-                            Text(
-                              getStrPosition(duration),
-                              style: TextStyle(
-                                  color: secondaryColor, fontSize: 32),
+                            GestureDetector(
+                              onTap: AudioService.skipToNext,
+                              child: Icon(
+                                Icons.skip_next,
+                                size: 64,
+                              ),
                             ),
                           ],
                         ),
-                        GestureDetector(
-                          onTap: () => AudioService.setShuffleMode(
-                              AudioServiceShuffleMode.all),
-                          child: Icon(
-                            Icons.shuffle,
-                            size: 32,
+                        SizedBox(
+                          height: 48.0,
+                        ),
+                        SliderTheme(
+                          data: CustomTheme,
+                          child: Slider(
+                            value: position.inSeconds.toDouble(),
+                            max: duration.inSeconds.toDouble(),
+                            min: 0.0,
+                            onChanged: (double value) {
+                              AudioService.seekTo(
+                                  Duration(seconds: value.toInt()));
+                            },
                           ),
                         ),
+                        SizedBox(
+                          height: 24.0,
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: <Widget>[
+                            Icon(Icons.loop, size: 32),
+                            Row(
+                              children: <Widget>[
+                                Text(
+                                  getStrPosition(position),
+                                  style: TextStyle(
+                                      color: accentColor, fontSize: 32),
+                                ),
+                                SizedBox(
+                                  width: 3.0,
+                                ),
+                                Text(
+                                  "|",
+                                  style: TextStyle(
+                                      color: secondaryColor, fontSize: 32),
+                                ),
+                                SizedBox(
+                                  width: 3.0,
+                                ),
+                                Text(
+                                  getStrPosition(duration),
+                                  style: TextStyle(
+                                      color: secondaryColor, fontSize: 32),
+                                ),
+                              ],
+                            ),
+                            GestureDetector(
+                              onTap: () => AudioService.setShuffleMode(
+                                  AudioServiceShuffleMode.all),
+                              child: Icon(
+                                Icons.shuffle,
+                                size: 32,
+                              ),
+                            ),
+                          ],
+                        ),
+                        // SizedBox(
+                        //   height: 32.0,
+                        // )
                       ],
                     ),
                   ],
@@ -785,7 +848,6 @@ String getStrPosition(Duration position) {
           ':' +
           (positionSecond < 10 ? '0$positionSecond' : '$positionSecond');
 }
-
 
 // void main() => runApp(new MyApp());
 
