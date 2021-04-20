@@ -1,7 +1,4 @@
 import 'dart:async';
-import 'dart:io';
-import 'dart:math';
-import 'package:flutter/services.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/cupertino.dart';
@@ -10,11 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:sleek_circular_slider/sleek_circular_slider.dart';
-import 'package:sputofy_2/main.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:sputofy_2/palette.dart';
-import 'package:sqflite/utils/utils.dart';
 
 void main() => runApp(new MyApp());
 
@@ -45,87 +40,89 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: mainColor,
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              StreamBuilder<PlaybackState>(
-                stream: AudioService.playbackStateStream,
-                builder: (context, snapshot) {
-                  final playing = snapshot.data?.playing ?? false;
-                  final processingState = snapshot.data?.processingState ??
-                      AudioProcessingState.stopped;
-                  print("playing var = $playing");
-                  print("processingstate var = $processingState");
-                  return Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      if (playing)
-                        MaterialButton(
-                          child: Text("Pause"),
-                          onPressed: pause,
-                          color: Colors.green,
-                        )
-                      else
-                        MaterialButton(
-                          child: Text("Play"),
-                          onPressed: () {
-                            _showDialogWindow(context);
-                            play();
-                          },
-                          color: Colors.green,
-                        ),
-                      if (processingState != AudioProcessingState.stopped &&
-                          processingState != AudioProcessingState.none)
-                        MaterialButton(
-                          child: Text("Stop"),
-                          onPressed: stop,
-                          color: Colors.red,
-                        ),
-                    ],
-                  );
-                },
-              ),
-              MaterialButton(
-                  child: Text("ADD"),
-                  color: Colors.blue,
-                  onPressed: () => add(
-                      MediaItem(id: "cacca", album: "cacca", title: "cacca"))),
-              StreamBuilder(
-                stream: _queueStateStream,
-                builder: (context, snapshot) {
-                  if (snapshot.data != null) {
-                    final queueStateStream = snapshot.data;
-                    return Container(
-                      width: double.infinity,
-                      height: 300,
-                      child: ListView.builder(
-                        itemCount: queueStateStream.queue.length,
-                        itemBuilder: (context, index) {
-                          final mediaItem = queueStateStream.queue[index];
-                          final currentMediaItem = queueStateStream.mediaItem;
-                          return MaterialButton(
-                            onPressed: () => seek(mediaItem.id),
-                            child: mediaItem == currentMediaItem
-                                ? Text(
-                                    "${currentMediaItem.title}---${currentMediaItem.duration.toString()}",
-                                    style: TextStyle(color: Colors.blue),
-                                  )
-                                : Text(
-                                    "${mediaItem.title}----${mediaItem.duration.toString()}"),
-                          );
-                        },
-                      ),
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                StreamBuilder<PlaybackState>(
+                  stream: AudioService.playbackStateStream,
+                  builder: (context, snapshot) {
+                    final playing = snapshot.data?.playing ?? false;
+                    final processingState = snapshot.data?.processingState ??
+                        AudioProcessingState.stopped;
+                    print("playing var = $playing");
+                    print("processingstate var = $processingState");
+                    return Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        if (playing)
+                          MaterialButton(
+                            child: Text("Pause"),
+                            onPressed: pause,
+                            color: Colors.green,
+                          )
+                        else
+                          MaterialButton(
+                            child: Text("Play"),
+                            onPressed: () {
+                              _showDialogWindow(context);
+                              play();
+                            },
+                            color: Colors.green,
+                          ),
+                        if (processingState != AudioProcessingState.stopped &&
+                            processingState != AudioProcessingState.none)
+                          MaterialButton(
+                            child: Text("Stop"),
+                            onPressed: stop,
+                            color: Colors.red,
+                          ),
+                      ],
                     );
-                  } else {
-                    return CircularProgressIndicator();
-                  }
-                },
-              ),
-            ],
+                  },
+                ),
+                MaterialButton(
+                    child: Text("ADD"),
+                    color: Colors.blue,
+                    onPressed: () => add(MediaItem(
+                        id: "cacca", album: "cacca", title: "cacca"))),
+                StreamBuilder(
+                  stream: _queueStateStream,
+                  builder: (context, snapshot) {
+                    if (snapshot.data != null) {
+                      final queueStateStream = snapshot.data;
+                      return Container(
+                        width: double.infinity,
+                        height: 300,
+                        child: ListView.builder(
+                          itemCount: queueStateStream.queue.length,
+                          itemBuilder: (context, index) {
+                            final mediaItem = queueStateStream.queue[index];
+                            final currentMediaItem = queueStateStream.mediaItem;
+                            return MaterialButton(
+                              onPressed: () => seek(mediaItem.id),
+                              child: mediaItem == currentMediaItem
+                                  ? Text(
+                                      "${currentMediaItem.title}---${currentMediaItem.duration.toString()}",
+                                      style: TextStyle(color: Colors.blue),
+                                    )
+                                  : Text(
+                                      "${mediaItem.title}----${mediaItem.duration.toString()}"),
+                            );
+                          },
+                        ),
+                      );
+                    } else {
+                      return CircularProgressIndicator();
+                    }
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -135,7 +132,7 @@ class _MainScreenState extends State<MainScreen> {
   _showDialogWindow(BuildContext context) {
     showBottomSheet(
       context: context,
-      builder: (context) => MiniPlayer(_playingMediaItemStream),
+      builder: (context) => MiniPlayer(),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(24.0),
@@ -180,7 +177,7 @@ class _MainScreenState extends State<MainScreen> {
         backgroundTaskEntrypoint: _backgroundTaskEntryPoint,
         params: params,
         androidEnableQueue: true,
-        androidNotificationColor: 16762880);
+        androidNotificationColor: 0x0000ff);
   }
 
   stop() {
@@ -215,11 +212,6 @@ class _MainScreenState extends State<MainScreen> {
           AudioService.queueStream,
           AudioService.currentMediaItemStream,
           (queue, mediaItem) => QueueState(queue, mediaItem));
-  Stream get _playingMediaItemStream =>
-      Rx.combineLatest2<MediaItem, Duration, PlayingMediaItem>(
-          AudioService.currentMediaItemStream,
-          AudioService.positionStream,
-          (mediaItem, position) => PlayingMediaItem(mediaItem, position));
 }
 
 class Song {
@@ -246,8 +238,9 @@ class QueueState {
 class PlayingMediaItem {
   final MediaItem mediaItem;
   final Duration position;
+  final PlaybackState playbackState;
 
-  PlayingMediaItem(this.mediaItem, this.position);
+  PlayingMediaItem(this.mediaItem, this.position, this.playbackState);
 }
 
 class AudioPlayerTask extends BackgroundAudioTask {
@@ -452,8 +445,13 @@ class AudioPlayerTask extends BackgroundAudioTask {
 //* URI : content://com.android.externalstorage.documents/document/primary%3ADownload%2Foregairu.mp3
 
 class MiniPlayer extends StatelessWidget {
-  MiniPlayer(this._playingMediaItemStream);
-  final Stream _playingMediaItemStream;
+  Stream get _playingMediaItemStream =>
+      Rx.combineLatest3<MediaItem, Duration, PlaybackState, PlayingMediaItem>(
+          AudioService.currentMediaItemStream,
+          AudioService.positionStream,
+          AudioService.playbackStateStream,
+          (mediaItem, position, playbackState) =>
+              PlayingMediaItem(mediaItem, position, playbackState));
 
   @override
   Widget build(BuildContext context) {
@@ -462,24 +460,21 @@ class MiniPlayer extends StatelessWidget {
         showModalBottomSheet(
           context: context,
           builder: (context) {
-            // return DetailMusicPlayer();
-            return Container(
-              color: Colors.blue,
-            );
+            return DetailMusicPlayer();
           },
           isDismissible: false,
           isScrollControlled: true,
         );
       },
-      child: StreamBuilder(
+      child: StreamBuilder<PlayingMediaItem>(
           stream: _playingMediaItemStream,
           builder: (context, snapshot) {
             if (snapshot.data != null) {
               final playingMediaItemStream = snapshot.data;
               final mediaItem = playingMediaItemStream.mediaItem;
               final position = playingMediaItemStream.position;
+              final playbackState = playingMediaItemStream.playbackState;
               return Container(
-                width: double.infinity,
                 // height: 80.0,
                 padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
                 decoration: BoxDecoration(
@@ -537,17 +532,30 @@ class MiniPlayer extends StatelessWidget {
                     ),
                     Row(
                       children: <Widget>[
-                        Icon(
-                          Icons.skip_previous_rounded,
-                          size: 36,
+                        GestureDetector(
+                          onTap: AudioService.skipToPrevious,
+                          child: Icon(
+                            Icons.skip_previous_rounded,
+                            size: 36,
+                          ),
                         ),
-                        Icon(
-                          Icons.play_arrow_rounded,
-                          size: 36,
+                        GestureDetector(
+                          onTap: playbackState.playing
+                              ? AudioService.pause
+                              : AudioService.play,
+                          child: Icon(
+                            playbackState.playing
+                                ? Icons.pause_outlined
+                                : Icons.play_arrow_rounded,
+                            size: 36,
+                          ),
                         ),
-                        Icon(
-                          Icons.skip_next_rounded,
-                          size: 36,
+                        GestureDetector(
+                          onTap: AudioService.skipToNext,
+                          child: Icon(
+                            Icons.skip_next_rounded,
+                            size: 36,
+                          ),
                         ),
                       ],
                     ),
@@ -561,6 +569,223 @@ class MiniPlayer extends StatelessWidget {
     );
   }
 }
+
+class DetailMusicPlayer extends StatelessWidget {
+  Stream get _playingMediaItemStream =>
+      Rx.combineLatest3<MediaItem, Duration, PlaybackState, PlayingMediaItem>(
+          AudioService.currentMediaItemStream,
+          AudioService.positionStream,
+          AudioService.playbackStateStream,
+          (mediaItem, position, playbackState) =>
+              PlayingMediaItem(mediaItem, position, playbackState));
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: mainColor,
+      body: SafeArea(
+        child: StreamBuilder<PlayingMediaItem>(
+          stream: _playingMediaItemStream,
+          builder: (context, snapshot) {
+            if (snapshot.data != null) {
+              final playingMediaItemStream = snapshot.data;
+              final playingMediaItem = playingMediaItemStream.mediaItem;
+              final position = playingMediaItemStream.position;
+              final duration = playingMediaItem.duration;
+              final cover = playingMediaItem.artUri;
+              final playbackState = playingMediaItemStream.playbackState;
+
+              return Container(
+                padding: const EdgeInsets.only(
+                    left: 16.0, right: 16.0, top: 64.0, bottom: 48.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: <Widget>[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        Icon(
+                          Icons.arrow_back,
+                          size: 32.0,
+                          color: accentColor,
+                        ),
+                        Row(
+                          children: <Widget>[
+                            Icon(
+                              Icons.volume_down,
+                              size: 32.0,
+                            ),
+                            Slider(
+                              value: 1.0,
+                              max: 10.0,
+                              min: 1.0,
+                              onChanged: (double value) {
+                                print(value);
+                              },
+                            ),
+                            Icon(
+                              Icons.volume_up,
+                              size: 32.0,
+                            ),
+                          ],
+                        ),
+                        Icon(
+                          Icons.more_vert,
+                          size: 32.0,
+                          color: accentColor,
+                        ),
+                      ],
+                    ),
+                    SizedBox(
+                      height: 32.0,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 72),
+                      child: ClipRRect(
+                        child: cover != null
+                            ? Image.network(cover)
+                            : Image.asset("cover.jpeg"),
+                      ),
+                    ),
+                    SizedBox(
+                      height: 10.0,
+                    ),
+                    Text(
+                      playingMediaItem.title,
+                      style: TextStyle(color: accentColor, fontSize: 18),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 3,
+                    ),
+                    Text(
+                      playingMediaItem?.artist ?? "Unknown artist",
+                      style: TextStyle(color: secondaryColor, fontSize: 20),
+                    ),
+                    SizedBox(
+                      height: 32.0,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        GestureDetector(
+                          onTap: AudioService.skipToPrevious,
+                          child: Icon(
+                            Icons.skip_previous,
+                            size: 64,
+                          ),
+                        ),
+                        SizedBox(
+                          width: 24.0,
+                        ),
+                        GestureDetector(
+                          onTap: playbackState.playing
+                              ? AudioService.pause
+                              : AudioService.play,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: secondaryColor,
+                              borderRadius: BorderRadius.circular(32.0),
+                            ),
+                            child: Icon(
+                              playbackState.playing
+                                  ? Icons.pause
+                                  : Icons.play_arrow,
+                              size: 64,
+                              color: accentColor,
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 24.0,
+                        ),
+                        GestureDetector(
+                          onTap: AudioService.skipToNext,
+                          child: Icon(
+                            Icons.skip_next,
+                            size: 64,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(
+                      height: 32.0,
+                    ),
+                    // Divider(
+                    //   color: Colors.red,
+                    // ),
+                    Slider(
+                      activeColor: Colors.red,
+                      value: position.inSeconds.toDouble(),
+                      max: duration.inSeconds.toDouble(),
+                      min: 0.0,
+                      onChanged: (double value) {
+                        AudioService.seekTo(Duration(seconds: value.toInt()));
+                      },
+                    ),
+                    SizedBox(
+                      height: 24.0,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        Icon(Icons.loop, size: 32),
+                        Row(
+                          children: <Widget>[
+                            Text(
+                              getStrPosition(position),
+                              style:
+                                  TextStyle(color: accentColor, fontSize: 32),
+                            ),
+                            SizedBox(
+                              width: 3.0,
+                            ),
+                            Text(
+                              "|",
+                              style: TextStyle(
+                                  color: secondaryColor, fontSize: 32),
+                            ),
+                            SizedBox(
+                              width: 3.0,
+                            ),
+                            Text(
+                              getStrPosition(duration),
+                              style: TextStyle(
+                                  color: secondaryColor, fontSize: 32),
+                            ),
+                          ],
+                        ),
+                        GestureDetector(
+                          onTap: () => AudioService.setShuffleMode(
+                              AudioServiceShuffleMode.all),
+                          child: Icon(
+                            Icons.shuffle,
+                            size: 32,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            }
+            return CircularProgressIndicator();
+          },
+        ),
+      ),
+    );
+  }
+}
+
+String getStrPosition(Duration position) {
+  String strPosition = '00:00';
+  int positionMinute = position.inSeconds ~/ 60;
+  int positionSecond =
+      positionMinute > 0 ? position.inSeconds % 60 : position.inSeconds;
+  return strPosition =
+      (positionMinute < 10 ? '$positionMinute' : '$positionMinute') +
+          ':' +
+          (positionSecond < 10 ? '0$positionSecond' : '$positionSecond');
+}
+
 
 // void main() => runApp(new MyApp());
 
