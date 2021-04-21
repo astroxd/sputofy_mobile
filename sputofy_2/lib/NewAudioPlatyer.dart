@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ffi';
 import 'package:audio_service/audio_service.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:flutter/cupertino.dart';
@@ -153,12 +152,16 @@ class _MainScreenState extends State<MainScreen> {
       title: 'oregairu',
       album: 'cacca',
       duration: Duration(milliseconds: 273057),
+      artUri:
+          "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
     ),
     Song(
       id: '/storage/emulated/0/Download/BLESS YoUr NAME - ChouCho (Highschool DXD BorN OP Full).mp3',
       title: 'BLESS YoUr NAME - ChouCho (Highschool DXD BorN OP Full)',
       album: 'cacca',
       duration: Duration(milliseconds: 282096),
+      artUri:
+          "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
     ),
   ];
 
@@ -221,8 +224,10 @@ class Song {
   final String title;
   final String album;
   final Duration duration;
+  final String artUri;
 
   Song({
+    this.artUri,
     @required this.id,
     @required this.title,
     @required this.album,
@@ -241,10 +246,8 @@ class PlayingMediaItem {
   final MediaItem mediaItem;
   final Duration position;
   final PlaybackState playbackState;
-  final double playerVolume;
 
-  PlayingMediaItem(
-      this.mediaItem, this.position, this.playbackState, this.playerVolume);
+  PlayingMediaItem(this.mediaItem, this.position, this.playbackState);
 }
 
 class AudioPlayerTask extends BackgroundAudioTask {
@@ -269,7 +272,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
     _broadcaseMediaItemChanges();
     _propogateEventsFromAudioPlayerToAudioServiceClients();
     _performSpecialProcessingForStateTransitions();
-    _propogateCustomAudioServiceFunctionToAudioServiceClients();
+    // _propogateCustomAudioServiceFunctionToAudioServiceClients();
     _loadQueue();
   }
 
@@ -343,18 +346,6 @@ class AudioPlayerTask extends BackgroundAudioTask {
     AudioServiceBackground.setMediaItem(_queue[index]);
   }
 
-  void _propogateCustomAudioServiceFunctionToAudioServiceClients() {
-    AudioService.customEventStream.listen((customEvent) {
-      switch (customEvent.runtimeType) {
-        case double:
-          print("object");
-          break;
-        default:
-          break;
-      }
-    });
-  }
-
   ///* Mette la duration al current MediaItem appena lo sta per suonare
   // void _updateQueueWithCurrentDuration(Duration duration) {
   //   final songIndex = _audioPlayer.currentIndex;
@@ -424,7 +415,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
     switch (funcName) {
       case 'setVolume':
         _audioPlayer.setVolume(arguments);
-        _audioPlayer.volumeStream;
+        AudioServiceBackground.sendCustomEvent(_audioPlayer.volume);
 
         break;
     }
@@ -479,15 +470,7 @@ class MiniPlayer extends StatelessWidget {
           AudioService.positionStream,
           AudioService.playbackStateStream,
           (mediaItem, position, playbackState) =>
-              PlayingMediaItem(mediaItem, position, playbackState, 0.0));
-  // Stream get _playingMediaItemStream => Rx.combineLatest4<MediaItem, Duration,
-  //         PlaybackState, double, PlayingMediaItem>(
-  //     AudioService.currentMediaItemStream,
-  //     AudioService.positionStream,
-  //     AudioService.playbackStateStream,
-  //     AudioService.customEventStream,
-  //     (mediaItem, position, playbackState, playerVolume) =>
-  //         PlayingMediaItem(mediaItem, position, playbackState, playerVolume));
+              PlayingMediaItem(mediaItem, position, playbackState));
 
   @override
   Widget build(BuildContext context) {
@@ -607,21 +590,13 @@ class MiniPlayer extends StatelessWidget {
 }
 
 class DetailMusicPlayer extends StatelessWidget {
-  // Stream get _playingMediaItemStream =>
-  //     Rx.combineLatest3<MediaItem, Duration, PlaybackState, PlayingMediaItem>(
-  //         AudioService.currentMediaItemStream,
-  //         AudioService.positionStream,
-  //         AudioService.playbackStateStream,
-  //         (mediaItem, position, playbackState) =>
-  //             PlayingMediaItem(mediaItem, position, playbackState, 0.0));
-  Stream get _playingMediaItemStream => Rx.combineLatest4<MediaItem, Duration,
-          PlaybackState, double, PlayingMediaItem>(
-      AudioService.currentMediaItemStream,
-      AudioService.positionStream,
-      AudioService.playbackStateStream,
-      AudioService?.customEventStream ?? 0.0,
-      (mediaItem, position, playbackState, playerVolume) =>
-          PlayingMediaItem(mediaItem, position, playbackState, playerVolume));
+  Stream get _playingMediaItemStream =>
+      Rx.combineLatest3<MediaItem, Duration, PlaybackState, PlayingMediaItem>(
+          AudioService.currentMediaItemStream,
+          AudioService.positionStream,
+          AudioService.playbackStateStream,
+          (mediaItem, position, playbackState) =>
+              PlayingMediaItem(mediaItem, position, playbackState));
 
   @override
   Widget build(BuildContext context) {
@@ -638,7 +613,6 @@ class DetailMusicPlayer extends StatelessWidget {
               final duration = playingMediaItem.duration;
               final cover = playingMediaItem.artUri;
               final playbackState = playingMediaItemStream.playbackState;
-              final playerVolume = playingMediaItemStream.playerVolume;
 
               return Container(
                 padding: const EdgeInsets.only(
@@ -665,13 +639,22 @@ class DetailMusicPlayer extends StatelessWidget {
                                   Icons.volume_down,
                                   size: 32.0,
                                 ),
-                                Slider(
-                                  value: 1.0,
-                                  max: 10.0,
-                                  min: 1.0,
-                                  onChanged: (double value) {
-                                    AudioService.customAction(
-                                        "setVolume", value);
+                                StreamBuilder(
+                                  stream: AudioService.customEventStream,
+                                  initialData: 1.0,
+                                  builder: (context, snapshot) {
+                                    return SliderTheme(
+                                      data: CustomTheme,
+                                      child: Slider(
+                                        value: snapshot.data,
+                                        max: 2.0,
+                                        min: 0.0,
+                                        onChanged: (double value) {
+                                          AudioService.customAction(
+                                              "setVolume", value);
+                                        },
+                                      ),
+                                    );
                                   },
                                 ),
                                 Icon(
@@ -785,7 +768,10 @@ class DetailMusicPlayer extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: <Widget>[
-                            Icon(Icons.loop, size: 32),
+                            GestureDetector(
+                              onTap: null,
+                              child: Icon(Icons.loop, size: 32),
+                            ),
                             Row(
                               children: <Widget>[
                                 Text(
@@ -830,6 +816,7 @@ class DetailMusicPlayer extends StatelessWidget {
                 ),
               );
             }
+
             return CircularProgressIndicator();
           },
         ),
