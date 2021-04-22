@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:audio_service/audio_service.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:flutter/cupertino.dart';
@@ -148,18 +149,18 @@ class _MainScreenState extends State<MainScreen> {
   //* AudioService lo usi per parlare con la background task
   List<Song> playlist = [
     Song(
-      id: '/storage/emulated/0/Download/oregairu.mp3',
-      title: 'oregairu',
-      album: 'cacca',
-      duration: Duration(milliseconds: 273057),
-      artUri:
-          "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
-    ),
-    Song(
       id: '/storage/emulated/0/Download/BLESS YoUr NAME - ChouCho (Highschool DXD BorN OP Full).mp3',
       title: 'BLESS YoUr NAME - ChouCho (Highschool DXD BorN OP Full)',
-      album: 'cacca',
+      album: 'album',
       duration: Duration(milliseconds: 282096),
+      artUri:
+          "https://www.vhv.rs/dpng/d/262-2628798_transparent-overlord-anime-png-wings-of-freedom-logo.png",
+    ),
+    Song(
+      id: '/storage/emulated/0/Download/snafu.mp3',
+      title: 'oregairu',
+      album: 'album',
+      duration: Duration(milliseconds: 273057),
       artUri:
           "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
     ),
@@ -170,10 +171,12 @@ class _MainScreenState extends State<MainScreen> {
     for (var song in playlist) {
       print(song);
       final mediaItem = MediaItem(
-          id: song.id,
-          album: song.album,
-          title: song.title,
-          duration: song.duration);
+        id: song.id,
+        album: song.album,
+        title: song.title,
+        duration: song.duration,
+        artUri: song.artUri,
+      );
       mediaList.add(mediaItem.toJson());
     }
     if (mediaList.isEmpty) return;
@@ -227,7 +230,7 @@ class Song {
   final String artUri;
 
   Song({
-    this.artUri,
+    @required this.artUri,
     @required this.id,
     @required this.title,
     @required this.album,
@@ -336,6 +339,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
       ));
 
       // _audioPlayer.durationStream.listen((duration) {
+      //   print(duration.inMilliseconds);
       //   _updateQueueWithCurrentDuration(duration);
       // });
     } catch (e) {
@@ -421,6 +425,41 @@ class AudioPlayerTask extends BackgroundAudioTask {
     }
   }
 
+  @override
+  Future<void> onSetShuffleMode(AudioServiceShuffleMode shuffleMode) async {
+    switch (shuffleMode) {
+      case AudioServiceShuffleMode.all:
+        await _audioPlayer.setShuffleModeEnabled(true);
+        break;
+      case AudioServiceShuffleMode.none:
+        await _audioPlayer.setShuffleModeEnabled(false);
+        break;
+      case AudioServiceShuffleMode.group:
+        break;
+    }
+    _audioPlayer.setLoopMode(LoopMode.off);
+    AudioServiceBackground.setState(shuffleMode: shuffleMode);
+  }
+
+  @override
+  Future<void> onSetRepeatMode(AudioServiceRepeatMode repeatMode) async {
+    switch (repeatMode) {
+      case AudioServiceRepeatMode.none:
+        await _audioPlayer.setLoopMode(LoopMode.off);
+        break;
+      case AudioServiceRepeatMode.one:
+        await _audioPlayer.setLoopMode(LoopMode.one);
+        break;
+      case AudioServiceRepeatMode.all:
+        await _audioPlayer.setLoopMode(LoopMode.all);
+        break;
+      case AudioServiceRepeatMode.group:
+        break;
+    }
+    _audioPlayer.setShuffleModeEnabled(false);
+    AudioServiceBackground.setState(repeatMode: repeatMode);
+  }
+
   ///* Cambia il badge delle notifiche
   Future<void> _broadcastState() async {
     await AudioServiceBackground.setState(
@@ -430,13 +469,31 @@ class AudioPlayerTask extends BackgroundAudioTask {
         MediaControl.skipToNext,
       ],
       androidCompactActions: [0, 1, 2],
-      systemActions: [MediaAction.setRating, MediaAction.seekTo],
+      systemActions: [MediaAction.seekTo, MediaAction.setShuffleMode],
       processingState: _getProcessingState(),
       playing: _audioPlayer.playing,
       position: _audioPlayer.position,
       bufferedPosition: _audioPlayer.bufferedPosition,
       speed: _audioPlayer.speed,
+      shuffleMode: _audioPlayer.shuffleModeEnabled
+          ? AudioServiceShuffleMode.all
+          : AudioServiceShuffleMode.none,
+      repeatMode: _getRepeatMode(),
     );
+  }
+
+  _getRepeatMode() {
+    switch (_audioPlayer.loopMode) {
+      case LoopMode.off:
+        return AudioServiceRepeatMode.none;
+        break;
+      case LoopMode.one:
+        return AudioServiceRepeatMode.one;
+        break;
+      case LoopMode.all:
+        return AudioServiceRepeatMode.all;
+        break;
+    }
   }
 
   ///* Prende il processo che sta facendo
@@ -598,6 +655,8 @@ class DetailMusicPlayer extends StatelessWidget {
           (mediaItem, position, playbackState) =>
               PlayingMediaItem(mediaItem, position, playbackState));
 
+  // Stream get _playerState => Rx.combineLatest<bool, PlayerState>(AudioService.playbackStateStream., (values) => )
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -613,6 +672,8 @@ class DetailMusicPlayer extends StatelessWidget {
               final duration = playingMediaItem.duration;
               final cover = playingMediaItem.artUri;
               final playbackState = playingMediaItemStream.playbackState;
+              final shuffleMode = playbackState.shuffleMode;
+              final repeatMode = playbackState.repeatMode;
 
               return Container(
                 padding: const EdgeInsets.only(
@@ -676,10 +737,12 @@ class DetailMusicPlayer extends StatelessWidget {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 72),
                           child: ClipRRect(
+                              child: ConstrainedBox(
+                            constraints: BoxConstraints(maxHeight: 260.0),
                             child: cover != null
                                 ? Image.network(cover)
                                 : Image.asset("cover.jpeg"),
-                          ),
+                          )),
                         ),
                         SizedBox(
                           height: 32.0,
@@ -769,8 +832,26 @@ class DetailMusicPlayer extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: <Widget>[
                             GestureDetector(
-                              onTap: null,
-                              child: Icon(Icons.loop, size: 32),
+                              onTap: () {
+                                print(shuffleMode);
+                                switch (repeatMode) {
+                                  case AudioServiceRepeatMode.none:
+                                    AudioService.setRepeatMode(
+                                        AudioServiceRepeatMode.one);
+                                    break;
+                                  case AudioServiceRepeatMode.one:
+                                    AudioService.setRepeatMode(
+                                        AudioServiceRepeatMode.all);
+                                    break;
+                                  case AudioServiceRepeatMode.all:
+                                    AudioService.setRepeatMode(
+                                        AudioServiceRepeatMode.none);
+                                    break;
+                                  case AudioServiceRepeatMode.group:
+                                    break;
+                                }
+                              },
+                              child: _getRepeatIcon(repeatMode),
                             ),
                             Row(
                               children: <Widget>[
@@ -798,10 +879,20 @@ class DetailMusicPlayer extends StatelessWidget {
                               ],
                             ),
                             GestureDetector(
-                              onTap: () => AudioService.setShuffleMode(
-                                  AudioServiceShuffleMode.all),
+                              onTap: () {
+                                print(shuffleMode);
+                                shuffleMode == AudioServiceShuffleMode.all
+                                    ? AudioService.setShuffleMode(
+                                        AudioServiceShuffleMode.none)
+                                    : AudioService.setShuffleMode(
+                                        AudioServiceShuffleMode.all);
+                              },
                               child: Icon(
                                 Icons.shuffle,
+                                color:
+                                    shuffleMode == AudioServiceShuffleMode.all
+                                        ? accentColor
+                                        : Colors.black,
                                 size: 32,
                               ),
                             ),
@@ -822,6 +913,22 @@ class DetailMusicPlayer extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Icon _getRepeatIcon(AudioServiceRepeatMode repeatMode) {
+    switch (repeatMode) {
+      case AudioServiceRepeatMode.none:
+        return Icon(Icons.repeat, size: 32);
+        break;
+      case AudioServiceRepeatMode.one:
+        return Icon(Icons.repeat_one, size: 32, color: accentColor);
+        break;
+      case AudioServiceRepeatMode.all:
+        return Icon(Icons.repeat, size: 32, color: accentColor);
+        break;
+      case AudioServiceRepeatMode.group:
+        break;
+    }
   }
 }
 
@@ -898,6 +1005,7 @@ String getStrPosition(Duration position) {
 //       File file = File(result.files.single.path);
 //       setState(() {
 //         nome = file.path;
+//         print(nome);
 //         player.setAudioSource(ConcatenatingAudioSource(
 //           children: [
 //             ProgressiveAudioSource(
