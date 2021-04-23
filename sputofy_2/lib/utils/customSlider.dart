@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sputofy_2/palette.dart';
+import 'package:sputofy_2/utils/palette.dart';
 
 SliderThemeData CustomTheme = SliderThemeData(
   activeTrackColor: accentColor,

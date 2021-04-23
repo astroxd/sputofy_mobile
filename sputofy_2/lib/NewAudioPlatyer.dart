@@ -7,11 +7,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:sleek_circular_slider/sleek_circular_slider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:audio_session/audio_session.dart';
-import 'package:sputofy_2/palette.dart';
-import 'package:sputofy_2/utils/customSlider.dart';
+import 'package:sputofy_2/utils/palette.dart';
+import 'package:sputofy_2/pages/MiniPlayerPage.dart';
 
 void main() => runApp(new MyApp());
 
@@ -71,7 +70,7 @@ class _MainScreenState extends State<MainScreen> {
                           MaterialButton(
                             child: Text("Play"),
                             onPressed: () {
-                              _showDialogWindow(context);
+                              showDialogWindow(context);
                               play();
                             },
                             color: Colors.green,
@@ -128,21 +127,6 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  _showDialogWindow(BuildContext context) {
-    showBottomSheet(
-      context: context,
-      builder: (context) => MiniPlayer(),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(24.0),
-          topRight: Radius.circular(24.0),
-        ),
-      ),
-      // backgroundColor: Colors.red,
-      elevation: 1.0,
     );
   }
 
@@ -380,6 +364,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
     print("onStop");
     await _audioPlayer.dispose();
     _eventSubscription.cancel();
+    _sequenceStateSubscription.cancel();
     await _broadcastState();
     await super.onStop();
   }
@@ -527,459 +512,335 @@ class AudioPlayerTask extends BackgroundAudioTask {
 //* path : /data/user/0/com.example.sputofy_2/cache/file_picker/oregairu.mp3
 //* URI : content://com.android.externalstorage.documents/document/primary%3ADownload%2Foregairu.mp3
 
-class MiniPlayer extends StatelessWidget {
-  Stream get _playingMediaItemStream =>
-      Rx.combineLatest3<MediaItem, Duration, PlaybackState, PlayingMediaItem>(
-          AudioService.currentMediaItemStream,
-          AudioService.positionStream,
-          AudioService.playbackStateStream,
-          (mediaItem, position, playbackState) =>
-              PlayingMediaItem(mediaItem, position, playbackState));
 
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        showModalBottomSheet(
-          context: context,
-          builder: (context) {
-            return DetailMusicPlayer();
-          },
-          isDismissible: false,
-          isScrollControlled: true,
-        );
-      },
-      child: StreamBuilder<PlayingMediaItem>(
-          stream: _playingMediaItemStream,
-          builder: (context, snapshot) {
-            if (snapshot.data != null) {
-              final playingMediaItemStream = snapshot.data;
-              final mediaItem = playingMediaItemStream.mediaItem;
-              final position = playingMediaItemStream.position;
-              final playbackState = playingMediaItemStream.playbackState;
-              return Container(
-                // height: 80.0,
-                padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-                decoration: BoxDecoration(
-                  color: testColor,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(24.0),
-                    topRight: Radius.circular(24.0),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    SleekCircularSlider(
-                      appearance: CircularSliderAppearance(
-                        customWidths: CustomSliderWidths(
-                          progressBarWidth: 2.5,
-                          trackWidth: 2.5,
-                          handlerSize: 1.0,
-                          shadowWidth: 1.0,
-                        ),
-                        infoProperties: InfoProperties(modifier: (value) => ''),
-                        customColors: CustomSliderColors(
-                            trackColor: Color.fromRGBO(229, 229, 229, 1.0),
-                            progressBarColor: Colors.black),
-                        size: 36.0,
-                        angleRange: 360,
-                        startAngle: -90.0,
-                      ),
-                      min: 0.0,
-                      max: mediaItem?.duration?.inSeconds?.toDouble() ?? 100.0,
-                      initialValue: position?.inSeconds?.toDouble() ?? 0.0,
-                    ),
-                    SizedBox(
-                      width: 10,
-                    ),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            "Now Playing",
-                            style: Theme.of(context).textTheme.subtitle2.merge(
-                                  TextStyle(color: Colors.black),
-                                ),
-                          ),
-                          Text(
-                            mediaItem?.title ?? "Unknown Title",
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.headline6,
-                          ),
-                        ],
-                      ),
-                    ),
-                    Row(
-                      children: <Widget>[
-                        GestureDetector(
-                          onTap: AudioService.skipToPrevious,
-                          child: Icon(
-                            Icons.skip_previous_rounded,
-                            size: 36,
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: playbackState.playing
-                              ? AudioService.pause
-                              : AudioService.play,
-                          child: Icon(
-                            playbackState.playing
-                                ? Icons.pause_outlined
-                                : Icons.play_arrow_rounded,
-                            size: 36,
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: AudioService.skipToNext,
-                          child: Icon(
-                            Icons.skip_next_rounded,
-                            size: 36,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            } else {
-              return CircularProgressIndicator();
-            }
-          }),
-    );
-  }
-}
 
-class DetailMusicPlayer extends StatelessWidget {
-  Stream get _playingMediaItemStream =>
-      Rx.combineLatest3<MediaItem, Duration, PlaybackState, PlayingMediaItem>(
-          AudioService.currentMediaItemStream,
-          AudioService.positionStream,
-          AudioService.playbackStateStream,
-          (mediaItem, position, playbackState) =>
-              PlayingMediaItem(mediaItem, position, playbackState));
+// class DetailMusicPlayer extends StatelessWidget {
+//   Stream get _playingMediaItemStream =>
+//       Rx.combineLatest3<MediaItem, Duration, PlaybackState, PlayingMediaItem>(
+//           AudioService.currentMediaItemStream,
+//           AudioService.positionStream,
+//           AudioService.playbackStateStream,
+//           (mediaItem, position, playbackState) =>
+//               PlayingMediaItem(mediaItem, position, playbackState));
 
-  @override
-  Widget build(BuildContext context) {
-    _showPopupMenu() {
-      showMenu<String>(
-        context: context,
-        position: RelativeRect.fromLTRB(16.0, 0.0, 0.0,
-            0.0), //position where you want to show the menu on screen
-        color: secondaryColor,
-        items: [
-          PopupMenuItem(
-            child: const Text("Share Song"),
-            value: '1',
-            textStyle: TextStyle(color: accentColor, fontSize: 18),
-          ),
-          PopupMenuItem(
-            child: const Text("Cancel Song"),
-            value: '2',
-            textStyle: TextStyle(color: Colors.red, fontSize: 18),
-          ),
-        ],
-        elevation: 8.0,
-      ).then<void>((String itemSelected) {
-        if (itemSelected == null) return;
+//   @override
+//   Widget build(BuildContext context) {
+//     _showPopupMenu() {
+//       showMenu<String>(
+//         context: context,
+//         position: RelativeRect.fromLTRB(16.0, 0.0, 0.0,
+//             0.0), //position where you want to show the menu on screen
+//         color: secondaryColor,
+//         items: [
+//           PopupMenuItem(
+//             child: const Text("Share Song"),
+//             value: '1',
+//             textStyle: TextStyle(color: accentColor, fontSize: 18),
+//           ),
+//           PopupMenuItem(
+//             child: const Text("Cancel Song"),
+//             value: '2',
+//             textStyle: TextStyle(color: Colors.red, fontSize: 18),
+//           ),
+//         ],
+//         elevation: 8.0,
+//       ).then<void>((String itemSelected) {
+//         if (itemSelected == null) return;
 
-        if (itemSelected == "1") {
-          print("1");
-        } else if (itemSelected == "2") {
-          print("2");
-        } else {
-          //code here
-        }
-      });
-    }
+//         if (itemSelected == "1") {
+//           print("1");
+//         } else if (itemSelected == "2") {
+//           print("2");
+//         } else {
+//           //code here
+//         }
+//       });
+//     }
 
-    return Scaffold(
-      backgroundColor: mainColor,
-      body: SafeArea(
-        child: StreamBuilder<PlayingMediaItem>(
-          stream: _playingMediaItemStream,
-          builder: (context, snapshot) {
-            if (snapshot.data != null) {
-              final playingMediaItemStream = snapshot.data;
-              final playingMediaItem = playingMediaItemStream.mediaItem;
-              final position = playingMediaItemStream.position;
-              final duration = playingMediaItem.duration;
-              final cover = playingMediaItem.artUri;
-              final playbackState = playingMediaItemStream.playbackState;
-              final shuffleMode = playbackState.shuffleMode;
-              final repeatMode = playbackState.repeatMode;
+//     return Scaffold(
+//       backgroundColor: mainColor,
+//       body: SafeArea(
+//         child: StreamBuilder<PlayingMediaItem>(
+//           stream: _playingMediaItemStream,
+//           builder: (context, snapshot) {
+//             if (snapshot.data != null) {
+//               final playingMediaItemStream = snapshot.data;
+//               final playingMediaItem = playingMediaItemStream.mediaItem;
+//               final position = playingMediaItemStream.position;
+//               final duration = playingMediaItem.duration;
+//               final cover = playingMediaItem.artUri;
+//               final playbackState = playingMediaItemStream.playbackState;
+//               final shuffleMode = playbackState.shuffleMode;
+//               final repeatMode = playbackState.repeatMode;
 
-              return Container(
-                padding: const EdgeInsets.only(
-                    left: 16.0, right: 16.0, top: 64.0, bottom: 48.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Column(
-                      children: <Widget>[
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: <Widget>[
-                            GestureDetector(
-                              onTap: Navigator.of(context).pop,
-                              child: Icon(
-                                Icons.arrow_back,
-                                size: 32.0,
-                                color: accentColor,
-                              ),
-                            ),
-                            Row(
-                              children: <Widget>[
-                                Icon(
-                                  Icons.volume_down,
-                                  size: 32.0,
-                                ),
-                                StreamBuilder(
-                                  stream: AudioService.customEventStream,
-                                  initialData: 1.0,
-                                  builder: (context, snapshot) {
-                                    return SliderTheme(
-                                      data: CustomTheme,
-                                      child: Slider(
-                                        value: snapshot.data,
-                                        max: 2.0,
-                                        min: 0.0,
-                                        onChanged: (double value) {
-                                          AudioService.customAction(
-                                              "setVolume", value);
-                                        },
-                                      ),
-                                    );
-                                  },
-                                ),
-                                Icon(
-                                  Icons.volume_up,
-                                  size: 32.0,
-                                ),
-                              ],
-                            ),
-                            GestureDetector(
-                              onTap: _showPopupMenu,
-                              child: Icon(
-                                Icons.more_vert,
-                                size: 32.0,
-                                color: accentColor,
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(
-                          height: 32.0,
-                        ),
-                        ClipRRect(
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(maxHeight: 300.0),
-                            child: cover != null
-                                ? Image.network(cover)
-                                : Image.asset("cover.jpeg"),
-                          ),
-                        ),
-                        SizedBox(
-                          height: 16.0,
-                        ),
-                        SizedBox(
-                          height: 62.0,
-                          child: Text(
-                            playingMediaItem?.title ?? "Unknown title",
-                            // "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-                            style: TextStyle(color: accentColor, fontSize: 18),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 3,
-                          ),
-                        ),
-                        SizedBox(
-                          height: 16.0,
-                        ),
-                        Text(
-                          playingMediaItem?.artist ?? "Unknown artist",
-                          style: TextStyle(color: secondaryColor, fontSize: 20),
-                        ),
-                      ],
-                    ),
-                    Column(
-                      children: <Widget>[
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: <Widget>[
-                            GestureDetector(
-                              onTap: AudioService.skipToPrevious,
-                              child: Icon(
-                                Icons.skip_previous,
-                                size: 64,
-                              ),
-                            ),
-                            SizedBox(
-                              width: 24.0,
-                            ),
-                            GestureDetector(
-                              onTap: playbackState.playing
-                                  ? AudioService.pause
-                                  : AudioService.play,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: secondaryColor,
-                                  borderRadius: BorderRadius.circular(32.0),
-                                ),
-                                child: Icon(
-                                  playbackState.playing
-                                      ? Icons.pause
-                                      : Icons.play_arrow,
-                                  size: 64,
-                                  color: accentColor,
-                                ),
-                              ),
-                            ),
-                            SizedBox(
-                              width: 24.0,
-                            ),
-                            GestureDetector(
-                              onTap: AudioService.skipToNext,
-                              child: Icon(
-                                Icons.skip_next,
-                                size: 64,
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(
-                          height: 24.0,
-                        ),
-                        SliderTheme(
-                          data: CustomTheme,
-                          child: Slider(
-                            value: position.inSeconds.toDouble(),
-                            max: duration.inSeconds.toDouble(),
-                            min: 0.0,
-                            onChanged: (double value) {
-                              AudioService.seekTo(
-                                  Duration(seconds: value.toInt()));
-                            },
-                          ),
-                        ),
-                        SizedBox(
-                          height: 24.0,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: <Widget>[
-                            GestureDetector(
-                              onTap: () {
-                                switch (repeatMode) {
-                                  case AudioServiceRepeatMode.none:
-                                    AudioService.setRepeatMode(
-                                        AudioServiceRepeatMode.one);
-                                    break;
-                                  case AudioServiceRepeatMode.one:
-                                    AudioService.setRepeatMode(
-                                        AudioServiceRepeatMode.all);
-                                    break;
-                                  case AudioServiceRepeatMode.all:
-                                    AudioService.setRepeatMode(
-                                        AudioServiceRepeatMode.none);
-                                    break;
-                                  case AudioServiceRepeatMode.group:
-                                    break;
-                                }
-                              },
-                              child: _getRepeatIcon(repeatMode),
-                            ),
-                            Row(
-                              children: <Widget>[
-                                Text(
-                                  getStrPosition(position),
-                                  style: TextStyle(
-                                      color: accentColor, fontSize: 32),
-                                ),
-                                SizedBox(
-                                  width: 3.0,
-                                ),
-                                Text(
-                                  "|",
-                                  style: TextStyle(
-                                      color: secondaryColor, fontSize: 32),
-                                ),
-                                SizedBox(
-                                  width: 3.0,
-                                ),
-                                Text(
-                                  getStrPosition(duration),
-                                  style: TextStyle(
-                                      color: secondaryColor, fontSize: 32),
-                                ),
-                              ],
-                            ),
-                            GestureDetector(
-                              onTap: () {
-                                print(shuffleMode);
-                                shuffleMode == AudioServiceShuffleMode.all
-                                    ? AudioService.setShuffleMode(
-                                        AudioServiceShuffleMode.none)
-                                    : AudioService.setShuffleMode(
-                                        AudioServiceShuffleMode.all);
-                              },
-                              child: Icon(
-                                Icons.shuffle,
-                                color:
-                                    shuffleMode == AudioServiceShuffleMode.all
-                                        ? accentColor
-                                        : Colors.black,
-                                size: 32,
-                              ),
-                            ),
-                          ],
-                        ),
-                        // SizedBox(
-                        //   height: 32.0,
-                        // )
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            }
+//               return Container(
+//                 padding: const EdgeInsets.only(
+//                     left: 16.0, right: 16.0, top: 64.0, bottom: 48.0),
+//                 child: Column(
+//                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                   children: <Widget>[
+//                     Column(
+//                       children: <Widget>[
+//                         Row(
+//                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                           children: <Widget>[
+//                             GestureDetector(
+//                               onTap: Navigator.of(context).pop,
+//                               child: Icon(
+//                                 Icons.arrow_back,
+//                                 size: 32.0,
+//                                 color: accentColor,
+//                               ),
+//                             ),
+//                             Row(
+//                               children: <Widget>[
+//                                 Icon(
+//                                   Icons.volume_down,
+//                                   size: 32.0,
+//                                 ),
+//                                 StreamBuilder(
+//                                   stream: AudioService.customEventStream,
+//                                   initialData: 1.0,
+//                                   builder: (context, snapshot) {
+//                                     return SliderTheme(
+//                                       data: CustomTheme,
+//                                       child: Slider(
+//                                         value: snapshot.data,
+//                                         max: 2.0,
+//                                         min: 0.0,
+//                                         onChanged: (double value) {
+//                                           AudioService.customAction(
+//                                               "setVolume", value);
+//                                         },
+//                                       ),
+//                                     );
+//                                   },
+//                                 ),
+//                                 Icon(
+//                                   Icons.volume_up,
+//                                   size: 32.0,
+//                                 ),
+//                               ],
+//                             ),
+//                             GestureDetector(
+//                               onTap: _showPopupMenu,
+//                               child: Icon(
+//                                 Icons.more_vert,
+//                                 size: 32.0,
+//                                 color: accentColor,
+//                               ),
+//                             ),
+//                           ],
+//                         ),
+//                         SizedBox(
+//                           height: 32.0,
+//                         ),
+//                         ClipRRect(
+//                           child: ConstrainedBox(
+//                             constraints: BoxConstraints(maxHeight: 300.0),
+//                             child: cover != null
+//                                 ? Image.network(cover)
+//                                 : Image.asset("cover.jpeg"),
+//                           ),
+//                         ),
+//                         SizedBox(
+//                           height: 16.0,
+//                         ),
+//                         SizedBox(
+//                           height: 62.0,
+//                           child: Text(
+//                             playingMediaItem?.title ?? "Unknown title",
+//                             // "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+//                             style: TextStyle(color: accentColor, fontSize: 18),
+//                             overflow: TextOverflow.ellipsis,
+//                             maxLines: 3,
+//                           ),
+//                         ),
+//                         SizedBox(
+//                           height: 16.0,
+//                         ),
+//                         Text(
+//                           playingMediaItem?.artist ?? "Unknown artist",
+//                           style: TextStyle(color: secondaryColor, fontSize: 20),
+//                         ),
+//                       ],
+//                     ),
+//                     Column(
+//                       children: <Widget>[
+//                         Row(
+//                           mainAxisAlignment: MainAxisAlignment.center,
+//                           children: <Widget>[
+//                             GestureDetector(
+//                               onTap: AudioService.skipToPrevious,
+//                               child: Icon(
+//                                 Icons.skip_previous,
+//                                 size: 64,
+//                               ),
+//                             ),
+//                             SizedBox(
+//                               width: 24.0,
+//                             ),
+//                             GestureDetector(
+//                               onTap: playbackState.playing
+//                                   ? AudioService.pause
+//                                   : AudioService.play,
+//                               child: Container(
+//                                 decoration: BoxDecoration(
+//                                   color: secondaryColor,
+//                                   borderRadius: BorderRadius.circular(32.0),
+//                                 ),
+//                                 child: Icon(
+//                                   playbackState.playing
+//                                       ? Icons.pause
+//                                       : Icons.play_arrow,
+//                                   size: 64,
+//                                   color: accentColor,
+//                                 ),
+//                               ),
+//                             ),
+//                             SizedBox(
+//                               width: 24.0,
+//                             ),
+//                             GestureDetector(
+//                               onTap: AudioService.skipToNext,
+//                               child: Icon(
+//                                 Icons.skip_next,
+//                                 size: 64,
+//                               ),
+//                             ),
+//                           ],
+//                         ),
+//                         SizedBox(
+//                           height: 24.0,
+//                         ),
+//                         SliderTheme(
+//                           data: CustomTheme,
+//                           child: Slider(
+//                             value: position.inSeconds.toDouble(),
+//                             max: duration.inSeconds.toDouble(),
+//                             min: 0.0,
+//                             onChanged: (double value) {
+//                               AudioService.seekTo(
+//                                   Duration(seconds: value.toInt()));
+//                             },
+//                           ),
+//                         ),
+//                         SizedBox(
+//                           height: 24.0,
+//                         ),
+//                         Row(
+//                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                           children: <Widget>[
+//                             GestureDetector(
+//                               onTap: () {
+//                                 switch (repeatMode) {
+//                                   case AudioServiceRepeatMode.none:
+//                                     AudioService.setRepeatMode(
+//                                         AudioServiceRepeatMode.one);
+//                                     break;
+//                                   case AudioServiceRepeatMode.one:
+//                                     AudioService.setRepeatMode(
+//                                         AudioServiceRepeatMode.all);
+//                                     break;
+//                                   case AudioServiceRepeatMode.all:
+//                                     AudioService.setRepeatMode(
+//                                         AudioServiceRepeatMode.none);
+//                                     break;
+//                                   case AudioServiceRepeatMode.group:
+//                                     break;
+//                                 }
+//                               },
+//                               child: _getRepeatIcon(repeatMode),
+//                             ),
+//                             Row(
+//                               children: <Widget>[
+//                                 Text(
+//                                   getStrPosition(position),
+//                                   style: TextStyle(
+//                                       color: accentColor, fontSize: 32),
+//                                 ),
+//                                 SizedBox(
+//                                   width: 3.0,
+//                                 ),
+//                                 Text(
+//                                   "|",
+//                                   style: TextStyle(
+//                                       color: secondaryColor, fontSize: 32),
+//                                 ),
+//                                 SizedBox(
+//                                   width: 3.0,
+//                                 ),
+//                                 Text(
+//                                   getStrPosition(duration),
+//                                   style: TextStyle(
+//                                       color: secondaryColor, fontSize: 32),
+//                                 ),
+//                               ],
+//                             ),
+//                             GestureDetector(
+//                               onTap: () {
+//                                 print(shuffleMode);
+//                                 shuffleMode == AudioServiceShuffleMode.all
+//                                     ? AudioService.setShuffleMode(
+//                                         AudioServiceShuffleMode.none)
+//                                     : AudioService.setShuffleMode(
+//                                         AudioServiceShuffleMode.all);
+//                               },
+//                               child: Icon(
+//                                 Icons.shuffle,
+//                                 color:
+//                                     shuffleMode == AudioServiceShuffleMode.all
+//                                         ? accentColor
+//                                         : Colors.black,
+//                                 size: 32,
+//                               ),
+//                             ),
+//                           ],
+//                         ),
+//                         // SizedBox(
+//                         //   height: 32.0,
+//                         // )
+//                       ],
+//                     ),
+//                   ],
+//                 ),
+//               );
+//             }
 
-            return CircularProgressIndicator();
-          },
-        ),
-      ),
-    );
-  }
+//             return CircularProgressIndicator();
+//           },
+//         ),
+//       ),
+//     );
+//   }
 
-  Icon _getRepeatIcon(AudioServiceRepeatMode repeatMode) {
-    switch (repeatMode) {
-      case AudioServiceRepeatMode.none:
-        return Icon(Icons.repeat, size: 32);
-        break;
-      case AudioServiceRepeatMode.one:
-        return Icon(Icons.repeat_one, size: 32, color: accentColor);
-        break;
-      case AudioServiceRepeatMode.all:
-        return Icon(Icons.repeat, size: 32, color: accentColor);
-        break;
-      case AudioServiceRepeatMode.group:
-        break;
-    }
-  }
-}
+//   Icon _getRepeatIcon(AudioServiceRepeatMode repeatMode) {
+//     switch (repeatMode) {
+//       case AudioServiceRepeatMode.none:
+//         return Icon(Icons.repeat, size: 32);
+//         break;
+//       case AudioServiceRepeatMode.one:
+//         return Icon(Icons.repeat_one, size: 32, color: accentColor);
+//         break;
+//       case AudioServiceRepeatMode.all:
+//         return Icon(Icons.repeat, size: 32, color: accentColor);
+//         break;
+//       case AudioServiceRepeatMode.group:
+//         break;
+//     }
+//   }
+// }
 
-String getStrPosition(Duration position) {
-  String strPosition = '00:00';
-  int positionMinute = position.inSeconds ~/ 60;
-  int positionSecond =
-      positionMinute > 0 ? position.inSeconds % 60 : position.inSeconds;
-  return strPosition =
-      (positionMinute < 10 ? '$positionMinute' : '$positionMinute') +
-          ':' +
-          (positionSecond < 10 ? '0$positionSecond' : '$positionSecond');
-}
+// String getStrPosition(Duration position) {
+//   String strPosition = '00:00';
+//   int positionMinute = position.inSeconds ~/ 60;
+//   int positionSecond =
+//       positionMinute > 0 ? position.inSeconds % 60 : position.inSeconds;
+//   return strPosition =
+//       (positionMinute < 10 ? '$positionMinute' : '$positionMinute') +
+//           ':' +
+//           (positionSecond < 10 ? '0$positionSecond' : '$positionSecond');
+// }
 
 // void main() => runApp(new MyApp());
 

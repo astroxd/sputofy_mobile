@@ -6,7 +6,7 @@ import 'package:sputofy_2/model/audioPlayer.dart';
 import 'package:sputofy_2/model/databaseValues.dart';
 import 'package:sputofy_2/model/folderPathmodel.dart';
 import 'package:sputofy_2/model/playlistSongsModel.dart';
-import 'package:sputofy_2/palette.dart';
+import 'package:sputofy_2/utils/palette.dart';
 import 'package:sputofy_2/utils/CustomExpansionTile.dart';
 
 class SelectableSongList extends StatefulWidget {
