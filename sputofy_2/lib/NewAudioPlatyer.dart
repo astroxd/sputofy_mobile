@@ -257,6 +257,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
   AudioPlayer _audioPlayer = AudioPlayer();
   AudioProcessingState _skipState;
   StreamSubscription<PlaybackEvent> _eventSubscription;
+  StreamSubscription<SequenceState> _sequenceStateSubscription;
 
   List<MediaItem> _queue = [];
   int get index => _audioPlayer.currentIndex;
@@ -284,7 +285,9 @@ class AudioPlayerTask extends BackgroundAudioTask {
     final List mediaItems = params['data'];
     for (var item in mediaItems) {
       final mediaItem = MediaItem.fromJson(item);
-      _queue.add(mediaItem);
+      final newItem = mediaItem.copyWith(rating: Rating.newHeartRating(true));
+      // _queue.add(mediaItem);
+      _queue.add(newItem);
     }
   }
 
@@ -303,6 +306,10 @@ class AudioPlayerTask extends BackgroundAudioTask {
   ///* Legge quale evento sta facendo e fa aggiornae il badge delle notifiche
   void _propogateEventsFromAudioPlayerToAudioServiceClients() {
     _eventSubscription = _audioPlayer.playbackEventStream.listen((event) {
+      _broadcastState();
+    });
+    _sequenceStateSubscription =
+        _audioPlayer.sequenceStateStream.listen((event) {
       _broadcastState();
     });
   }
@@ -385,8 +392,6 @@ class AudioPlayerTask extends BackgroundAudioTask {
   @override
   Future<void> onPause() async {
     await _audioPlayer.pause();
-    print(_audioPlayer.effectiveIndices.first);
-    print(_audioPlayer.duration.inMilliseconds);
   }
 
   @override
@@ -418,7 +423,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
   Future<void> onCustomAction(String funcName, dynamic arguments) async {
     switch (funcName) {
       case 'setVolume':
-        _audioPlayer.setVolume(arguments);
+        await _audioPlayer.setVolume(arguments);
         AudioServiceBackground.sendCustomEvent(_audioPlayer.volume);
 
         break;
@@ -438,7 +443,6 @@ class AudioPlayerTask extends BackgroundAudioTask {
         break;
     }
     _audioPlayer.setLoopMode(LoopMode.off);
-    AudioServiceBackground.setState(shuffleMode: shuffleMode);
   }
 
   @override
@@ -457,7 +461,6 @@ class AudioPlayerTask extends BackgroundAudioTask {
         break;
     }
     _audioPlayer.setShuffleModeEnabled(false);
-    AudioServiceBackground.setState(repeatMode: repeatMode);
   }
 
   ///* Cambia il badge delle notifiche
@@ -469,7 +472,11 @@ class AudioPlayerTask extends BackgroundAudioTask {
         MediaControl.skipToNext,
       ],
       androidCompactActions: [0, 1, 2],
-      systemActions: [MediaAction.seekTo, MediaAction.setShuffleMode],
+      systemActions: [
+        MediaAction.seekTo,
+        MediaAction.setShuffleMode,
+        MediaAction.setRating
+      ],
       processingState: _getProcessingState(),
       playing: _audioPlayer.playing,
       position: _audioPlayer.position,
@@ -655,10 +662,40 @@ class DetailMusicPlayer extends StatelessWidget {
           (mediaItem, position, playbackState) =>
               PlayingMediaItem(mediaItem, position, playbackState));
 
-  // Stream get _playerState => Rx.combineLatest<bool, PlayerState>(AudioService.playbackStateStream., (values) => )
-
   @override
   Widget build(BuildContext context) {
+    _showPopupMenu() {
+      showMenu<String>(
+        context: context,
+        position: RelativeRect.fromLTRB(16.0, 0.0, 0.0,
+            0.0), //position where you want to show the menu on screen
+        color: secondaryColor,
+        items: [
+          PopupMenuItem(
+            child: const Text("Share Song"),
+            value: '1',
+            textStyle: TextStyle(color: accentColor, fontSize: 18),
+          ),
+          PopupMenuItem(
+            child: const Text("Cancel Song"),
+            value: '2',
+            textStyle: TextStyle(color: Colors.red, fontSize: 18),
+          ),
+        ],
+        elevation: 8.0,
+      ).then<void>((String itemSelected) {
+        if (itemSelected == null) return;
+
+        if (itemSelected == "1") {
+          print("1");
+        } else if (itemSelected == "2") {
+          print("2");
+        } else {
+          //code here
+        }
+      });
+    }
+
     return Scaffold(
       backgroundColor: mainColor,
       body: SafeArea(
@@ -724,33 +761,35 @@ class DetailMusicPlayer extends StatelessWidget {
                                 ),
                               ],
                             ),
-                            Icon(
-                              Icons.more_vert,
-                              size: 32.0,
-                              color: accentColor,
+                            GestureDetector(
+                              onTap: _showPopupMenu,
+                              child: Icon(
+                                Icons.more_vert,
+                                size: 32.0,
+                                color: accentColor,
+                              ),
                             ),
                           ],
                         ),
                         SizedBox(
                           height: 32.0,
                         ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 72),
-                          child: ClipRRect(
-                              child: ConstrainedBox(
-                            constraints: BoxConstraints(maxHeight: 260.0),
+                        ClipRRect(
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(maxHeight: 300.0),
                             child: cover != null
                                 ? Image.network(cover)
                                 : Image.asset("cover.jpeg"),
-                          )),
+                          ),
                         ),
                         SizedBox(
-                          height: 32.0,
+                          height: 16.0,
                         ),
                         SizedBox(
                           height: 62.0,
                           child: Text(
-                            playingMediaItem.title,
+                            playingMediaItem?.title ?? "Unknown title",
+                            // "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
                             style: TextStyle(color: accentColor, fontSize: 18),
                             overflow: TextOverflow.ellipsis,
                             maxLines: 3,
@@ -811,7 +850,7 @@ class DetailMusicPlayer extends StatelessWidget {
                           ],
                         ),
                         SizedBox(
-                          height: 48.0,
+                          height: 24.0,
                         ),
                         SliderTheme(
                           data: CustomTheme,
@@ -833,7 +872,6 @@ class DetailMusicPlayer extends StatelessWidget {
                           children: <Widget>[
                             GestureDetector(
                               onTap: () {
-                                print(shuffleMode);
                                 switch (repeatMode) {
                                   case AudioServiceRepeatMode.none:
                                     AudioService.setRepeatMode(

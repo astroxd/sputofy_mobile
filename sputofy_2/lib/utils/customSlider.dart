@@ -10,7 +10,7 @@ SliderThemeData CustomTheme = SliderThemeData(
     enabledThumbRadius: 8.0,
   ),
   overlayShape: RoundSliderOverlayShape(overlayRadius: 16.0),
-  // trackShape: CustomTrackShape(),
+  trackShape: CustomTrackShape(),
 );
 
 class CustomTrackShape extends RectangularSliderTrackShape {
