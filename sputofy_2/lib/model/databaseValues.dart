@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sputofy_2/model/folderPathmodel.dart';
-import 'package:sputofy_2/model/playlistModel.dart';
+import 'package:sputofy_2/model/playlistModels.dart';
 import 'package:sputofy_2/model/playlistSongsModel.dart';
 import 'package:sputofy_2/utils/Database.dart';
 

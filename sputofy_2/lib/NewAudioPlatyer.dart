@@ -9,6 +9,7 @@ import 'package:flutter/rendering.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:audio_session/audio_session.dart';
+import 'package:sputofy_2/pages/PlaylistScreenPage.dart';
 import 'package:sputofy_2/utils/palette.dart';
 import 'package:sputofy_2/pages/MiniPlayerPage.dart';
 
@@ -89,8 +90,7 @@ class _MainScreenState extends State<MainScreen> {
                 MaterialButton(
                     child: Text("ADD"),
                     color: Colors.blue,
-                    onPressed: () => add(MediaItem(
-                        id: "cacca", album: "cacca", title: "cacca"))),
+                    onPressed: () => openPlaylist()),
                 StreamBuilder(
                   stream: _queueStateStream,
                   builder: (context, snapshot) {
@@ -151,6 +151,28 @@ class _MainScreenState extends State<MainScreen> {
   ];
 
   start() async {
+    // final mediaList = [];
+    // for (var song in playlist) {
+    //   print(song);
+    //   final mediaItem = MediaItem(
+    //     id: song.id,
+    //     album: song.album,
+    //     title: song.title,
+    //     duration: song.duration,
+    //     artUri: song.artUri,
+    //   );
+    //   mediaList.add(mediaItem.toJson());
+    // }
+    // if (mediaList.isEmpty) return;
+    // final params = {'data': mediaList};
+    AudioService.start(
+        backgroundTaskEntrypoint: _backgroundTaskEntryPoint,
+        // params: params,
+        androidEnableQueue: true,
+        androidNotificationColor: 0x0000ff);
+  }
+
+  openPlaylist() {
     final mediaList = [];
     for (var song in playlist) {
       print(song);
@@ -164,12 +186,13 @@ class _MainScreenState extends State<MainScreen> {
       mediaList.add(mediaItem.toJson());
     }
     if (mediaList.isEmpty) return;
-    final params = {'data': mediaList};
-    AudioService.start(
-        backgroundTaskEntrypoint: _backgroundTaskEntryPoint,
-        params: params,
-        androidEnableQueue: true,
-        androidNotificationColor: 0x0000ff);
+    // final params = {'data': mediaList};
+    AudioService.customAction('openPlaylist', mediaList);
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PlaylistScreen(),
+        ));
   }
 
   stop() {
@@ -255,22 +278,29 @@ class AudioPlayerTask extends BackgroundAudioTask {
   Future<void> onStart(Map<String, dynamic> params) async {
     //* params sarà la playlist
     print("onStart");
-    _loadMediaItemsIntoQueue(params);
+    // _loadMediaItemsIntoQueue(params);
     await _setAudioSession();
     _broadcaseMediaItemChanges();
     _propogateEventsFromAudioPlayerToAudioServiceClients();
     _performSpecialProcessingForStateTransitions();
-    // _propogateCustomAudioServiceFunctionToAudioServiceClients();
-    _loadQueue();
+    // _loadQueue();
   }
 
-  _loadMediaItemsIntoQueue(Map<String, dynamic> params) {
-    _queue.clear();
-    final List mediaItems = params['data'];
+  // _loadMediaItemsIntoQueue(Map<String, dynamic> params) {
+  //   _queue.clear();
+  //   final List mediaItems = params['data'];
+  //   for (var item in mediaItems) {
+  //     final mediaItem = MediaItem.fromJson(item);
+  //     final newItem = mediaItem.copyWith(rating: Rating.newHeartRating(true));
+  //     // _queue.add(mediaItem);
+  //     _queue.add(newItem);
+  //   }
+  // }
+  _loadMediaItemsIntoQueue(final mediaItems) {
     for (var item in mediaItems) {
-      final mediaItem = MediaItem.fromJson(item);
+      MediaItem mediaItem = MediaItem.fromJson(item);
       final newItem = mediaItem.copyWith(rating: Rating.newHeartRating(true));
-      // _queue.add(mediaItem);
+      print(newItem.rating);
       _queue.add(newItem);
     }
   }
@@ -287,7 +317,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
     });
   }
 
-  ///* Legge quale evento sta facendo e fa aggiornae il badge delle notifiche
+  ///* Legge quale evento sta facendo e fa aggiornare il badge delle notifiche
   void _propogateEventsFromAudioPlayerToAudioServiceClients() {
     _eventSubscription = _audioPlayer.playbackEventStream.listen((event) {
       _broadcastState();
@@ -410,7 +440,12 @@ class AudioPlayerTask extends BackgroundAudioTask {
       case 'setVolume':
         await _audioPlayer.setVolume(arguments);
         AudioServiceBackground.sendCustomEvent(_audioPlayer.volume);
+        break;
+      case 'openPlaylist':
+        // print(arguments.runtimeType);
 
+        _loadMediaItemsIntoQueue(arguments);
+        _loadQueue();
         break;
     }
   }
