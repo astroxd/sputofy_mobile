@@ -9,7 +9,9 @@ import 'package:flutter/rendering.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:audio_session/audio_session.dart';
+import 'package:sputofy_2/model/SongModel.dart';
 import 'package:sputofy_2/pages/PlaylistScreenPage.dart';
+import 'package:sputofy_2/utils/Database.dart';
 import 'package:sputofy_2/utils/palette.dart';
 import 'package:sputofy_2/pages/MiniPlayerPage.dart';
 
@@ -38,8 +40,43 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
+  // List<Song> playlist = [
+  //   Song(
+  //     id: '/storage/emulated/0/Download/BLESS YoUr NAME - ChouCho (Highschool DXD BorN OP Full).mp3',
+  //     title: 'BLESS YoUr NAME - ChouCho (Highschool DXD BorN OP Full)',
+  //     album: 'album',
+  //     duration: Duration(milliseconds: 282096),
+  //     artUri:
+  //         "https://www.vhv.rs/dpng/d/262-2628798_transparent-overlord-anime-png-wings-of-freedom-logo.png",
+  //   ),
+  //   Song(
+  //     id: '/storage/emulated/0/Download/snafu.mp3',
+  //     title: 'oregairu',
+  //     album: 'album',
+  //     duration: Duration(milliseconds: 273057),
+  //     artUri:
+  //         "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
+  //   ),
+  // ];
+  List<Song> playlist = [
+    Song(
+        null,
+        "/storage/emulated/0/Download/BLESS YoUr NAME - ChouCho (Highschool DXD BorN OP Full).mp3",
+        'BLESS YoUr NAME - ChouCho (Highschool DXD BorN OP Full)',
+        'me',
+        "https://www.vhv.rs/dpng/d/262-2628798_transparent-overlord-anime-png-wings-of-freedom-logo.png",
+        null),
+    Song(
+        null,
+        '/storage/emulated/0/Download/snafu.mp3',
+        'oregairu',
+        'tanta',
+        "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
+        null),
+  ];
   @override
   Widget build(BuildContext context) {
+    DBHelper _database = DBHelper();
     return Scaffold(
       backgroundColor: mainColor,
       body: SafeArea(
@@ -90,7 +127,11 @@ class _MainScreenState extends State<MainScreen> {
                 MaterialButton(
                     child: Text("ADD"),
                     color: Colors.blue,
-                    onPressed: () => openPlaylist()),
+                    onPressed: () {
+                      // _database.saveSong(playlist[0]);
+                      // _database.saveSong(playlist[1]);
+                      openPlaylist();
+                    }),
                 StreamBuilder(
                   stream: _queueStateStream,
                   builder: (context, snapshot) {
@@ -131,24 +172,6 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   //* AudioService lo usi per parlare con la background task
-  List<Song> playlist = [
-    Song(
-      id: '/storage/emulated/0/Download/BLESS YoUr NAME - ChouCho (Highschool DXD BorN OP Full).mp3',
-      title: 'BLESS YoUr NAME - ChouCho (Highschool DXD BorN OP Full)',
-      album: 'album',
-      duration: Duration(milliseconds: 282096),
-      artUri:
-          "https://www.vhv.rs/dpng/d/262-2628798_transparent-overlord-anime-png-wings-of-freedom-logo.png",
-    ),
-    Song(
-      id: '/storage/emulated/0/Download/snafu.mp3',
-      title: 'oregairu',
-      album: 'album',
-      duration: Duration(milliseconds: 273057),
-      artUri:
-          "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
-    ),
-  ];
 
   start() async {
     // final mediaList = [];
@@ -177,11 +200,11 @@ class _MainScreenState extends State<MainScreen> {
     for (var song in playlist) {
       print(song);
       final mediaItem = MediaItem(
-        id: song.id,
-        album: song.album,
+        id: song.path,
+        album: song.author,
         title: song.title,
-        duration: song.duration,
-        artUri: song.artUri,
+        duration: null,
+        artUri: song.cover,
       );
       mediaList.add(mediaItem.toJson());
     }
@@ -229,21 +252,21 @@ class _MainScreenState extends State<MainScreen> {
           (queue, mediaItem) => QueueState(queue, mediaItem));
 }
 
-class Song {
-  final String id;
-  final String title;
-  final String album;
-  final Duration duration;
-  final String artUri;
+// class Song {
+//   final String id;
+//   final String title;
+//   final String album;
+//   final Duration duration;
+//   final String artUri;
 
-  Song({
-    @required this.artUri,
-    @required this.id,
-    @required this.title,
-    @required this.album,
-    @required this.duration,
-  });
-}
+//   Song({
+//     @required this.artUri,
+//     @required this.id,
+//     @required this.title,
+//     @required this.album,
+//     @required this.duration,
+//   });
+// }
 
 class QueueState {
   final List<MediaItem> queue;
