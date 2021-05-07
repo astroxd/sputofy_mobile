@@ -222,7 +222,7 @@ import 'package:path/path.dart';
 
 class DBHelper {
   static Database _db;
-  static const String DB_NAME = 'SSputofy.db';
+  static const String DB_NAME = 'SSSSSSSSSSSSSSSputofy.db';
   static const String TABLE = 'song';
   static const String ID = 'id';
   static const String PATH = 'path';
@@ -250,7 +250,7 @@ class DBHelper {
     await db.execute('''
       CREATE TABLE $TABLE (       
         $ID INTEGER PRIMARY KEY,
-        $PATH TEXT NOT NULL,
+        $PATH TEXT UNIQUE,
         $TITLE TEXT NOT NULL,
         $AUTHOR TEXT,
         $COVER TEXT,
@@ -278,7 +278,8 @@ class DBHelper {
 
   Future<List<Song>> getSongs() async {
     var dbClient = await db;
-    List<Map> maps = await dbClient.query(TABLE, columns: [ID, PATH]);
+    List<Map> maps = await dbClient
+        .query(TABLE, columns: [ID, PATH, TITLE, AUTHOR, COVER, DURATION]);
     List<Song> songs = [];
     if (maps.length > 0) {
       for (int i = 0; i < maps.length; i++) {

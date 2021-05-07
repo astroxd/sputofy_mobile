@@ -35,8 +35,14 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                     itemCount: canzoni.length,
                     itemBuilder: (context, index) {
                       return GestureDetector(
-                          onTap: () => _database.deleteSong(index),
-                          child: Text(canzoni[index].path));
+                          onTap: () {
+                            _database.deleteSong(canzoni[index].id);
+                            setState(() {});
+                          },
+                          child: Container(
+                              color: Colors.red,
+                              padding: const EdgeInsets.all(16.0),
+                              child: Text(canzoni[index].path.toString())));
                     },
                   ),
                 ),
@@ -46,12 +52,13 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                     onPressed: () {
                       _database.saveSong(
                         Song(
-                            null,
-                            "/storage/emulated/0/Download/BLESS YoUr NAME - ChouCho (Highschool DXD BorN OP Full).mp3",
-                            "title",
-                            "andrea",
-                            "cover",
-                            null),
+                          null,
+                          'percorsoooo',
+                          "title",
+                          "andrea",
+                          "cover",
+                          Duration(milliseconds: 282096),
+                        ),
                       );
                       setState(() {});
                     }),

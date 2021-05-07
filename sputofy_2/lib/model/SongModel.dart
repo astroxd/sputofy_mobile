@@ -4,7 +4,8 @@ class Song {
   String title;
   String author;
   String cover;
-  int duration;
+  Duration duration;
+  // int duration;
 
   Song(this.id, this.path, this.title, this.author, this.cover, this.duration);
 
@@ -15,17 +16,25 @@ class Song {
       'title': title,
       'author': author,
       'cover': cover,
-      'duration': duration,
+      'duration': duration.inMilliseconds,
     };
     return map;
   }
 
   Song.fromMap(Map<String, dynamic> map) {
+    print(map['duration']);
+    print(map['id']);
+    print(map['title']);
+    print(map['author']);
+    print(map['cover']);
     id = map['id'];
     path = map['path'];
     title = map['title'];
     author = map['author'];
     cover = map['cover'];
-    duration = map['duration'];
+    // duration = map['duration'];
+    duration = Duration(milliseconds: map['duration']);
+    // duration = Duration(milliseconds: map['duration']);
+    // duration = Duration(milliseconds: 30);
   }
 }

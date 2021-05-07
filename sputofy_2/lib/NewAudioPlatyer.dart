@@ -60,19 +60,21 @@ class _MainScreenState extends State<MainScreen> {
   // ];
   List<Song> playlist = [
     Song(
-        null,
-        "/storage/emulated/0/Download/BLESS YoUr NAME - ChouCho (Highschool DXD BorN OP Full).mp3",
-        'BLESS YoUr NAME - ChouCho (Highschool DXD BorN OP Full)',
-        'me',
-        "https://www.vhv.rs/dpng/d/262-2628798_transparent-overlord-anime-png-wings-of-freedom-logo.png",
-        null),
+      null,
+      '/storage/emulated/0/Download/BLESS YoUr NAME - ChouCho (Highschool DXD BorN OP Full).mp3',
+      'BLESS YoUr NAME - ChouCho (Highschool DXD BorN OP Full)',
+      'me',
+      "https://www.vhv.rs/dpng/d/262-2628798_transparent-overlord-anime-png-wings-of-freedom-logo.png",
+      Duration(milliseconds: 282096),
+    ),
     Song(
-        null,
-        '/storage/emulated/0/Download/snafu.mp3',
-        'oregairu',
-        'tanta',
-        "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
-        null),
+      null,
+      '/storage/emulated/0/Download/snafu.mp3',
+      'oregairu',
+      'tanta',
+      "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
+      Duration(milliseconds: 273057),
+    ),
   ];
   @override
   Widget build(BuildContext context) {
@@ -203,7 +205,7 @@ class _MainScreenState extends State<MainScreen> {
         id: song.path,
         album: song.author,
         title: song.title,
-        duration: null,
+        duration: song.duration,
         artUri: song.cover,
       );
       mediaList.add(mediaItem.toJson());
