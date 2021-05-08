@@ -5,7 +5,6 @@ class Song {
   String author;
   String cover;
   Duration duration;
-  // int duration;
 
   Song(this.id, this.path, this.title, this.author, this.cover, this.duration);
 
@@ -32,9 +31,6 @@ class Song {
     title = map['title'];
     author = map['author'];
     cover = map['cover'];
-    // duration = map['duration'];
     duration = Duration(milliseconds: map['duration']);
-    // duration = Duration(milliseconds: map['duration']);
-    // duration = Duration(milliseconds: 30);
   }
 }

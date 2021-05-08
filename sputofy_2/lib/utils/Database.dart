@@ -4,10 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sputofy_2/model/SongModel.dart';
 import 'package:sputofy_2/model/folderPathmodel.dart';
-import 'package:sputofy_2/model/playlistModels.dart';
+// import 'package:sputofy_2/model/playlistModels.dart';
 import 'package:sputofy_2/model/playlistSongsModel.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'package:sputofy_2/model/PlaylistModel.dart';
 
 // class DBProvider {
 //   static final _databaseName = "MyDatabase.db";
@@ -222,14 +223,25 @@ import 'package:path/path.dart';
 
 class DBHelper {
   static Database _db;
-  static const String DB_NAME = 'SSSSSSSSSSSSSSSputofy.db';
-  static const String TABLE = 'song';
-  static const String ID = 'id';
-  static const String PATH = 'path';
-  static const String TITLE = 'title';
-  static const String AUTHOR = 'author';
-  static const String COVER = 'cover';
-  static const String DURATION = 'duration';
+  static const String DB_NAME = 'SSSSSSSSSSSSSSSSputofy.db';
+  //* SONG TABLE
+  static const String SONG_TABLE = 'song';
+  static const String SONG_ID = 'id';
+  static const String SONG_PATH = 'path';
+  static const String SONG_TITLE = 'title';
+  static const String SONG_AUTHOR = 'author';
+  static const String SONG_COVER = 'cover';
+  static const String SONG_DURATION = 'duration';
+  //* SONG TABLE
+
+  //* PLAYLIST TABLE
+  static const String PLAYLIST_TABLE = 'playlist';
+  static const String PLAYLIST_ID = 'id';
+  static const String PLAYLIST_NAME = 'name';
+  static const String PLAYLIST_COVER = 'cover';
+  static const String PLAYLIST_CREATION_DATE = 'creation_date';
+  static const String PLAYLIST_DURATION = 'duration';
+  //* PLAYLIST TABLE
 
   Future<Database> get db async {
     if (_db != null) {
@@ -248,38 +260,54 @@ class DBHelper {
 
   _onCreate(Database db, int version) async {
     await db.execute('''
-      CREATE TABLE $TABLE (       
-        $ID INTEGER PRIMARY KEY,
-        $PATH TEXT UNIQUE,
-        $TITLE TEXT NOT NULL,
-        $AUTHOR TEXT,
-        $COVER TEXT,
-        $DURATION INTEGER
+      CREATE TABLE $SONG_TABLE (       
+        $SONG_ID INTEGER PRIMARY KEY,
+        $SONG_PATH TEXT UNIQUE,
+        $SONG_TITLE TEXT NOT NULL,
+        $SONG_AUTHOR TEXT,
+        $SONG_COVER TEXT,
+        $SONG_DURATION INTEGER
       )
       ''');
+    await db.execute('''
+      CREATE TABLE $PLAYLIST_TABLE (
+        $PLAYLIST_ID INTEGER PRIMARY KEY,
+        $PLAYLIST_NAME TEXT NOT NULL,
+        $PLAYLIST_COVER TEXT,
+        $PLAYLIST_CREATION_DATE INTEGER NOT NULL,
+        $PLAYLIST_DURATION INTEGER
+      )
+     ''');
   }
 
   Future<Song> saveSong(Song song) async {
     var dbClient = await db;
-    song.id = await dbClient.insert(TABLE, song.toMap());
+    song.id = await dbClient.insert(SONG_TABLE, song.toMap());
     return song;
   }
 
   Future<int> deleteSong(int id) async {
     var dbClient = await db;
-    return await dbClient.delete(TABLE, where: '$ID = ?', whereArgs: [id]);
+    return await dbClient
+        .delete(SONG_TABLE, where: '$SONG_ID = ?', whereArgs: [id]);
   }
 
   Future<int> updateSong(Song song) async {
     var dbClient = await db;
-    return await dbClient
-        .update(TABLE, song.toMap(), where: '$ID = ?', whereArgs: [song.id]);
+    return await dbClient.update(SONG_TABLE, song.toMap(),
+        where: '$SONG_ID = ?', whereArgs: [song.id]);
   }
 
   Future<List<Song>> getSongs() async {
     var dbClient = await db;
-    List<Map> maps = await dbClient
-        .query(TABLE, columns: [ID, PATH, TITLE, AUTHOR, COVER, DURATION]);
+    List<Map> maps = await dbClient.query(SONG_TABLE, columns: [
+      SONG_ID,
+      SONG_PATH,
+      SONG_TITLE,
+      SONG_AUTHOR,
+      SONG_COVER,
+      SONG_DURATION
+    ]);
     List<Song> songs = [];
     if (maps.length > 0) {
       for (int i = 0; i < maps.length; i++) {
@@ -287,6 +315,43 @@ class DBHelper {
       }
     }
     return songs;
+  }
+
+  Future<Playlist> savePlaylist(Playlist playlist) async {
+    var dbClient = await db;
+    playlist.id = await dbClient.insert(PLAYLIST_TABLE, playlist.toMap());
+
+    return playlist;
+  }
+
+  Future<int> deletePlaylist(int id) async {
+    var dbClient = await db;
+    return await dbClient
+        .delete(PLAYLIST_TABLE, where: '$PLAYLIST_ID = ?', whereArgs: [id]);
+  }
+
+  Future<int> updatePlaylist(Playlist playlist) async {
+    var dbClient = await db;
+    return await dbClient.update(PLAYLIST_TABLE, playlist.toMap(),
+        where: '$PLAYLIST_ID = ?', whereArgs: [playlist.id]);
+  }
+
+  Future<List<Playlist>> getPlaylists() async {
+    var dbClient = await db;
+    List<Map> maps = await dbClient.query(PLAYLIST_TABLE, columns: [
+      PLAYLIST_ID,
+      PLAYLIST_NAME,
+      PLAYLIST_COVER,
+      PLAYLIST_CREATION_DATE,
+      PLAYLIST_DURATION
+    ]);
+    List<Playlist> playlists = [];
+    if (maps.length > 0) {
+      for (int i = 0; i < maps.length; i++) {
+        playlists.add(Playlist.fromMap(maps[i]));
+      }
+    }
+    return playlists;
   }
 
   Future close() async {

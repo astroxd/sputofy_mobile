@@ -33,14 +33,22 @@ class MiniPlayer extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        showModalBottomSheet(
-          context: context,
-          builder: (context) {
-            return DetailMusicPlayer();
-          },
-          isDismissible: false,
-          isScrollControlled: true,
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) {
+              return DetailMusicPlayer();
+            },
+          ),
         );
+        // showModalBottomSheet(
+        //   context: context,
+        //   builder: (context) {
+        //     return DetailMusicPlayer();
+        //   },
+        //   isDismissible: false,
+        //   isScrollControlled: true,
+        // );
       },
       child: StreamBuilder<PlayingMediaItem>(
           stream: _playingMediaItemStream,

@@ -6,6 +6,8 @@ import 'package:sputofy_2/utils/palette.dart';
 import 'package:sputofy_2/NewAudioPlatyer.dart';
 
 class DetailMusicPlayer extends StatelessWidget {
+  // DetailMusicPlayer({Key key}) : super(key: key);
+
   Stream get _playingMediaItemStream =>
       Rx.combineLatest3<MediaItem, Duration, PlaybackState, PlayingMediaItem>(
           AudioService.currentMediaItemStream,
@@ -49,68 +51,71 @@ class DetailMusicPlayer extends StatelessWidget {
       });
     }
 
-    return Scaffold(
-      backgroundColor: mainColor,
-      body: SafeArea(
-        child: StreamBuilder<PlayingMediaItem>(
-          stream: _playingMediaItemStream,
-          builder: (context, snapshot) {
-            if (snapshot.data != null) {
-              final PlayingMediaItem playingMediaItemStream = snapshot.data;
-              final MediaItem playingMediaItem =
-                  playingMediaItemStream.mediaItem;
-              final Duration position = playingMediaItemStream.position;
-              final Duration duration = playingMediaItem.duration;
-              final PlaybackState playbackState =
-                  playingMediaItemStream.playbackState;
+    return Dismissible(
+      // key: super.key,
+      child: Scaffold(
+        backgroundColor: mainColor,
+        body: SafeArea(
+          child: StreamBuilder<PlayingMediaItem>(
+            stream: _playingMediaItemStream,
+            builder: (context, snapshot) {
+              if (snapshot.data != null) {
+                final PlayingMediaItem playingMediaItemStream = snapshot.data;
+                final MediaItem playingMediaItem =
+                    playingMediaItemStream.mediaItem;
+                final Duration position = playingMediaItemStream.position;
+                final Duration duration = playingMediaItem.duration;
+                final PlaybackState playbackState =
+                    playingMediaItemStream.playbackState;
 
-              return Container(
-                padding: const EdgeInsets.only(
-                    left: 16.0, right: 16.0, top: 64.0, bottom: 48.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Column(
-                      children: <Widget>[
-                        _buildWidgetTopBar(context, _showPopupMenu),
-                        SizedBox(
-                          height: 32.0,
-                        ),
-                        _buildWidgetMediaItemInfo(playingMediaItem),
-                      ],
-                    ),
-                    Column(
-                      children: <Widget>[
-                        _buildWidgetMediaControl(playbackState),
-                        SizedBox(
-                          height: 24.0,
-                        ),
-                        SliderTheme(
-                          data: CustomTheme,
-                          child: Slider(
-                            value: position.inSeconds.toDouble(),
-                            max: duration.inSeconds.toDouble(),
-                            min: 0.0,
-                            onChanged: (double value) {
-                              AudioService.seekTo(
-                                  Duration(seconds: value.toInt()));
-                            },
+                return Container(
+                  padding: const EdgeInsets.only(
+                      left: 16.0, right: 16.0, top: 64.0, bottom: 48.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Column(
+                        children: <Widget>[
+                          _buildWidgetTopBar(context, _showPopupMenu),
+                          SizedBox(
+                            height: 32.0,
                           ),
-                        ),
-                        SizedBox(
-                          height: 24.0,
-                        ),
-                        _buildWidgetSpecialMediaControl(
-                            playingMediaItem, position, playbackState),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            }
+                          _buildWidgetMediaItemInfo(playingMediaItem),
+                        ],
+                      ),
+                      Column(
+                        children: <Widget>[
+                          _buildWidgetMediaControl(playbackState),
+                          SizedBox(
+                            height: 24.0,
+                          ),
+                          SliderTheme(
+                            data: CustomTheme,
+                            child: Slider(
+                              value: position.inSeconds.toDouble(),
+                              max: duration.inSeconds.toDouble(),
+                              min: 0.0,
+                              onChanged: (double value) {
+                                AudioService.seekTo(
+                                    Duration(seconds: value.toInt()));
+                              },
+                            ),
+                          ),
+                          SizedBox(
+                            height: 24.0,
+                          ),
+                          _buildWidgetSpecialMediaControl(
+                              playingMediaItem, position, playbackState),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              }
 
-            return CircularProgressIndicator();
-          },
+              return CircularProgressIndicator();
+            },
+          ),
         ),
       ),
     );
