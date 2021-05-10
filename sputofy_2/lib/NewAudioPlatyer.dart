@@ -10,6 +10,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:sputofy_2/model/SongModel.dart';
+import 'package:sputofy_2/pages/PaginaPerFarVedereLeCanzoni.dart';
 import 'package:sputofy_2/pages/PlaylistScreenPage.dart';
 import 'package:sputofy_2/pages/PlaylistsListPage.dart';
 import 'package:sputofy_2/utils/AudioPlayer.dart';
@@ -95,7 +96,12 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ),
         body: TabBarView(
-          children: [PrimaPagina(context), PlaylistScreen(), PlaylistsList()],
+          children: [
+            PrimaPagina(context),
+            ListaCanzoni(),
+            // PlaylistScreen(),
+            PlaylistsList()
+          ],
         ));
   }
 
@@ -215,7 +221,7 @@ class PrimaPagina extends StatelessWidget {
   PrimaPagina(this.context);
   final BuildContext context;
 
-  List<Song> playlist = [
+  final List<Song> playlist = [
     Song(
       null,
       '/storage/emulated/0/Download/BLESS YoUr NAME - ChouCho (Highschool DXD BorN OP Full).mp3',
@@ -367,11 +373,11 @@ class PrimaPagina extends StatelessWidget {
     if (mediaList.isEmpty) return;
     // final params = {'data': mediaList};
     AudioService.customAction('openPlaylist', mediaList);
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PlaylistScreen(),
-        ));
+    // Navigator.push(
+    //     context,
+    //     MaterialPageRoute(
+    //       builder: (context) => PlaylistScreen(),
+    //     ));
   }
 
   pause() {
@@ -401,8 +407,6 @@ class PrimaPagina extends StatelessWidget {
     AudioService.skipToQueueItem(mediaId);
   }
 }
-
-
 
 // class AudioPlayerTask extends BackgroundAudioTask {
 //   AudioPlayer _audioPlayer = AudioPlayer();
@@ -690,8 +694,6 @@ class PrimaPagina extends StatelessWidget {
 //* FILES
 //* path : /data/user/0/com.example.sputofy_2/cache/file_picker/oregairu.mp3
 //* URI : content://com.android.externalstorage.documents/document/primary%3ADownload%2Foregairu.mp3
-
-
 
 // class DetailMusicPlayer extends StatelessWidget {
 //   Stream get _playingMediaItemStream =>

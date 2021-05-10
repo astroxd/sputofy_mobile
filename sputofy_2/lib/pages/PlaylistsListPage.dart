@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:sputofy_2/model/PlaylistModel.dart';
+import 'package:sputofy_2/pages/PlaylistScreenPage.dart';
 import 'package:sputofy_2/utils/Database.dart';
 
 class PlaylistsList extends StatefulWidget {
@@ -23,18 +24,30 @@ class _PlaylistsListState extends State<PlaylistsList> {
               future: _database.getPlaylists(),
               builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
                 if (snapshot.hasData) {
-                  List<Playlist> canzoni = snapshot.data;
+                  List<Playlist> _playlists = snapshot.data;
+
                   return ListView.builder(
-                    itemCount: canzoni.length,
+                    itemCount: _playlists.length,
                     itemBuilder: (context, index) {
+                      Playlist _playlist = _playlists[index];
+
                       return GestureDetector(
-                          onTap: () {
-                            _database.deletePlaylist(canzoni[index].id);
+                          onLongPress: () {
+                            _database.deletePlaylist(_playlist.id);
                             setState(() {});
                           },
+                          onTap: () {
+                            Navigator.push(context, MaterialPageRoute(
+                              builder: (context) {
+                                return PlaylistScreen(_playlist);
+                              },
+                            ));
+                          },
                           child: Container(
-                              child: Text(
-                                  canzoni[index].creationDate.toString())));
+                              // width: 40,
+                              height: 100,
+                              color: Colors.red,
+                              child: Text(_playlist.creationDate.toString())));
                     },
                   );
                 } else {

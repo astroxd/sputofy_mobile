@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:sputofy_2/model/PlaylistSongModel.dart';
 import 'package:sputofy_2/model/SongModel.dart';
 import 'package:sputofy_2/model/folderPathmodel.dart';
 // import 'package:sputofy_2/model/playlistModels.dart';
@@ -223,7 +224,7 @@ import 'package:sputofy_2/model/PlaylistModel.dart';
 
 class DBHelper {
   static Database _db;
-  static const String DB_NAME = 'SSSSSSSSSSSSSSSSputofy.db';
+  static const String DB_NAME = 'SSSSSSSSSSSSSSSSSSputofy.db';
   //* SONG TABLE
   static const String SONG_TABLE = 'song';
   static const String SONG_ID = 'id';
@@ -242,6 +243,13 @@ class DBHelper {
   static const String PLAYLIST_CREATION_DATE = 'creation_date';
   static const String PLAYLIST_DURATION = 'duration';
   //* PLAYLIST TABLE
+
+  //* PLAYLIST SONG TABLE
+  static const String PLAYLISTSONG_TABLE = 'playlist_song';
+  static const String PLAYLISTSONG_ID = 'id';
+  static const String PLAYLISTSONG_PLAYLIST_ID = 'playlist_id';
+  static const String PLAYLISTSONG_SONG_ID = 'song_id';
+  //* PLAYLIST SONG TABLE
 
   Future<Database> get db async {
     if (_db != null) {
@@ -276,6 +284,14 @@ class DBHelper {
         $PLAYLIST_COVER TEXT,
         $PLAYLIST_CREATION_DATE INTEGER NOT NULL,
         $PLAYLIST_DURATION INTEGER
+      )
+     ''');
+
+    await db.execute('''
+      CREATE TABLE $PLAYLISTSONG_TABLE (
+        $PLAYLISTSONG_ID INTEGER PRIMARY KEY,
+        $PLAYLISTSONG_PLAYLIST_ID INTEGER NOT NULL,
+        $PLAYLISTSONG_SONG_ID INTEGER NOT NULL
       )
      ''');
   }
@@ -352,6 +368,107 @@ class DBHelper {
       }
     }
     return playlists;
+  }
+
+  Future<PlaylistSong> savePlaylistSong(PlaylistSong playlistSong) async {
+    print("dai salvami questa canzone $playlistSong");
+    print(playlistSong.id);
+    print(playlistSong.playlistID);
+    print(playlistSong.songID);
+    var dbClient = await db;
+    playlistSong.id =
+        await dbClient.insert(PLAYLISTSONG_TABLE, playlistSong.toMap());
+    return playlistSong;
+  }
+
+  Future<int> deletePlaylistSong(int id) async {
+    var dbClient = await db;
+    return await dbClient.delete(PLAYLISTSONG_TABLE,
+        where: '$PLAYLISTSONG_ID = ?', whereArgs: [id]);
+  }
+
+  //* updatePlaylistSong();
+
+  //! maybe useless
+  Future<List<PlaylistSong>> testGetPlaylistSongs(int playlistID) async {
+    var dbClient = await db;
+    List<Map> maps = await dbClient.query(
+      PLAYLISTSONG_TABLE,
+      columns: [
+        PLAYLISTSONG_ID,
+        PLAYLISTSONG_PLAYLIST_ID,
+        PLAYLISTSONG_SONG_ID
+      ],
+      where: '$PLAYLISTSONG_PLAYLIST_ID = ?',
+      whereArgs: [playlistID],
+    );
+    List<PlaylistSong> playlistSongs = [];
+    if (maps.length > 0) {
+      for (int i = 0; i < maps.length; i++) {
+        playlistSongs.add(PlaylistSong.fromMap(maps[i]));
+      }
+    }
+    return playlistSongs;
+  }
+
+  Future<List<Song>> getPlaylistSongs(int playlistID) async {
+    print("dai che sono dentro");
+    var dbClient = await db;
+    List<PlaylistSong> playlistSongs = await testGetPlaylistSongs(playlistID);
+    List<Song> returnedSongs = [];
+    List<Map> maps = [];
+    List<Map> map2 = [];
+    for (int i = 0; i < playlistSongs.length; i++) {
+      map2 = await dbClient.query(
+        SONG_TABLE,
+        columns: [
+          SONG_ID,
+          SONG_PATH,
+          SONG_TITLE,
+          SONG_AUTHOR,
+          SONG_COVER,
+          SONG_DURATION
+        ],
+        where: '$SONG_ID = ?',
+        whereArgs: [playlistSongs[i].songID],
+      );
+    }
+    map2.forEach(
+      (song) {
+        maps.add(song);
+      },
+    );
+    // playlistSongs.forEach(
+    //   (playlistSong) async {
+    //     map2 = await dbClient.query(
+    //       SONG_TABLE,
+    //       columns: [
+    //         SONG_ID,
+    //         SONG_PATH,
+    //         SONG_TITLE,
+    //         SONG_AUTHOR,
+    //         SONG_COVER,
+    //         SONG_DURATION
+    //       ],
+    //       where: '$SONG_ID = ?',
+    //       whereArgs: [playlistSong.songID],
+    //     );
+    //     print("map2 $map2");
+    //     map2.forEach(
+    //       (song) {
+    //         // print("song  $song");
+    //         maps.add(song);
+    //         // print("MAPS NEL FOREACH $maps");
+    //       },
+    //     );
+    //   },
+    // );
+    if (maps.length > 0) {
+      for (int i = 0; i < maps.length; i++) {
+        returnedSongs.add(Song.fromMap(maps[i]));
+      }
+    }
+    return returnedSongs;
   }
 
   Future close() async {
