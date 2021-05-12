@@ -24,6 +24,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: "Test",
       home: AudioServiceWidget(
         child: DefaultTabController(length: 3, child: MainScreen()),
@@ -43,25 +44,6 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  // List<Song> playlist = [
-  //   Song(
-  //     id: '/storage/emulated/0/Download/BLESS YoUr NAME - ChouCho (Highschool DXD BorN OP Full).mp3',
-  //     title: 'BLESS YoUr NAME - ChouCho (Highschool DXD BorN OP Full)',
-  //     album: 'album',
-  //     duration: Duration(milliseconds: 282096),
-  //     artUri:
-  //         "https://www.vhv.rs/dpng/d/262-2628798_transparent-overlord-anime-png-wings-of-freedom-logo.png",
-  //   ),
-  //   Song(
-  //     id: '/storage/emulated/0/Download/snafu.mp3',
-  //     title: 'oregairu',
-  //     album: 'album',
-  //     duration: Duration(milliseconds: 273057),
-  //     artUri:
-  //         "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
-  //   ),
-  // ];
-
   @override
   void initState() {
     start();
@@ -128,79 +110,7 @@ class _MainScreenState extends State<MainScreen> {
         androidEnableQueue: true,
         androidNotificationColor: 0x0000ff);
   }
-
-  // openPlaylist() {
-  //   final mediaList = [];
-  //   for (var song in playlist) {
-  //     print(song);
-  //     final mediaItem = MediaItem(
-  //       id: song.path,
-  //       album: song.author,
-  //       title: song.title,
-  //       duration: song.duration,
-  //       artUri: song.cover,
-  //     );
-  //     mediaList.add(mediaItem.toJson());
-  //   }
-  //   if (mediaList.isEmpty) return;
-  //   // final params = {'data': mediaList};
-  //   AudioService.customAction('openPlaylist', mediaList);
-  //   Navigator.push(
-  //       context,
-  //       MaterialPageRoute(
-  //         builder: (context) => PlaylistScreen(),
-  //       ));
-  // }
-
-  // stop() {
-  //   print("stop");
-  //   AudioService.stop();
-  // }
-
-  // play() async {
-  //   if (AudioService.running) {
-  //     AudioService.play();
-  //   } else {
-  //     start();
-  //   }
-  // }
-
-  // pause() {
-  //   print("Pause");
-  //   AudioService.pause();
-  // }
-
-  // add(MediaItem mediaItem) {
-  //   AudioService.addQueueItem(mediaItem);
-  //   // AudioService.setRating(Rating.newHeartRating(true));
-  // }
-
-  // seek(String mediaId) {
-  //   AudioService.skipToQueueItem(mediaId);
-  // }
-
-  // Stream<QueueState> get _queueStateStream =>
-  //     Rx.combineLatest2<List<MediaItem>, MediaItem, QueueState>(
-  //         AudioService.queueStream,
-  //         AudioService.currentMediaItemStream,
-  //         (queue, mediaItem) => QueueState(queue, mediaItem));
 }
-
-// class Song {
-//   final String id;
-//   final String title;
-//   final String album;
-//   final Duration duration;
-//   final String artUri;
-
-//   Song({
-//     @required this.artUri,
-//     @required this.id,
-//     @required this.title,
-//     @required this.album,
-//     @required this.duration,
-//   });
-// }
 
 class QueueState {
   final List<MediaItem> queue;

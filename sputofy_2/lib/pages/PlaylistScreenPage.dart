@@ -3,6 +3,7 @@ import 'package:sputofy_2/app_icons.dart';
 import 'package:sputofy_2/model/PlaylistModel.dart';
 import 'package:sputofy_2/model/PlaylistSongModel.dart';
 import 'package:sputofy_2/model/SongModel.dart';
+import 'package:sputofy_2/pages/SelectSongPage.dart';
 import 'package:sputofy_2/utils/Database.dart';
 import 'package:sputofy_2/utils/palette.dart';
 
@@ -191,7 +192,13 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                         ),
                       ),
                       GestureDetector(
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.push(context, MaterialPageRoute(
+                            builder: (context) {
+                              return SelectSongList();
+                            },
+                          ));
+                        },
                         child: Container(
                           decoration: BoxDecoration(
                               color: mainColor,
