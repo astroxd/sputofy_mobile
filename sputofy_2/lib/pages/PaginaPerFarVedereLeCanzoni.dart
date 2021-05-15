@@ -32,37 +32,14 @@ class _ListaCanzoniState extends State<ListaCanzoni> {
                             _database.deleteSong(canzoni[index].id);
                             setState(() {});
                           },
-                          onTap: () {
-                            if (toADD.contains(canzoni[index])) {
-                              // setState(() {
-                              toADD.remove(canzoni[index]);
-
-                              // });
-                              toADD.forEach((element) {
-                                print("RIMOSSO${element.path}");
-                              });
-                              print(toADD);
-                            } else {
-                              // setState(() {
-                              toADD.add(canzoni[index]);
-                              // });
-                              toADD.forEach((element) {
-                                print("AGGIUNTO${element.path}");
-                              });
-                              print(toADD);
-                            }
-                          },
                           child: Container(
-                              color: toADD.contains(canzoni[index])
-                                  ? Colors.red
-                                  : Colors.blue,
                               padding: const EdgeInsets.all(16.0),
                               child: Text(canzoni[index].path.toString())));
                     },
                   ),
                 ),
                 MaterialButton(
-                    child: Text("BOTTONE"),
+                    child: Text("Salva canzone"),
                     color: Colors.red,
                     onPressed: () {
                       _database.saveSong(

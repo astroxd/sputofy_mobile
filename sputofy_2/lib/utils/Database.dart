@@ -224,7 +224,7 @@ import 'package:sputofy_2/model/PlaylistModel.dart';
 
 class DBHelper {
   static Database _db;
-  static const String DB_NAME = 'SSSSSSSSSSSSSSSSSSputofy.db';
+  static const String DB_NAME = 'SSSSSSSSSsssSSSSSSSSSputofy.db';
   //* SONG TABLE
   static const String SONG_TABLE = 'song';
   static const String SONG_ID = 'id';
@@ -269,7 +269,7 @@ class DBHelper {
   _onCreate(Database db, int version) async {
     await db.execute('''
       CREATE TABLE $SONG_TABLE (       
-        $SONG_ID INTEGER PRIMARY KEY,
+        $SONG_ID INTEGER PRIMARY KEY AUTOINCREMENT,
         $SONG_PATH TEXT UNIQUE,
         $SONG_TITLE TEXT NOT NULL,
         $SONG_AUTHOR TEXT,

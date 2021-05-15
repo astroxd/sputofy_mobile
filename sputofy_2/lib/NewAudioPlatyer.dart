@@ -10,6 +10,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:sputofy_2/model/SongModel.dart';
+import 'package:sputofy_2/pages/FouthPage.dart';
 import 'package:sputofy_2/pages/PaginaPerFarVedereLeCanzoni.dart';
 import 'package:sputofy_2/pages/PlaylistScreenPage.dart';
 import 'package:sputofy_2/pages/PlaylistsListPage.dart';
@@ -27,7 +28,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: "Test",
       home: AudioServiceWidget(
-        child: DefaultTabController(length: 3, child: MainScreen()),
+        child: DefaultTabController(length: 4, child: MainScreen()),
       ),
     );
   }
@@ -74,6 +75,11 @@ class _MainScreenState extends State<MainScreen> {
                   Icons.playlist_add,
                 ),
               ),
+              Tab(
+                icon: Icon(
+                  Icons.playlist_add,
+                ),
+              ),
             ],
           ),
         ),
@@ -82,7 +88,8 @@ class _MainScreenState extends State<MainScreen> {
             PrimaPagina(context),
             ListaCanzoni(),
             // PlaylistScreen(),
-            PlaylistsList()
+            PlaylistsList(),
+            FourthPage(),
           ],
         ));
   }
@@ -132,17 +139,25 @@ class PrimaPagina extends StatelessWidget {
   final BuildContext context;
 
   final List<Song> playlist = [
+    // Song(
+    //   null,
+    //   '/storage/emulated/0/Download/BLESS YoUr NAME - ChouCho (Highschool DXD BorN OP Full).mp3',
+    //   'BLESS YoUr NAME - ChouCho (Highschool DXD BorN OP Full)',
+    //   'me',
+    //   "https://www.vhv.rs/dpng/d/262-2628798_transparent-overlord-anime-png-wings-of-freedom-logo.png",
+    //   Duration(milliseconds: 282096),
+    // ),
+    // Song(
+    //   null,
+    //   '/storage/emulated/0/Download/snafu.mp3',
+    //   'oregairu',
+    //   'tanta',
+    //   "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
+    //   Duration(milliseconds: 273057),
+    // ),
     Song(
       null,
-      '/storage/emulated/0/Download/BLESS YoUr NAME - ChouCho (Highschool DXD BorN OP Full).mp3',
-      'BLESS YoUr NAME - ChouCho (Highschool DXD BorN OP Full)',
-      'me',
-      "https://www.vhv.rs/dpng/d/262-2628798_transparent-overlord-anime-png-wings-of-freedom-logo.png",
-      Duration(milliseconds: 282096),
-    ),
-    Song(
-      null,
-      '/storage/emulated/0/Download/snafu.mp3',
+      '/data/user/0/com.example.sputofy_2/cache/file_picker/「Rock」 Hatsuki Yura (葉月ゆら) - 少女と黄金竜の物語 (Shoujo to Ougon Ryuu no Monogatari).mp3',
       'oregairu',
       'tanta',
       "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",

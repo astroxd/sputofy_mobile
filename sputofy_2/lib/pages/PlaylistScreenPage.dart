@@ -195,7 +195,9 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                         onTap: () {
                           Navigator.push(context, MaterialPageRoute(
                             builder: (context) {
-                              return SelectSongList();
+                              return SelectSongList(
+                                playlistID: widget.playlist.id,
+                              );
                             },
                           ));
                         },
