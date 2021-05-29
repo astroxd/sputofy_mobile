@@ -14,9 +14,7 @@ class FourthPage extends StatefulWidget {
 }
 
 class _FourthPageState extends State<FourthPage> {
-  List<Song> toADD = [];
   DBHelper _database = DBHelper();
-  List<Song> songs = [];
   @override
   void initState() {
     // loadSongs();
@@ -64,7 +62,7 @@ class _FourthPageState extends State<FourthPage> {
                   return CircularProgressIndicator();
               },
             ),
-          )
+          ),
         ],
       ),
     );
@@ -79,7 +77,8 @@ class _FourthPageState extends State<FourthPage> {
   }
 
   void loadSingleFolderItem(String path) async {
-    songs = await _database.getSongs();
+    List<Song> songs = await _database.getSongs();
+    List<Song> toADD = [];
     AudioPlayer _audioPlayer = AudioPlayer();
     Directory folder = Directory(path);
     List<FileSystemEntity> files = folder.listSync();
@@ -88,9 +87,11 @@ class _FourthPageState extends State<FourthPage> {
       if (file is Directory) {
         toRemove.add(file);
       }
-      if (!file.path.endsWith('mp3') || file.path.endsWith('ogg')) {
+      if (!file.path.endsWith('mp3') && !file.path.endsWith('ogg')) {
+        print("la stiamo togliendo ${file.path}");
         toRemove.add(file);
       }
+
       for (Song song in songs) {
         if (song.path == file.path) {
           toRemove.add(file);
@@ -98,9 +99,6 @@ class _FourthPageState extends State<FourthPage> {
             print(element.path);
           });
           print("BREAK");
-          // songs.forEach((element) {
-          //   print(element.path);
-          // });
           break;
         }
       }
@@ -108,19 +106,21 @@ class _FourthPageState extends State<FourthPage> {
 
     files.removeWhere((e) => toRemove.contains(e));
     for (var i = 0; i < files.length; i++) {
-      // Duration songDuration = await _audioPlayer
-      //     .setAudioSource(AudioSource.uri(Uri.parse(files[i].path)));
+      Duration songDuration = await _audioPlayer
+          .setAudioSource(AudioSource.uri(Uri.parse(files[i].path)));
+      print("percorso da aggiungere ${files[i].path}");
       toADD.add(
         Song(
-            null,
-            files[i].path,
-            files[i].path.split("/").last.replaceAll('.mp3', ''),
-            "author",
-            "cover",
-            // songDuration,
-            Duration(milliseconds: 0)),
+          null,
+          files[i].path,
+          files[i].path.split("/").last.replaceAll('.mp3', ''),
+          "author",
+          "cover",
+          songDuration,
+        ),
       );
     }
+
     for (var i = 0; i < toADD.length; i++) {
       _database.saveSong(toADD[i]);
       setState(() {});

@@ -224,7 +224,7 @@ import 'package:sputofy_2/model/PlaylistModel.dart';
 
 class DBHelper {
   static Database _db;
-  static const String DB_NAME = 'SSSSSSSSSsssSSSSSSSSSputofy.db';
+  static const String DB_NAME = 'SSSSSSSSSsssssSSSSSSSSSputofy.db';
   //* SONG TABLE
   static const String SONG_TABLE = 'song';
   static const String SONG_ID = 'id';
@@ -371,20 +371,17 @@ class DBHelper {
   }
 
   Future<PlaylistSong> savePlaylistSong(PlaylistSong playlistSong) async {
-    print("dai salvami questa canzone $playlistSong");
-    print(playlistSong.id);
-    print(playlistSong.playlistID);
-    print(playlistSong.songID);
     var dbClient = await db;
     playlistSong.id =
         await dbClient.insert(PLAYLISTSONG_TABLE, playlistSong.toMap());
     return playlistSong;
   }
 
-  Future<int> deletePlaylistSong(int id) async {
+  Future<int> deletePlaylistSong(int playlistID, int songID) async {
     var dbClient = await db;
     return await dbClient.delete(PLAYLISTSONG_TABLE,
-        where: '$PLAYLISTSONG_ID = ?', whereArgs: [id]);
+        where: '$PLAYLISTSONG_PLAYLIST_ID = ? and $PLAYLISTSONG_SONG_ID = ?',
+        whereArgs: [playlistID, songID]);
   }
 
   //* updatePlaylistSong();
@@ -412,14 +409,12 @@ class DBHelper {
   }
 
   Future<List<Song>> getPlaylistSongs(int playlistID) async {
-    print("dai che sono dentro");
     var dbClient = await db;
     List<PlaylistSong> playlistSongs = await testGetPlaylistSongs(playlistID);
     List<Song> returnedSongs = [];
     List<Map> maps = [];
-    List<Map> map2 = [];
     for (int i = 0; i < playlistSongs.length; i++) {
-      map2 = await dbClient.query(
+      maps = await dbClient.query(
         SONG_TABLE,
         columns: [
           SONG_ID,
@@ -432,42 +427,9 @@ class DBHelper {
         where: '$SONG_ID = ?',
         whereArgs: [playlistSongs[i].songID],
       );
+      returnedSongs.add(Song.fromMap(maps[0]));
     }
-    map2.forEach(
-      (song) {
-        maps.add(song);
-      },
-    );
-    // playlistSongs.forEach(
-    //   (playlistSong) async {
-    //     map2 = await dbClient.query(
-    //       SONG_TABLE,
-    //       columns: [
-    //         SONG_ID,
-    //         SONG_PATH,
-    //         SONG_TITLE,
-    //         SONG_AUTHOR,
-    //         SONG_COVER,
-    //         SONG_DURATION
-    //       ],
-    //       where: '$SONG_ID = ?',
-    //       whereArgs: [playlistSong.songID],
-    //     );
-    //     print("map2 $map2");
-    //     map2.forEach(
-    //       (song) {
-    //         // print("song  $song");
-    //         maps.add(song);
-    //         // print("MAPS NEL FOREACH $maps");
-    //       },
-    //     );
-    //   },
-    // );
-    if (maps.length > 0) {
-      for (int i = 0; i < maps.length; i++) {
-        returnedSongs.add(Song.fromMap(maps[i]));
-      }
-    }
+
     return returnedSongs;
   }
 

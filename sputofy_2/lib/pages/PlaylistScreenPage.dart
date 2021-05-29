@@ -6,6 +6,7 @@ import 'package:sputofy_2/model/SongModel.dart';
 import 'package:sputofy_2/pages/SelectSongPage.dart';
 import 'package:sputofy_2/utils/Database.dart';
 import 'package:sputofy_2/utils/palette.dart';
+import 'package:sqflite/sqflite.dart';
 
 class PlaylistScreen extends StatefulWidget {
   final Playlist playlist;
@@ -17,58 +18,6 @@ class PlaylistScreen extends StatefulWidget {
 
 class _PlaylistScreenState extends State<PlaylistScreen> {
   @override
-  // Widget build(BuildContext context) {
-  // DBHelper _database = DBHelper();
-  // return Scaffold(
-  //   body: FutureBuilder(
-  //     future: _database.getSongs(),
-  //     builder: (context, snapshot) {
-  //       if (snapshot.hasData) {
-  //         List<Song> canzoni = snapshot.data;
-  //         return Column(
-  //           children: <Widget>[
-  //             Container(
-  //               height: 300,
-  //               width: double.infinity,
-  //               child: ListView.builder(
-  //                 itemCount: canzoni.length,
-  //                 itemBuilder: (context, index) {
-  //                   return GestureDetector(
-  //                       onTap: () {
-  //                         _database.deleteSong(canzoni[index].id);
-  //                         setState(() {});
-  //                       },
-  //                       child: Container(
-  //                           color: Colors.red,
-  //                           padding: const EdgeInsets.all(16.0),
-  //                           child: Text(canzoni[index].path.toString())));
-  //                 },
-  //               ),
-  //             ),
-  //             MaterialButton(
-  //                 child: Text("BOTTONE"),
-  //                 color: Colors.red,
-  //                 onPressed: () {
-  //                   _database.saveSong(
-  //                     Song(
-  //                       null,
-  //                       'percorsoooo',
-  //                       "title",
-  //                       "andrea",
-  //                       "cover",
-  //                       Duration(milliseconds: 282096),
-  //                     ),
-  //                   );
-  //                   setState(() {});
-  //                 }),
-  //           ],
-  //         );
-  //       } else
-  //         return CircularProgressIndicator();
-  //     },
-  //   ),
-  // );
-  // }
   Widget build(BuildContext context) {
     MediaQueryData mediaQueryData = MediaQuery.of(context);
     double widthScreen = mediaQueryData.size.width;
@@ -87,7 +36,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                 _buildWidgetPlaylistInfo(
                     widthScreen, context, safePadding, playlistSongs),
                 SizedBox(height: 16.0),
-                _buildWidgetPlaylistSongsList(playlistSongs),
+                _buildWidgetPlaylistSongsList(playlistSongs, _database),
               ],
             );
           } else {
@@ -106,7 +55,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
       child: Column(
         children: <Widget>[
           _buildTopBar(),
-          _buildPlaylistData(),
+          _buildPlaylistData(playlistSongs),
           SizedBox(height: 10.0),
           _buildPlaylistActionButtons(widthScreen),
         ],
@@ -140,7 +89,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     );
   }
 
-  Widget _buildPlaylistData() {
+  Widget _buildPlaylistData(List<Song> playlistSongs) {
     return Container(
       padding: const EdgeInsets.only(left: 32.0, top: 16.0, right: 32.0),
       child: Row(
@@ -193,13 +142,14 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                       ),
                       GestureDetector(
                         onTap: () {
-                          Navigator.push(context, MaterialPageRoute(
-                            builder: (context) {
-                              return SelectSongList(
-                                playlistID: widget.playlist.id,
-                              );
-                            },
-                          ));
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => SelectSongList(
+                                  playlistID: widget.playlist.id,
+                                  playlistSongs: playlistSongs,
+                                ),
+                              )).then((value) => setState(() {}));
                         },
                         child: Container(
                           decoration: BoxDecoration(
@@ -296,7 +246,8 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     );
   }
 
-  Widget _buildWidgetPlaylistSongsList(List<Song> playlistSongs) {
+  Widget _buildWidgetPlaylistSongsList(
+      List<Song> playlistSongs, DBHelper _database) {
     _showPopupMenu(Offset offset, Song song) async {
       double left = offset.dx;
       double top = offset.dy;
@@ -317,9 +268,8 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
         if (itemSelected == null) return;
 
         if (itemSelected == "1") {
-          // Provider.of<MyAudio>(context, listen: false)
-          //     .changeListener(context, playlist.id);
-
+          _database.deletePlaylistSong(widget.playlist.id, song.id);
+          setState(() {});
         } else if (itemSelected == "2") {
           //code here
         } else {

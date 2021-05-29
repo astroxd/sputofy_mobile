@@ -1,19 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:sputofy_2/model/PlaylistSongModel.dart';
 import 'package:sputofy_2/model/SongModel.dart';
+import 'package:sputofy_2/test.dart';
 import 'package:sputofy_2/utils/Database.dart';
-
-class Canzoni {
-  int id;
-  String nome;
-  bool clicked;
-
-  Canzoni(this.id, this.nome, this.clicked);
-}
+import 'package:sputofy_2/utils/palette.dart';
 
 class SelectSongList extends StatefulWidget {
   final int playlistID;
+  final List<Song> playlistSongs;
 
-  const SelectSongList({Key key, this.playlistID}) : super(key: key);
+  const SelectSongList({Key key, this.playlistID, this.playlistSongs})
+      : super(key: key);
 
   @override
   _SelectSongListState createState() => _SelectSongListState();
@@ -21,99 +18,68 @@ class SelectSongList extends StatefulWidget {
 
 class _SelectSongListState extends State<SelectSongList> {
   DBHelper _database = DBHelper();
-  Canzoni cacca = Canzoni(1, "canzone 1", false);
-  Canzoni cacca2 = Canzoni(2, "canzone 2", false);
-  List<Canzoni> canzs = [];
 
-  List<Canzoni> prova = [];
-
-  List<Song> playlistSongs = [];
-
+  List<Song> toAddSongs = [];
   @override
   void initState() {
-    print("pla id ${widget.playlistID}");
-    canzs.add(cacca);
-    canzs.add(cacca2);
-    prova.add(cacca);
-    loadPlaylistSongs();
     super.initState();
-  }
-
-  loadPlaylistSongs() async {
-    playlistSongs = await _database.getPlaylistSongs(widget.playlistID);
-    print(" CANOZNIENIENINFI$playlistSongs");
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: [
-          // Expanded(
-          //   child: ListView.builder(
-          //     itemCount: canzs.length,
-          //     itemBuilder: (context, index) {
-          //       print("contiene ?${prova.contains(canzs[index])}");
-          //       return CheckboxListTile(
-          //         activeColor: Colors.orange,
-          //         title: Text(canzs[index].nome),
-          //         value: prova.contains(canzs[index]),
-          //         onChanged: (bool value) {
-          //           setState(() {
-          //             canzs[index].clicked = value;
-          //           });
-          //         },
-          //       );
-          //     },
-          //   ),
-          // ),
-          Expanded(
-              child: FutureBuilder(
-            future: _database.getSongs(),
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                print("Canzoni palylist $playlistSongs");
-                List<Song> songs = snapshot.data;
-                return ListView.builder(
-                  itemCount: songs.length,
-                  itemBuilder: (context, index) {
-                    Song song = songs[index];
-                    print("la contine? ${playlistSongs.contains(song)}");
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            MaterialButton(
+              child: Text(
+                "ADD SONGS",
+                style: TextStyle(
+                    color:
+                        toAddSongs.length == 0 ? secondaryColor : accentColor),
+              ),
+              onPressed: toAddSongs.length == 0 ? null : saveSongs,
+            ),
+            Expanded(
+                child: FutureBuilder(
+              future: _database.getSongs(),
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  List<Song> songs = snapshot.data;
+                  return ListView.builder(
+                    itemCount: songs.length,
+                    itemBuilder: (context, index) {
+                      Song song = songs[index];
 
-                    return Theme(
-                      data: ThemeData(disabledColor: Colors.red),
-                      child: playlistSongs.contains(song)
-                          ? _unselectableSong(song)
-                          : _selectableSong(song),
-                    );
-                  },
-                );
-              } else {
-                return CircularProgressIndicator();
-              }
-            },
-          )),
-          CustomTile(),
-        ],
+                      return Theme(
+                        data: ThemeData(disabledColor: Colors.red),
+                        child: widget.playlistSongs
+                                .any((element) => element.id == song.id)
+                            ? _unselectableSong(song)
+                            : _selectableSong(song),
+                      );
+                    },
+                  );
+                } else {
+                  return CircularProgressIndicator();
+                }
+              },
+            )),
+            Expanded(
+                child: ListView.builder(
+              itemCount: toAddSongs.length,
+              itemBuilder: (context, index) {
+                return Text(toAddSongs[index].path);
+              },
+            )),
+          ],
+        ),
       ),
     );
   }
 
   Widget _unselectableSong(Song song) {
-    // return InkWell(
-    //   onTap: () => print(cacca),
-    //   child: Padding(
-    //     padding: const EdgeInsets.all(16.0),
-    //     child: Row(
-    //       children: <Widget>[
-    //         Expanded(child: Text(song.title)),
-    //         Theme(
-    //             data: ThemeData(disabledColor: Colors.red),
-    //             child: Checkbox(value: true, onChanged: null)),
-    //       ],
-    //     ),
-    //   ),
-    // );
     return CheckboxListTile(
         title: Text(
           song.title,
@@ -126,20 +92,29 @@ class _SelectSongListState extends State<SelectSongList> {
   Widget _selectableSong(Song song) {
     return CheckboxListTile(
       title: Text(song.path),
-      value: false,
-      onChanged: (bool value) {},
+      value: toAddSongs.any((element) => element.id == song.id),
+      onChanged: (bool value) {
+        if (toAddSongs.any((element) => element.id == song.id)) {
+          setState(() {
+            toAddSongs.removeWhere((element) => element.id == song.id);
+          });
+        } else {
+          setState(() {
+            toAddSongs.add(song);
+          });
+        }
+      },
     );
   }
 
-  Widget CustomTile() {
-    return Theme(
-        data: ThemeData(disabledColor: Colors.red),
-        child: CheckboxListTile(
-            title: Text(
-              "cacca",
-              style: TextStyle(color: Colors.blue),
-            ),
-            value: true,
-            onChanged: null));
+  void saveSongs() {
+    for (var i = 0; i < toAddSongs.length; i++) {
+      _database.savePlaylistSong(PlaylistSong(
+        null,
+        widget.playlistID,
+        toAddSongs[i].id,
+      ));
+    }
+    Navigator.of(context).pop();
   }
 }

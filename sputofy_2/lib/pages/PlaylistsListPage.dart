@@ -47,7 +47,12 @@ class _PlaylistsListState extends State<PlaylistsList> {
                               // width: 40,
                               height: 100,
                               color: Colors.red,
-                              child: Text(_playlist.creationDate.toString())));
+                              child: Column(
+                                children: [
+                                  Text(_playlist.id.toString()),
+                                  Text(_playlist.creationDate.toString()),
+                                ],
+                              )));
                     },
                   );
                 } else {
