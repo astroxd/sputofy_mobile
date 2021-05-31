@@ -18,6 +18,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
   int get index => _audioPlayer.currentIndex;
   MediaItem get mediaItem => index == null ? null : _queue[index];
   int playlistID;
+  Stream test;
   DBHelper _database = DBHelper();
 
   //*  Qui overridi le varie funzioni
