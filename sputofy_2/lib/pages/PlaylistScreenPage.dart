@@ -1,12 +1,18 @@
+import 'dart:async';
+
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:sputofy_2/app_icons.dart';
 import 'package:sputofy_2/model/PlaylistModel.dart';
 import 'package:sputofy_2/model/PlaylistSongModel.dart';
 import 'package:sputofy_2/model/SongModel.dart';
+import 'package:sputofy_2/pages/MiniPlayerPage.dart';
 import 'package:sputofy_2/pages/SelectSongPage.dart';
 import 'package:sputofy_2/utils/Database.dart';
+import 'package:sputofy_2/utils/DatabaseProvider.dart';
 import 'package:sputofy_2/utils/palette.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:sputofy_2/utils/AudioPlayer.dart';
 
 class PlaylistScreen extends StatefulWidget {
   final Playlist playlist;
@@ -23,6 +29,10 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     double widthScreen = mediaQueryData.size.width;
     double safePadding = mediaQueryData.padding.top;
     DBHelper _database = DBHelper();
+    // DBProvider _provider = DBProvider();
+    // _provider.playlistSongs.listen((event) {
+    //   print("CACA");
+    // });
     return Scaffold(
       backgroundColor: mainColor,
       body: SafeArea(
@@ -128,7 +138,23 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
                       GestureDetector(
-                        onTap: () {},
+                        onTap: () async {
+                          // DBHelper db = DBHelper();
+                          // var canzonini =
+                          //     await db.getPlaylistSongs(widget.playlist.id);
+                          // List<Map> canzoni = [];
+                          // for (var song in canzonini) {
+                          //   MediaItem item = MediaItem(
+                          //       id: song.path,
+                          //       album: "album",
+                          //       title: song.title,
+                          //       duration: song.duration);
+                          //   canzoni.add(item.toJson());
+                          // }
+                          await AudioService.customAction(
+                              'openPlaylist', widget.playlist.id);
+                          // showDialogWindow(context);
+                        },
                         child: Container(
                           decoration: BoxDecoration(
                               color: mainColor,

@@ -113,7 +113,7 @@ class _MainScreenState extends State<MainScreen> {
     // final params = {'data': mediaList};
     AudioService.start(
         backgroundTaskEntrypoint: _backgroundTaskEntryPoint,
-        // params: params,
+        // params: ,
         androidEnableQueue: true,
         androidNotificationColor: 0x0000ff);
   }

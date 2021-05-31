@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -251,6 +252,9 @@ class DBHelper {
   static const String PLAYLISTSONG_SONG_ID = 'song_id';
   //* PLAYLIST SONG TABLE
 
+  final StreamController<List<Song>> _controller =
+      StreamController<List<Song>>();
+
   Future<Database> get db async {
     if (_db != null) {
       return _db;
@@ -429,9 +433,12 @@ class DBHelper {
       );
       returnedSongs.add(Song.fromMap(maps[0]));
     }
-
+    _controller.add(returnedSongs);
     return returnedSongs;
   }
+
+  Stream<List<Song>> get playlistSongs =>
+      _controller.stream.asBroadcastStream();
 
   Future close() async {
     var dbClient = await db;

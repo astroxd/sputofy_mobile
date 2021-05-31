@@ -3,16 +3,22 @@ import 'dart:async';
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:sputofy_2/model/SongModel.dart';
+import 'package:sputofy_2/utils/Database.dart';
+import 'package:sputofy_2/utils/DatabaseProvider.dart';
 
 class AudioPlayerTask extends BackgroundAudioTask {
   AudioPlayer _audioPlayer = AudioPlayer();
   AudioProcessingState _skipState;
   StreamSubscription<PlaybackEvent> _eventSubscription;
   StreamSubscription<SequenceState> _sequenceStateSubscription;
+  StreamSubscription<List<Song>> _listSongs;
 
   List<MediaItem> _queue = [];
   int get index => _audioPlayer.currentIndex;
   MediaItem get mediaItem => index == null ? null : _queue[index];
+  int playlistID;
+  DBHelper _database = DBHelper();
 
   //*  Qui overridi le varie funzioni
 
@@ -40,13 +46,42 @@ class AudioPlayerTask extends BackgroundAudioTask {
   //     _queue.add(newItem);
   //   }
   // }
-  _loadMediaItemsIntoQueue(final mediaItems) {
-    for (var item in mediaItems) {
-      MediaItem mediaItem = MediaItem.fromJson(item);
-      final newItem = mediaItem.copyWith(rating: Rating.newHeartRating(true));
-      print(newItem.rating);
-      _queue.add(newItem);
-    }
+  _loadMediaItemsIntoQueue(final mediaItems) async {
+    if (mediaItems != playlistID) {
+      _queue.clear();
+      DBHelper _database = DBHelper();
+      List<Song> songs = await _database.getPlaylistSongs(mediaItems);
+      print(songs);
+
+      for (var song in songs) {
+        MediaItem item = MediaItem(
+            id: song.path,
+            album: "album",
+            title: song.title,
+            duration: song.duration);
+        _queue.add(item);
+      }
+      playlistID = mediaItems;
+      _loadQueue();
+      onPlay();
+      print(_queue);
+    } else
+      print("non faccio niente");
+
+    // for (var item in songs) {
+    //   MediaItem mediaItem = MediaItem.fromJson(item);
+    //   //   // MediaItem mediaItem = MediaItem(
+    //   //   //   id: item.path,
+    //   //   //   album: "album",
+    //   //   //   title: item.title,
+    //   //   //   duration: item.duration,
+    //   //   // );
+    //   //   // final newItem = mediaItem.copyWith(rating: Rating.newHeartRating(true));
+    //   _queue.add(mediaItem);
+    //   // print(mediaItem);
+    // }
+    // print(_queue);
+    // print(mediaItems);
   }
 
   Future<void> _setAudioSession() async {
@@ -139,6 +174,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
     await _audioPlayer.dispose();
     _eventSubscription.cancel();
     _sequenceStateSubscription.cancel();
+    _listSongs.cancel();
     await _broadcastState();
     await super.onStop();
   }
@@ -186,10 +222,8 @@ class AudioPlayerTask extends BackgroundAudioTask {
         AudioServiceBackground.sendCustomEvent(_audioPlayer.volume);
         break;
       case 'openPlaylist':
-        // print(arguments.runtimeType);
+        await _loadMediaItemsIntoQueue(arguments);
 
-        _loadMediaItemsIntoQueue(arguments);
-        _loadQueue();
         break;
     }
   }

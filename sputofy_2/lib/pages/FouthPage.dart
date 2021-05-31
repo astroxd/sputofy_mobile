@@ -7,6 +7,8 @@ import 'package:flutter/services.dart';
 import 'package:sputofy_2/model/SongModel.dart';
 import 'package:sputofy_2/utils/Database.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:rxdart/rxdart.dart';
+import 'package:sputofy_2/utils/DatabaseProvider.dart';
 
 class FourthPage extends StatefulWidget {
   @override
@@ -15,6 +17,7 @@ class FourthPage extends StatefulWidget {
 
 class _FourthPageState extends State<FourthPage> {
   DBHelper _database = DBHelper();
+
   @override
   void initState() {
     // loadSongs();
@@ -63,6 +66,22 @@ class _FourthPageState extends State<FourthPage> {
               },
             ),
           ),
+          // Expanded(
+          //   child: StreamBuilder<List<Song>>(
+          //     stream: _database.playlistSongs,
+          //     builder: (context, snapshot) {
+          //       if (snapshot.hasData) {
+          //         return ListView.builder(
+          //           itemCount: snapshot.data.length,
+          //           itemBuilder: (context, index) {
+          //             return Text(snapshot.data[index].path);
+          //           },
+          //         );
+          //       } else
+          //         return CircularProgressIndicator();
+          //     },
+          //   ),
+          // )
         ],
       ),
     );
