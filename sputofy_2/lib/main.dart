@@ -1,371 +1,315 @@
-// import 'package:flutter/material.dart';
-// import 'package:provider/provider.dart';
-// import 'package:sputofy_2/mainPage.dart';
+import 'package:audio_service/audio_service.dart';
+import 'package:flutter/material.dart';
 
-// import 'package:sputofy_2/model/audioPlayer.dart';
-// import 'package:sputofy_2/model/databaseValues.dart';
-// import 'package:sputofy_2/model/playlistModels.dart';
-// import 'package:sputofy_2/utils/palette.dart';
-// import 'package:sputofy_2/playlistList.dart';
+import 'package:rxdart/rxdart.dart';
 
-// void main() {
-//   runApp(MyApp());
-// }
+import 'package:sputofy_2/model/SongModel.dart';
 
-// class MyApp extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     return MultiProvider(
-//       providers: [
-//         ChangeNotifierProvider(create: (_) => MyAudio()),
-//         ChangeNotifierProvider(create: (_) => DatabaseValue()),
-//       ],
-//       child: MaterialApp(
-//         debugShowCheckedModeBanner: false,
-//         title: 'Sputofy',
-//         theme: ThemeData(
-//           visualDensity: VisualDensity.adaptivePlatformDensity,
-//         ),
-//         home: HomePage(),
-//       ),
-//     );
-//   }
-// }
+import 'package:sputofy_2/pages/FouthPage.dart';
+import 'package:sputofy_2/pages/MiniPlayerPage.dart';
+import 'package:sputofy_2/pages/PaginaPerFarVedereLeCanzoni.dart';
+import 'package:sputofy_2/pages/PlaylistsListPage.dart';
 
-// class HomePage extends StatefulWidget {
-//   @override
-//   _HomePageState createState() => _HomePageState();
-// }
+import 'package:sputofy_2/utils/AudioPlayer.dart';
+import 'package:sputofy_2/utils/Database.dart';
+import 'package:sputofy_2/utils/palette.dart';
 
-// class _HomePageState extends State<HomePage> {
-//   int index = 0;
-//   PageController pageController = PageController();
+void main() {
+  runApp(MyApp());
+}
 
-//   @override
-//   Widget build(BuildContext context) {
-//     MediaQueryData mediaQueryData = MediaQuery.of(context);
-//     double widthScreen = mediaQueryData.size.width;
-//     return Scaffold(
-//       backgroundColor: mainColor,
-//       appBar: CustomAppBar(index, widthScreen, context),
-//       body: Column(
-//         children: <Widget>[
-//           PageButtons(widthScreen, index, pageController),
-//           Expanded(
-//             child: PageView(
-//               controller: pageController,
-//               onPageChanged: (value) {
-//                 setState(() {
-//                   index = value;
-//                 });
-//               },
-//               children: [
-//                 MainPage(),
-//                 // FilePickerDemo(),
-//                 PlaylistList(),
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: "Test",
+      home: AudioServiceWidget(
+        child: DefaultTabController(length: 4, child: MainScreen()),
+      ),
+    );
+  }
+}
 
-//                 // Container(
-//                 //   color: mainColor,
-//                 // )
-//               ],
-//             ),
-//           ),
-//         ],
-//       ),
+_backgroundTaskEntryPoint() {
+  print("entrypoint");
+  AudioServiceBackground.run(() => AudioPlayerTask());
+}
 
-//       // bottomSheet: WidgetMiniPlayer(),
-//       // bottomNavigationBar: WidgetMiniPlayer(),
-//     );
-//   }
-// }
+class MainScreen extends StatefulWidget {
+  @override
+  _MainScreenState createState() => _MainScreenState();
+}
 
-// class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
-//   final int index;
-//   final double widthScreen;
-//   final BuildContext context;
+class _MainScreenState extends State<MainScreen> {
+  @override
+  void initState() {
+    start();
+    super.initState();
+  }
 
-//   @override
-//   final Size preferredSize;
+  @override
+  Widget build(BuildContext context) {
+    DBHelper _database = DBHelper();
+    return Scaffold(
+        backgroundColor: mainColor,
+        appBar: AppBar(
+          title: Text("test"),
+          bottom: TabBar(
+            tabs: [
+              Tab(
+                icon: Icon(
+                  Icons.home,
+                ),
+              ),
+              Tab(
+                icon: Icon(
+                  Icons.playlist_add,
+                ),
+              ),
+              Tab(
+                icon: Icon(
+                  Icons.playlist_add,
+                ),
+              ),
+              Tab(
+                icon: Icon(
+                  Icons.playlist_add,
+                ),
+              ),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            PrimaPagina(context),
+            ListaCanzoni(),
+            // PlaylistScreen(),
+            PlaylistsList(),
+            FourthPage(),
+          ],
+        ));
+  }
 
-//   CustomAppBar(this.index, this.widthScreen, this.context)
-//       : preferredSize = Size.fromHeight(95.0);
+  //* AudioService lo usi per parlare con la background task
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       padding: const EdgeInsets.only(top: 8.0, left: 16.0, right: 16.0),
-//       color: secondaryColor,
-//       child: SafeArea(
-//         child: Column(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: <Widget>[
-//             Text(
-//               "Sputofy",
-//               style: Theme.of(context).textTheme.subtitle2.merge(
-//                     TextStyle(color: accentColor, fontSize: 24.0),
-//                   ),
-//             ),
-//             SizedBox(
-//               height: 10.0,
-//             ),
-//             Row(
-//               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//               children: <Widget>[
-//                 Container(
-//                   height: 30.0,
-//                   width: 280.0,
-//                   color: Colors.red,
-//                 ),
-//                 GestureDetector(
-//                   onTap: () {
-//                     index == 0
-//                         ? cacca()
-//                         : _showNewPlaylistDialog(widthScreen, context);
-//                   },
-//                   child: Icon(
-//                     index == 0 ? Icons.menu_rounded : Icons.library_add,
-//                     size: 32.0,
-//                   ),
-//                 )
-//               ],
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
+  start() async {
+    // final mediaList = [];
+    // for (var song in playlist) {
+    //   print(song);
+    //   final mediaItem = MediaItem(
+    //     id: song.id,
+    //     album: song.album,
+    //     title: song.title,
+    //     duration: song.duration,
+    //     artUri: song.artUri,
+    //   );
+    //   mediaList.add(mediaItem.toJson());
+    // }
+    // if (mediaList.isEmpty) return;
+    // final params = {'data': mediaList};
+    AudioService.start(
+        backgroundTaskEntrypoint: _backgroundTaskEntryPoint,
+        // params: ,
+        androidEnableQueue: true,
+        androidNotificationColor: 0x0000ff);
+  }
+}
 
-//   cacca() {
-//     print(0);
-//   }
+class QueueState {
+  final List<MediaItem> queue;
+  final MediaItem mediaItem;
 
-//   void _showNewPlaylistDialog(double widthScreen, BuildContext context) {
-//     showModalBottomSheet(
-//       isScrollControlled: true,
-//       context: context,
-//       builder: (context) =>
-//           NewPlaylistDialog(MediaQuery.of(context).viewInsets),
-//       shape: RoundedRectangleBorder(
-//         borderRadius: BorderRadius.only(
-//           topLeft: Radius.circular(24.0),
-//           topRight: Radius.circular(24.0),
-//         ),
-//       ),
-//       backgroundColor: mainColor,
-//     );
-//   }
-// }
+  QueueState(this.queue, this.mediaItem);
+}
 
-// class NewPlaylistDialog extends StatefulWidget {
-//   NewPlaylistDialog(this.padding);
-//   final EdgeInsets padding;
+class PlayingMediaItem {
+  final MediaItem mediaItem;
+  final Duration position;
+  final PlaybackState playbackState;
 
-//   @override
-//   _NewPlaylistDialogState createState() => _NewPlaylistDialogState();
-// }
+  PlayingMediaItem(this.mediaItem, this.position, this.playbackState);
+}
 
-// class _NewPlaylistDialogState extends State<NewPlaylistDialog> {
-//   var textController = TextEditingController(text: "cacca");
+class PrimaPagina extends StatelessWidget {
+  PrimaPagina(this.context);
+  final BuildContext context;
 
-//   @override
-//   void initState() {
-//     super.initState();
-//   }
+  final List<Song> playlist = [
+    Song(
+      null,
+      '/data/user/0/com.example.sputofy_2/cache/file_picker/「Rock」 Hatsuki Yura (葉月ゆら) - 少女と黄金竜の物語 (Shoujo to Ougon Ryuu no Monogatari).mp3',
+      'oregairu',
+      'tanta',
+      "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
+      Duration(milliseconds: 273057),
+    ),
+  ];
 
-//   @override
-//   void dispose() {
-//     textController.dispose();
-//     super.dispose();
-//   }
+  Stream<QueueState> get _queueStateStream =>
+      Rx.combineLatest2<List<MediaItem>, MediaItem, QueueState>(
+          AudioService.queueStream,
+          AudioService.currentMediaItemStream,
+          (queue, mediaItem) => QueueState(queue, mediaItem));
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return Padding(
-//       padding: widget.padding,
-//       child: Container(
-//         padding: const EdgeInsets.all(24.0),
-//         child: Column(
-//           mainAxisSize: MainAxisSize.min,
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: <Widget>[
-//             Center(
-//               child: Text(
-//                 "Playlist Title",
-//                 style: Theme.of(context).textTheme.headline6.merge(
-//                       TextStyle(
-//                         color: accentColor,
-//                       ),
-//                     ),
-//               ),
-//             ),
-//             SizedBox(height: 10.0),
-//             Text(
-//               "Enter playlist title",
-//               style: Theme.of(context).textTheme.subtitle1.merge(
-//                     TextStyle(
-//                       color: accentColor,
-//                       fontSize: 16,
-//                     ),
-//                   ),
-//             ),
-//             SizedBox(height: 8.0),
-//             TextField(
-//               controller: textController,
-//               autofocus: true,
-//               cursorColor: accentColor,
-//               cursorHeight: 20.0,
-//               decoration: InputDecoration(
-//                 focusedBorder: InputBorder.none,
-//                 filled: true,
-//                 fillColor: secondaryColor,
-//               ),
-//             ),
-//             SizedBox(height: 8.0),
-//             Row(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//               children: <Widget>[
-//                 GestureDetector(
-//                   onTap: () => Navigator.of(context).pop(),
-//                   child: Container(
-//                     width: 180,
-//                     height: 50,
-//                     decoration: BoxDecoration(
-//                       color: secondaryColor,
-//                       borderRadius: BorderRadius.all((Radius.circular(24.0))),
-//                     ),
-//                     child: Center(
-//                       child: Text(
-//                         "Cancel",
-//                         style: Theme.of(context).textTheme.headline6.merge(
-//                               TextStyle(
-//                                 color: accentColor,
-//                               ),
-//                             ),
-//                       ),
-//                     ),
-//                   ),
-//                 ),
-//                 GestureDetector(
-//                   onTap: _insert,
-//                   child: Container(
-//                     width: 150,
-//                     height: 50,
-//                     decoration: BoxDecoration(
-//                       color: accentColor,
-//                       borderRadius: BorderRadius.all((Radius.circular(24.0))),
-//                     ),
-//                     child: Center(
-//                       child: Text(
-//                         "Save",
-//                         style: Theme.of(context).textTheme.headline6.merge(
-//                               TextStyle(color: Colors.black),
-//                             ),
-//                       ),
-//                     ),
-//                   ),
-//                 )
-//               ],
-//             )
-//           ],
-//         ),
-//       ),
-//     );
-//   }
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            StreamBuilder<PlaybackState>(
+              stream: AudioService.playbackStateStream,
+              builder: (context, snapshot) {
+                final playing = snapshot.data?.playing ?? false;
+                final processingState = snapshot.data?.processingState ??
+                    AudioProcessingState.stopped;
+                print("playing var = $playing");
+                print("processingstate var = $processingState");
+                return Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    if (playing)
+                      MaterialButton(
+                        child: Text("Pause"),
+                        onPressed: pause,
+                        color: Colors.green,
+                      )
+                    else
+                      MaterialButton(
+                        child: Text("Play"),
+                        onPressed: () {
+                          showDialogWindow(context);
+                          play();
+                        },
+                        color: Colors.green,
+                      ),
+                    if (processingState != AudioProcessingState.stopped &&
+                        processingState != AudioProcessingState.none)
+                      MaterialButton(
+                        child: Text("Stop"),
+                        onPressed: stop,
+                        color: Colors.red,
+                      ),
+                  ],
+                );
+              },
+            ),
+            MaterialButton(
+                child: Text("ADD"),
+                color: Colors.blue,
+                onPressed: () {
+                  openPlaylist();
+                }),
+            StreamBuilder(
+              stream: _queueStateStream,
+              builder: (context, snapshot) {
+                if (snapshot.data != null) {
+                  final queueStateStream = snapshot.data;
+                  return Container(
+                    width: double.infinity,
+                    height: 300,
+                    child: ListView.builder(
+                      itemCount: queueStateStream.queue.length,
+                      itemBuilder: (context, index) {
+                        final mediaItem = queueStateStream.queue[index];
+                        final currentMediaItem = queueStateStream.mediaItem;
+                        return MaterialButton(
+                          onPressed: () => seek(mediaItem.id),
+                          child: mediaItem == currentMediaItem
+                              ? Text(
+                                  "${currentMediaItem.title}---${currentMediaItem.duration.toString()}",
+                                  style: TextStyle(color: Colors.blue),
+                                )
+                              : Text(
+                                  "${mediaItem.title}----${mediaItem.duration.toString()}"),
+                        );
+                      },
+                    ),
+                  );
+                } else {
+                  return CircularProgressIndicator();
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-//   void _insert() async {
-//     List<Playlist> playlists =
-//         await Provider.of<DatabaseValue>(context, listen: false).playlists;
-//     // print(playlists.map((e) => print(e.name.toString())));
-//     int max = playlists.length;
-//     bool isIn = false;
+  start() async {
+    // final mediaList = [];
+    // for (var song in playlist) {
+    //   print(song);
+    //   final mediaItem = MediaItem(
+    //     id: song.id,
+    //     album: song.album,
+    //     title: song.title,
+    //     duration: song.duration,
+    //     artUri: song.artUri,
+    //   );
+    //   mediaList.add(mediaItem.toJson());
+    // }
+    // if (mediaList.isEmpty) return;
+    // final params = {'data': mediaList};
+    AudioService.start(
+        backgroundTaskEntrypoint: _backgroundTaskEntryPoint,
+        // params: params,
+        androidEnableQueue: true,
+        androidNotificationColor: 0x0000ff);
+  }
 
-//     for (int i = 0; i < max; i++) {
-//       if (textController.text == playlists[i].name) {
-//         isIn = true;
-//         break;
-//       }
-//     }
+  openPlaylist() {
+    final mediaList = [];
+    for (var song in playlist) {
+      print(song);
+      final mediaItem = MediaItem(
+        id: song.path,
+        album: song.author,
+        title: song.title,
+        duration: song.duration,
+        artUri: song.cover,
+      );
+      mediaList.add(mediaItem.toJson());
+    }
+    if (mediaList.isEmpty) return;
+    // final params = {'data': mediaList};
+    AudioService.customAction('openPlaylist', mediaList);
+    // Navigator.push(
+    //     context,
+    //     MaterialPageRoute(
+    //       builder: (context) => PlaylistScreen(),
+    //     ));
+  }
 
-//     if (isIn) {
-//       print("gia esiste");
-//     } else {
-//       Playlist playlist = Playlist(null, textController.text);
-//       Provider.of<DatabaseValue>(context, listen: false).savePlaylist(playlist);
+  pause() {
+    print("Pause");
+    AudioService.pause();
+  }
 
-//       Navigator.of(context).pop();
-//     }
-//   }
-// }
+  stop() {
+    print("stop");
+    AudioService.stop();
+  }
 
-// class PageButtons extends StatelessWidget {
-//   final double widthScreen;
-//   final int index;
-//   final PageController pageController;
+  play() async {
+    if (AudioService.running) {
+      AudioService.play();
+    } else {
+      start();
+    }
+  }
 
-//   PageButtons(this.widthScreen, this.index, this.pageController);
+  add(MediaItem mediaItem) {
+    AudioService.addQueueItem(mediaItem);
+    // AudioService.setRating(Rating.newHeartRating(true));
+  }
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       width: widthScreen,
-//       height: 40.0,
-//       padding: const EdgeInsets.only(left: 16.0, right: 16.0),
-//       child: Row(
-//         mainAxisAlignment: MainAxisAlignment.center,
-//         children: <Widget>[
-//           GestureDetector(
-//             onTap: () {
-//               pageController.animateToPage(0,
-//                   duration: Duration(microseconds: 250),
-//                   curve: Curves.bounceInOut);
-//             },
-//             child: Container(
-//               width: (widthScreen - 32) / 2,
-//               decoration: BoxDecoration(
-//                 border: Border(
-//                   bottom: BorderSide(
-//                       color: index == 0 ? accentColor : secondaryColor,
-//                       width: 3.0),
-//                 ),
-//               ),
-//               child: Center(
-//                 child: Text(
-//                   "Songs",
-//                   style: TextStyle(
-//                       fontSize: 20.0,
-//                       color: index == 0 ? Colors.white : secondaryColor),
-//                 ),
-//               ),
-//             ),
-//           ),
-//           GestureDetector(
-//             onTap: () {
-//               pageController.animateToPage(1,
-//                   duration: Duration(microseconds: 250),
-//                   curve: Curves.bounceInOut);
-//             },
-//             child: Container(
-//               width: (widthScreen - 32) / 2,
-//               decoration: BoxDecoration(
-//                 border: Border(
-//                   bottom: BorderSide(
-//                       color: index == 1 ? accentColor : secondaryColor,
-//                       width: 3.0),
-//                 ),
-//               ),
-//               child: Center(
-//                 child: Text(
-//                   "Playlist",
-//                   style: TextStyle(
-//                       fontSize: 20.0,
-//                       color: index == 1 ? Colors.white : secondaryColor),
-//                 ),
-//               ),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
+  seek(String mediaId) {
+    AudioService.skipToQueueItem(mediaId);
+  }
+}

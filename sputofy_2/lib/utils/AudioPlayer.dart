@@ -5,7 +5,6 @@ import 'package:audio_session/audio_session.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:sputofy_2/model/SongModel.dart';
 import 'package:sputofy_2/utils/Database.dart';
-import 'package:sputofy_2/utils/DatabaseProvider.dart';
 
 class AudioPlayerTask extends BackgroundAudioTask {
   AudioPlayer _audioPlayer = AudioPlayer();
