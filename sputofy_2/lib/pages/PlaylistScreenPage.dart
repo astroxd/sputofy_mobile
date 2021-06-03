@@ -14,6 +14,15 @@ import 'package:sputofy_2/utils/palette.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sputofy_2/utils/AudioPlayer.dart';
 
+import 'package:rxdart/rxdart.dart';
+
+class PlayingPlaylist {
+  final List<Song> playlistSongs;
+  final MediaItem playingSong;
+
+  PlayingPlaylist(this.playlistSongs, this.playingSong);
+}
+
 class PlaylistScreen extends StatefulWidget {
   final Playlist playlist;
   PlaylistScreen(this.playlist);
@@ -23,37 +32,46 @@ class PlaylistScreen extends StatefulWidget {
 }
 
 class _PlaylistScreenState extends State<PlaylistScreen> {
+  int playingPlaylistID;
+
+  @override
+  void initState() {
+    AudioService.customAction('getPlaylistID');
+    AudioService.customEventStream.listen((event) {
+      playingPlaylistID = event;
+    });
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     MediaQueryData mediaQueryData = MediaQuery.of(context);
     double widthScreen = mediaQueryData.size.width;
     double safePadding = mediaQueryData.padding.top;
     DBHelper _database = DBHelper();
-    // DBProvider _provider = DBProvider();
-    // _provider.playlistSongs.listen((event) {
-    //   print("CACA");
-    // });
+
     return Scaffold(
       backgroundColor: mainColor,
       body: SafeArea(
-          child: FutureBuilder(
-        future: _database.getPlaylistSongs(widget.playlist.id),
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            List<Song> playlistSongs = snapshot.data;
-            return Column(
-              children: <Widget>[
-                _buildWidgetPlaylistInfo(
-                    widthScreen, context, safePadding, playlistSongs),
-                SizedBox(height: 16.0),
-                _buildWidgetPlaylistSongsList(playlistSongs, _database),
-              ],
-            );
-          } else {
-            return CircularProgressIndicator();
-          }
-        },
-      )),
+        child: FutureBuilder(
+          future: _database.getPlaylistSongs(widget.playlist.id),
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              List<Song> playlistSongs = snapshot.data;
+              return Column(
+                children: <Widget>[
+                  _buildWidgetPlaylistInfo(
+                      widthScreen, context, safePadding, playlistSongs),
+                  SizedBox(height: 16.0),
+                  _buildWidgetPlaylistSongsList(playlistSongs, _database),
+                ],
+              );
+            } else {
+              return CircularProgressIndicator();
+            }
+          },
+        ),
+      ),
     );
   }
 
@@ -175,7 +193,13 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                                   playlistID: widget.playlist.id,
                                   playlistSongs: playlistSongs,
                                 ),
-                              )).then((value) => setState(() {}));
+                              )).then((value) => setState(() {
+                                if (value != null &&
+                                    playingPlaylistID == widget.playlist.id) {
+                                  AudioService.customAction(
+                                      'addSong', value[0].toMap());
+                                }
+                              }));
                         },
                         child: Container(
                           decoration: BoxDecoration(
@@ -295,7 +319,11 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
 
         if (itemSelected == "1") {
           _database.deletePlaylistSong(widget.playlist.id, song.id);
-          setState(() {});
+          setState(() {
+            if (playingPlaylistID == widget.playlist.id) {
+              AudioService.customAction('removeSong', song.id);
+            }
+          });
         } else if (itemSelected == "2") {
           //code here
         } else {

@@ -5,6 +5,7 @@ import 'package:audio_session/audio_session.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:sputofy_2/model/SongModel.dart';
 import 'package:sputofy_2/utils/Database.dart';
+import 'package:rxdart/rxdart.dart';
 
 class AudioPlayerTask extends BackgroundAudioTask {
   AudioPlayer _audioPlayer = AudioPlayer();
@@ -16,9 +17,12 @@ class AudioPlayerTask extends BackgroundAudioTask {
   List<MediaItem> _queue = [];
   int get index => _audioPlayer.currentIndex;
   MediaItem get mediaItem => index == null ? null : _queue[index];
-  int playlistID;
-  Stream test;
+  int _playlistID;
+  int get playlistID => _playlistID == null ? null : _playlistID;
   DBHelper _database = DBHelper();
+
+  final _playlistSongs = BehaviorSubject<List<Song>>();
+  Stream<List<Song>> get playlistSongs => _playlistSongs.stream;
 
   //*  Qui overridi le varie funzioni
 
@@ -33,7 +37,16 @@ class AudioPlayerTask extends BackgroundAudioTask {
     _broadcaseMediaItemChanges();
     _propogateEventsFromAudioPlayerToAudioServiceClients();
     _performSpecialProcessingForStateTransitions();
+    _listeToDatabase();
     // _loadQueue();
+  }
+
+  _listeToDatabase() {
+    _database.playlistSongs.listen((event) {
+      print("ho ricevuto qualcosa");
+      _playlistSongs.add(event);
+      AudioServiceBackground.sendCustomEvent(event);
+    });
   }
 
   // _loadMediaItemsIntoQueue(Map<String, dynamic> params) {
@@ -47,7 +60,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
   //   }
   // }
   _loadMediaItemsIntoQueue(final mediaItems) async {
-    if (mediaItems != playlistID) {
+    if (mediaItems != _playlistID) {
       _queue.clear();
       DBHelper _database = DBHelper();
       List<Song> songs = await _database.getPlaylistSongs(mediaItems);
@@ -61,7 +74,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
             duration: song.duration);
         _queue.add(item);
       }
-      playlistID = mediaItems;
+      _playlistID = mediaItems;
       _loadQueue();
       onPlay();
       print(_queue);
@@ -223,7 +236,24 @@ class AudioPlayerTask extends BackgroundAudioTask {
         break;
       case 'openPlaylist':
         await _loadMediaItemsIntoQueue(arguments);
-
+        break;
+      case 'getPlaylistID':
+        if (playlistID != null) {
+          AudioServiceBackground.sendCustomEvent(playlistID);
+        }
+        break;
+      case 'addSong':
+        print("vediamo $arguments");
+        //TODO function that add the new song passed
+        break;
+      case 'removeSong':
+        print("remove Song $arguments");
+        //TODO function that remove song passed
+        break;
+      case 'loadPlaylist':
+        List<Song> canzoni = await _database.getPlaylistSongs(arguments);
+        _playlistSongs.add(canzoni);
+        AudioServiceBackground.sendCustomEvent(_playlistSongs.value);
         break;
     }
   }

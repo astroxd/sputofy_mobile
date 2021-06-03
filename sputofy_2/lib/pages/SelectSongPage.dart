@@ -1,3 +1,4 @@
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:sputofy_2/model/PlaylistSongModel.dart';
 import 'package:sputofy_2/model/SongModel.dart';
@@ -114,6 +115,6 @@ class _SelectSongListState extends State<SelectSongList> {
         toAddSongs[i].id,
       ));
     }
-    Navigator.of(context).pop();
+    Navigator.pop(context, toAddSongs);
   }
 }
