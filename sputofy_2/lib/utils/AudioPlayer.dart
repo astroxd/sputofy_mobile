@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:sputofy_2/model/SongModel.dart';
 import 'package:sputofy_2/utils/Database.dart';
@@ -12,7 +13,6 @@ class AudioPlayerTask extends BackgroundAudioTask {
   AudioProcessingState _skipState;
   StreamSubscription<PlaybackEvent> _eventSubscription;
   StreamSubscription<SequenceState> _sequenceStateSubscription;
-  StreamSubscription<List<Song>> _listSongs;
 
   List<MediaItem> _queue = [];
   int get index => _audioPlayer.currentIndex;
@@ -39,7 +39,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
     // _loadQueue();
   }
 
-  _loadMediaItemsIntoQueue(final songs) async {
+  _loadMediaItemsIntoQueue(final songs) {
     _queue.clear();
 
     for (var song in songs) {
@@ -57,6 +57,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   _addSongToQueue(final songs) {
     List<MediaItem> newSongs = [];
+    int previousQueueLength = _queue.length;
     for (var song in songs) {
       MediaItem item = MediaItem(
         id: song['path'],
@@ -73,18 +74,33 @@ class AudioPlayerTask extends BackgroundAudioTask {
       _playlist
           .add(AudioSource.uri(Uri.parse(mediaItem.id), tag: mediaItem.id));
     }
+    print("ho aggiunto una canzone $_playlist");
+    print("ho aggiunto una queue $_queue");
+    print("dovresti essre 0? $previousQueueLength");
+    if (previousQueueLength == 0) _loadQueue();
   }
 
-  _removeSongToQueue(final songPath) {
+  _removeSongFromQueue(final songPath) {
     final lista = _playlist.sequence;
-    if (lista.length == 1) _audioPlayer.stop();
+
     int indexToRemove = lista.indexWhere((element) => element.tag == songPath);
     _playlist.removeAt(indexToRemove);
     _queue.removeWhere((element) => element.id == songPath);
-    print(_queue);
-    AudioServiceBackground.setQueue(_queue);
-    //TODO remove the badge when there are no songs
-    // AudioServiceBackground.setMediaItem(_queue[index]);
+
+    print(index);
+    if (_playlist.length == 0) {
+      _audioPlayer.pause();
+      AudioServiceBackground.setQueue(_queue);
+    } else {
+      print("non dovrei stare qui");
+      AudioServiceBackground.setQueue(_queue);
+      // AudioServiceBackground.setMediaItem(_queue[index]);
+      //TODO forse l'index non si aggiorna quando togli la canzone dalla _playlist
+    }
+
+    print("la queue aggiornata è $_queue");
+    print("la _playlist aggiornata è $_playlist");
+    print("la _playlist lunga è ${_playlist.children}");
   }
 
   Future<void> _setAudioSession() async {
@@ -115,6 +131,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
     _audioPlayer.processingStateStream.listen((state) {
       switch (state) {
         case ProcessingState.completed:
+          if (_playlist.length == 0) return;
           _audioPlayer.pause();
           _audioPlayer.seek(Duration.zero,
               index: _audioPlayer.effectiveIndices.first);
@@ -156,13 +173,14 @@ class AudioPlayerTask extends BackgroundAudioTask {
     await _audioPlayer.dispose();
     _eventSubscription.cancel();
     _sequenceStateSubscription.cancel();
-    _listSongs.cancel();
     await _broadcastState();
     await super.onStop();
   }
 
   @override
   Future<void> onPlay() async {
+    if (_playlist.length == 0) return;
+
     await _audioPlayer.play();
   }
 
@@ -185,15 +203,17 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   @override
   Future<void> onSkipToQueueItem(String mediaId) async {
-    final newIndex = _queue.indexWhere((song) => song.id == mediaId);
+    final lista = _playlist.sequence;
+    final newIndex = lista.indexWhere((song) => song.tag == mediaId);
 
-    if (newIndex == -1 || index == null) return;
+    if (newIndex == -1 || index == null || newIndex == index) return;
     _skipState = newIndex > index
         ? AudioProcessingState.skippingToNext
         : AudioProcessingState.skippingToPrevious;
 
     await _audioPlayer.seek(Duration.zero, index: newIndex);
-    if (!_audioPlayer.playing) await _audioPlayer.play();
+    // if (!_audioPlayer.playing) await _audioPlayer.play();
+    await _audioPlayer.play();
   }
 
   @override
@@ -204,7 +224,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
         AudioServiceBackground.sendCustomEvent(_audioPlayer.volume);
         break;
       case 'openPlaylist':
-        await _loadMediaItemsIntoQueue(arguments);
+        await _loadMediaItemsIntoQueue(arguments); //TODO remove
         break;
       case 'getPlaylistID':
         if (playlistID != null) {
@@ -215,15 +235,15 @@ class AudioPlayerTask extends BackgroundAudioTask {
         _playlistID = arguments;
         AudioServiceBackground.sendCustomEvent(playlistID);
         break;
+      case 'loadPlaylist':
+        _loadMediaItemsIntoQueue(arguments);
+        break;
       case 'addSong':
         _addSongToQueue(arguments);
         break;
       case 'removeSong':
         print("remove Song $arguments");
-        _removeSongToQueue(arguments);
-        break;
-      case 'loadPlaylist':
-        _loadMediaItemsIntoQueue(arguments);
+        _removeSongFromQueue(arguments);
         break;
     }
   }

@@ -150,14 +150,9 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                       GestureDetector(
                         onTap: () {
                           if (playingPlaylistID != widget.playlist.id) {
-                            List<Map> songs = [];
-                            for (Song song in playlistSongs) {
-                              songs.add(song.toMap());
-                            }
-                            AudioService.customAction('loadPlaylist', songs);
-                            AudioService.customAction(
-                                'setPlaylistID', widget.playlist.id);
+                            _loadQueue(playlistSongs);
                           } else {
+                            print("sono qui giusto=?");
                             AudioService.play();
                           }
 
@@ -313,7 +308,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
         if (itemSelected == null) return;
 
         if (itemSelected == "1") {
-          // _database.deletePlaylistSong(widget.playlist.id, song.id);
+          _database.deletePlaylistSong(widget.playlist.id, song.id);
           setState(() {
             if (playingPlaylistID == widget.playlist.id) {
               AudioService.customAction('removeSong', song.path);
@@ -328,61 +323,88 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     }
 
     return Expanded(
-      child: ListView.builder(
-        itemCount: playlistSongs.length,
-        itemBuilder: (context, index) {
-          String songTitle = playlistSongs[index].title;
+      child: StreamBuilder<MediaItem>(
+          stream: AudioService.currentMediaItemStream,
+          builder: (context, snapshot) {
+            String playingSongPath = snapshot.data?.id ?? '';
+            return ListView.builder(
+              itemCount: playlistSongs.length,
+              itemBuilder: (context, index) {
+                Song song = playlistSongs[index];
 
-          return GestureDetector(
-            behavior: HitTestBehavior.translucent,
-            onTap: () {},
-            child: Column(
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0, vertical: 8.0),
-                  child: Row(
+                return GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onTap: () {
+                    if (playingPlaylistID == widget.playlist.id) {
+                      AudioService.skipToQueueItem(song.path);
+                      AudioService.play();
+                    } else {
+                      _loadQueue(playlistSongs);
+                      print("ma sta cosa la fai?");
+                      AudioService.skipToQueueItem(song.path);
+                      print("e questa?");
+                    }
+                  },
+                  child: Column(
                     children: <Widget>[
-                      Text(
-                        '${index + 1}',
-                        style: TextStyle(fontSize: 20, color: accentColor),
-                      ),
-                      SizedBox(width: 10.0),
-                      Expanded(
-                        child: Text(
-                          songTitle,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 20,
-                            color: Colors.black,
-                          ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0, vertical: 8.0),
+                        child: Row(
+                          children: <Widget>[
+                            Text(
+                              '${index + 1}',
+                              style:
+                                  TextStyle(fontSize: 20, color: accentColor),
+                            ),
+                            SizedBox(width: 10.0),
+                            Expanded(
+                              child: Text(
+                                song.title,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 20,
+                                  color: song.path == playingSongPath
+                                      ? accentColor
+                                      : Colors.black,
+                                ),
+                              ),
+                            ),
+                            GestureDetector(
+                              onTapDown: (TapDownDetails details) {
+                                _showPopupMenu(details.globalPosition,
+                                    playlistSongs[index]);
+                              },
+                              child: Icon(
+                                Icons.more_vert,
+                                color: accentColor,
+                                size: 24,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      GestureDetector(
-                        onTapDown: (TapDownDetails details) {
-                          _showPopupMenu(
-                              details.globalPosition, playlistSongs[index]);
-                        },
-                        child: Icon(
-                          Icons.more_vert,
-                          color: accentColor,
-                          size: 24,
-                        ),
-                      ),
+                      Divider(
+                        indent: 16.0,
+                        color: Colors.black,
+                      )
                     ],
                   ),
-                ),
-                Divider(
-                  indent: 16.0,
-                  color: Colors.black,
-                )
-              ],
-            ),
-          );
-        },
-      ),
+                );
+              },
+            );
+          }),
       //
     );
+  }
+
+  _loadQueue(List<Song> playlistSongs) {
+    List<Map> songs = [];
+    for (Song song in playlistSongs) {
+      songs.add(song.toMap());
+    }
+    AudioService.customAction('loadPlaylist', songs);
+    AudioService.customAction('setPlaylistID', widget.playlist.id);
   }
 }
