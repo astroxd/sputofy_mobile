@@ -21,8 +21,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
   int get playlistID => _playlistID == null ? null : _playlistID;
   DBHelper _database = DBHelper();
 
-  final _playlistSongs = BehaviorSubject<List<Song>>();
-  Stream<List<Song>> get playlistSongs => _playlistSongs.stream;
+  ConcatenatingAudioSource _playlist;
 
   //*  Qui overridi le varie funzioni
 
@@ -37,64 +36,55 @@ class AudioPlayerTask extends BackgroundAudioTask {
     _broadcaseMediaItemChanges();
     _propogateEventsFromAudioPlayerToAudioServiceClients();
     _performSpecialProcessingForStateTransitions();
-    _listeToDatabase();
     // _loadQueue();
   }
 
-  _listeToDatabase() {
-    _database.playlistSongs.listen((event) {
-      print("ho ricevuto qualcosa");
-      _playlistSongs.add(event);
-      AudioServiceBackground.sendCustomEvent(event);
-    });
+  _loadMediaItemsIntoQueue(final songs) async {
+    _queue.clear();
+
+    for (var song in songs) {
+      MediaItem item = MediaItem(
+        id: song['path'],
+        album: "album",
+        title: song['title'],
+        duration: Duration(milliseconds: song['duration']),
+      );
+      _queue.add(item);
+    }
+    _loadQueue();
+    onPlay();
   }
 
-  // _loadMediaItemsIntoQueue(Map<String, dynamic> params) {
-  //   _queue.clear();
-  //   final List mediaItems = params['data'];
-  //   for (var item in mediaItems) {
-  //     final mediaItem = MediaItem.fromJson(item);
-  //     final newItem = mediaItem.copyWith(rating: Rating.newHeartRating(true));
-  //     // _queue.add(mediaItem);
-  //     _queue.add(newItem);
-  //   }
-  // }
-  _loadMediaItemsIntoQueue(final mediaItems) async {
-    if (mediaItems != _playlistID) {
-      _queue.clear();
-      DBHelper _database = DBHelper();
-      List<Song> songs = await _database.getPlaylistSongs(mediaItems);
-      print(songs);
+  _addSongToQueue(final songs) {
+    List<MediaItem> newSongs = [];
+    for (var song in songs) {
+      MediaItem item = MediaItem(
+        id: song['path'],
+        album: "album",
+        title: song['title'],
+        duration: Duration(milliseconds: song['duration']),
+      );
+      _queue.add(item);
+      newSongs.add(item);
+    }
+    AudioServiceBackground.setQueue(_queue);
 
-      for (var song in songs) {
-        MediaItem item = MediaItem(
-            id: song.path,
-            album: "album",
-            title: song.title,
-            duration: song.duration);
-        _queue.add(item);
-      }
-      _playlistID = mediaItems;
-      _loadQueue();
-      onPlay();
-      print(_queue);
-    } else
-      print("non faccio niente");
+    for (var mediaItem in newSongs) {
+      _playlist
+          .add(AudioSource.uri(Uri.parse(mediaItem.id), tag: mediaItem.id));
+    }
+  }
 
-    // for (var item in songs) {
-    //   MediaItem mediaItem = MediaItem.fromJson(item);
-    //   //   // MediaItem mediaItem = MediaItem(
-    //   //   //   id: item.path,
-    //   //   //   album: "album",
-    //   //   //   title: item.title,
-    //   //   //   duration: item.duration,
-    //   //   // );
-    //   //   // final newItem = mediaItem.copyWith(rating: Rating.newHeartRating(true));
-    //   _queue.add(mediaItem);
-    //   // print(mediaItem);
-    // }
-    // print(_queue);
-    // print(mediaItems);
+  _removeSongToQueue(final songPath) {
+    final lista = _playlist.sequence;
+    if (lista.length == 1) _audioPlayer.stop();
+    int indexToRemove = lista.indexWhere((element) => element.tag == songPath);
+    _playlist.removeAt(indexToRemove);
+    _queue.removeWhere((element) => element.id == songPath);
+    print(_queue);
+    AudioServiceBackground.setQueue(_queue);
+    //TODO remove the badge when there are no songs
+    // AudioServiceBackground.setMediaItem(_queue[index]);
   }
 
   Future<void> _setAudioSession() async {
@@ -141,20 +131,15 @@ class AudioPlayerTask extends BackgroundAudioTask {
   ///* Crea la lista di AudioSource
   Future<void> _loadQueue() async {
     AudioServiceBackground.setQueue(_queue);
-
-    try {
-      await _audioPlayer.setAudioSource(ConcatenatingAudioSource(
+    _playlist = ConcatenatingAudioSource(
         useLazyPreparation: true,
         children: _queue.map((item) {
           final uri = Uri.parse(item.id);
-          return AudioSource.uri(uri);
-        }).toList(),
-      ));
+          return AudioSource.uri(uri, tag: item.id);
+        }).toList());
 
-      // _audioPlayer.durationStream.listen((duration) {
-      //   print(duration.inMilliseconds);
-      //   _updateQueueWithCurrentDuration(duration);
-      // });
+    try {
+      await _audioPlayer.setAudioSource(_playlist);
     } catch (e) {
       print('Error: $e');
       onStop();
@@ -163,22 +148,6 @@ class AudioPlayerTask extends BackgroundAudioTask {
     AudioServiceBackground.setMediaItem(_queue[index]);
   }
 
-  ///* Mette la duration al current MediaItem appena lo sta per suonare
-  // void _updateQueueWithCurrentDuration(Duration duration) {
-  //   final songIndex = _audioPlayer.currentIndex;
-  //   if (duration == null || mediaItem == null) {
-  //     return;
-  //   }
-  //   final modifiedMediaItem = mediaItem.copyWith(
-  //     duration: duration,
-  //     rating: Rating.newHeartRating(false),
-  //     artUri:
-  //         "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
-  //   );
-  //   _queue[songIndex] = modifiedMediaItem;
-  //   AudioServiceBackground.setQueue(_queue);
-  //   AudioServiceBackground.setMediaItem(_queue[songIndex]);
-  // }
 //* ---------------------------------------------------------------------------
 
   @override
@@ -242,18 +211,19 @@ class AudioPlayerTask extends BackgroundAudioTask {
           AudioServiceBackground.sendCustomEvent(playlistID);
         }
         break;
+      case 'setPlaylistID':
+        _playlistID = arguments;
+        AudioServiceBackground.sendCustomEvent(playlistID);
+        break;
       case 'addSong':
-        print("vediamo $arguments");
-        //TODO function that add the new song passed
+        _addSongToQueue(arguments);
         break;
       case 'removeSong':
         print("remove Song $arguments");
-        //TODO function that remove song passed
+        _removeSongToQueue(arguments);
         break;
       case 'loadPlaylist':
-        List<Song> canzoni = await _database.getPlaylistSongs(arguments);
-        _playlistSongs.add(canzoni);
-        AudioServiceBackground.sendCustomEvent(_playlistSongs.value);
+        _loadMediaItemsIntoQueue(arguments);
         break;
     }
   }

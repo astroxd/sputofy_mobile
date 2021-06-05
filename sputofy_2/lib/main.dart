@@ -23,6 +23,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(primarySwatch: Colors.orange),
       title: "Test",
       home: AudioServiceWidget(
         child: DefaultTabController(length: 4, child: MainScreen()),

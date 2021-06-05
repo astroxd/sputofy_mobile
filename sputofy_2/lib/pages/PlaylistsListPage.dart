@@ -51,6 +51,7 @@ class _PlaylistsListState extends State<PlaylistsList> {
                                 children: [
                                   Text(_playlist.id.toString()),
                                   Text(_playlist.creationDate.toString()),
+                                  Text(_playlist.name.toString()),
                                 ],
                               )));
                     },

@@ -14,15 +14,6 @@ import 'package:sputofy_2/utils/palette.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sputofy_2/utils/AudioPlayer.dart';
 
-import 'package:rxdart/rxdart.dart';
-
-class PlayingPlaylist {
-  final List<Song> playlistSongs;
-  final MediaItem playingSong;
-
-  PlayingPlaylist(this.playlistSongs, this.playingSong);
-}
-
 class PlaylistScreen extends StatefulWidget {
   final Playlist playlist;
   PlaylistScreen(this.playlist);
@@ -40,6 +31,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     AudioService.customEventStream.listen((event) {
       playingPlaylistID = event;
     });
+
     super.initState();
   }
 
@@ -85,7 +77,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
           _buildTopBar(),
           _buildPlaylistData(playlistSongs),
           SizedBox(height: 10.0),
-          _buildPlaylistActionButtons(widthScreen),
+          _buildPlaylistActionButtons(widthScreen, playlistSongs),
         ],
       ),
     );
@@ -156,21 +148,19 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
                       GestureDetector(
-                        onTap: () async {
-                          // DBHelper db = DBHelper();
-                          // var canzonini =
-                          //     await db.getPlaylistSongs(widget.playlist.id);
-                          // List<Map> canzoni = [];
-                          // for (var song in canzonini) {
-                          //   MediaItem item = MediaItem(
-                          //       id: song.path,
-                          //       album: "album",
-                          //       title: song.title,
-                          //       duration: song.duration);
-                          //   canzoni.add(item.toJson());
-                          // }
-                          await AudioService.customAction(
-                              'openPlaylist', widget.playlist.id);
+                        onTap: () {
+                          if (playingPlaylistID != widget.playlist.id) {
+                            List<Map> songs = [];
+                            for (Song song in playlistSongs) {
+                              songs.add(song.toMap());
+                            }
+                            AudioService.customAction('loadPlaylist', songs);
+                            AudioService.customAction(
+                                'setPlaylistID', widget.playlist.id);
+                          } else {
+                            AudioService.play();
+                          }
+
                           // showDialogWindow(context);
                         },
                         child: Container(
@@ -196,8 +186,9 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                               )).then((value) => setState(() {
                                 if (value != null &&
                                     playingPlaylistID == widget.playlist.id) {
-                                  AudioService.customAction(
-                                      'addSong', value[0].toMap());
+                                  AudioService.customAction('addSong', value);
+                                } else {
+                                  print("sono qui dentro=? $value+");
                                 }
                               }));
                         },
@@ -223,7 +214,11 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     );
   }
 
-  Widget _buildPlaylistActionButtons(double widthScreen) {
+  Widget _buildPlaylistActionButtons(
+      double widthScreen, List<Song> playlistSongs) {
+    Duration tempo = Duration.zero;
+    playlistSongs.map((e) => tempo += e.duration).toList();
+
     return Container(
       width: widthScreen,
       child: Stack(
@@ -245,7 +240,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                 child: Padding(
                   padding: const EdgeInsets.only(left: 16.0, top: 16.0),
                   child: Text(
-                    "TODO Songs",
+                    "$tempo",
                     style: TextStyle(fontSize: 16.0, color: accentColor),
                   ),
                 ),
@@ -318,10 +313,10 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
         if (itemSelected == null) return;
 
         if (itemSelected == "1") {
-          _database.deletePlaylistSong(widget.playlist.id, song.id);
+          // _database.deletePlaylistSong(widget.playlist.id, song.id);
           setState(() {
             if (playingPlaylistID == widget.playlist.id) {
-              AudioService.customAction('removeSong', song.id);
+              AudioService.customAction('removeSong', song.path);
             }
           });
         } else if (itemSelected == "2") {

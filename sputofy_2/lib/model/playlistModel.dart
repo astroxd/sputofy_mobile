@@ -19,13 +19,8 @@ class Playlist {
   }
 
   Playlist.fromMap(Map<String, dynamic> map) {
-    print(map['id']);
-    print(map['name']);
-    print(map['cover']);
-    print(map['creation_date']);
-    print(map['duration']);
     id = map['id'];
-    name = map['map'];
+    name = map['name'];
     cover = map['cover'];
     creationDate = DateTime.fromMillisecondsSinceEpoch(map['creation_date']);
     duration = Duration(milliseconds: map['duration']);
