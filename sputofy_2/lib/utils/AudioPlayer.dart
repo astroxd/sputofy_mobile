@@ -33,13 +33,13 @@ class AudioPlayerTask extends BackgroundAudioTask {
     print("onStart");
     // _loadMediaItemsIntoQueue(params);
     await _setAudioSession();
-    _broadcaseMediaItemChanges();
+    _broadcasteMediaItemChanges();
     _propogateEventsFromAudioPlayerToAudioServiceClients();
     _performSpecialProcessingForStateTransitions();
     // _loadQueue();
   }
 
-  _loadMediaItemsIntoQueue(final songs) {
+  _loadMediaItemsIntoQueue(final songs) async {
     _queue.clear();
 
     for (var song in songs) {
@@ -51,8 +51,8 @@ class AudioPlayerTask extends BackgroundAudioTask {
       );
       _queue.add(item);
     }
-    _loadQueue();
-    onPlay();
+    await _loadQueue();
+    await onPlay();
   }
 
   _addSongToQueue(final songs) {
@@ -77,7 +77,13 @@ class AudioPlayerTask extends BackgroundAudioTask {
     print("ho aggiunto una canzone $_playlist");
     print("ho aggiunto una queue $_queue");
     print("dovresti essre 0? $previousQueueLength");
-    if (previousQueueLength == 0) _loadQueue();
+    // if (previousQueueLength == 0) _loadQueue();
+
+    if (previousQueueLength == 0) {
+      AudioServiceBackground.setMediaItem(_queue[index]);
+
+      _audioPlayer.load();
+    }
   }
 
   _removeSongFromQueue(final songPath) {
@@ -87,15 +93,20 @@ class AudioPlayerTask extends BackgroundAudioTask {
     _playlist.removeAt(indexToRemove);
     _queue.removeWhere((element) => element.id == songPath);
 
-    print(index);
     if (_playlist.length == 0) {
       _audioPlayer.pause();
       AudioServiceBackground.setQueue(_queue);
     } else {
       print("non dovrei stare qui");
       AudioServiceBackground.setQueue(_queue);
-      // AudioServiceBackground.setMediaItem(_queue[index]);
-      //TODO forse l'index non si aggiorna quando togli la canzone dalla _playlist
+      bool haidopo = index < _playlist.length - 1;
+      if (haidopo) {
+        print("ho quello dopo");
+        AudioServiceBackground.setMediaItem(_queue[index]);
+      } else {
+        print("non ho quello dopo");
+        AudioServiceBackground.setMediaItem(_queue[0]);
+      }
     }
 
     print("la queue aggiornata è $_queue");
@@ -109,7 +120,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
   }
 
   ///* Cambia il current item
-  void _broadcaseMediaItemChanges() {
+  void _broadcasteMediaItemChanges() {
     _audioPlayer.currentIndexStream.listen((index) {
       if (index != null) AudioServiceBackground.setMediaItem(_queue[index]);
     });
@@ -140,6 +151,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
           _skipState = null;
           break;
         default:
+          print("sono del default");
           break;
       }
     });
@@ -180,7 +192,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
   @override
   Future<void> onPlay() async {
     if (_playlist.length == 0) return;
-
+    // await _audioPlayer.seek(Duration.zero);
     await _audioPlayer.play();
   }
 
@@ -206,10 +218,10 @@ class AudioPlayerTask extends BackgroundAudioTask {
     final lista = _playlist.sequence;
     final newIndex = lista.indexWhere((song) => song.tag == mediaId);
 
-    if (newIndex == -1 || index == null || newIndex == index) return;
-    _skipState = newIndex > index
-        ? AudioProcessingState.skippingToNext
-        : AudioProcessingState.skippingToPrevious;
+    // if (newIndex == -1 || index == null) return;
+    // _skipState = newIndex > index
+    //     ? AudioProcessingState.skippingToNext
+    //     : AudioProcessingState.skippingToPrevious;
 
     await _audioPlayer.seek(Duration.zero, index: newIndex);
     // if (!_audioPlayer.playing) await _audioPlayer.play();
@@ -326,14 +338,20 @@ class AudioPlayerTask extends BackgroundAudioTask {
     if (_skipState != null) return _skipState;
     switch (_audioPlayer.processingState) {
       case ProcessingState.idle:
+        print("player in idle");
         return AudioProcessingState.stopped;
       case ProcessingState.loading:
+        print("player in loading");
         return AudioProcessingState.connecting;
       case ProcessingState.buffering:
+        print("player in buffering");
         return AudioProcessingState.buffering;
       case ProcessingState.ready:
+        print("player in ready");
         return AudioProcessingState.ready;
       case ProcessingState.completed:
+        print("player in completed");
+        print("queue ${_playlist.children}");
         return AudioProcessingState.completed;
       default:
         throw Exception("Invalid state: ${_audioPlayer.processingState}");

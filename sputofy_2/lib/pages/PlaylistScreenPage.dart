@@ -150,7 +150,9 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                       GestureDetector(
                         onTap: () {
                           if (playingPlaylistID != widget.playlist.id) {
-                            _loadQueue(playlistSongs);
+                            if (playlistSongs.isNotEmpty) {
+                              _loadQueue(playlistSongs);
+                            }
                           } else {
                             print("sono qui giusto=?");
                             AudioService.play();
@@ -337,11 +339,11 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                   onTap: () {
                     if (playingPlaylistID == widget.playlist.id) {
                       AudioService.skipToQueueItem(song.path);
-                      AudioService.play();
+                      // AudioService.play();
                     } else {
-                      _loadQueue(playlistSongs);
+                      _loadQueue(playlistSongs, songPath: song.path);
                       print("ma sta cosa la fai?");
-                      AudioService.skipToQueueItem(song.path);
+                      // AudioService.skipToQueueItem(song.path);
                       print("e questa?");
                     }
                   },
@@ -399,12 +401,17 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     );
   }
 
-  _loadQueue(List<Song> playlistSongs) {
+  _loadQueue(List<Song> playlistSongs, {String songPath}) async {
+    //TODO se non funziona metty async e await
     List<Map> songs = [];
     for (Song song in playlistSongs) {
       songs.add(song.toMap());
     }
-    AudioService.customAction('loadPlaylist', songs);
-    AudioService.customAction('setPlaylistID', widget.playlist.id);
+    await AudioService.customAction('loadPlaylist', songs);
+    await AudioService.customAction('setPlaylistID', widget.playlist.id);
+    if (songPath != null) {
+      print("voglio skippare");
+      await AudioService.skipToQueueItem(songPath);
+    }
   }
 }
