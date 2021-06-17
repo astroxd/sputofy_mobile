@@ -5,6 +5,8 @@ import 'package:sputofy_2/pages/PlaylistScreenPage.dart';
 import 'package:sputofy_2/utils/Database.dart';
 
 class PlaylistsList extends StatefulWidget {
+  final context;
+  PlaylistsList(this.context);
   @override
   _PlaylistsListState createState() => _PlaylistsListState();
 }
@@ -39,7 +41,7 @@ class _PlaylistsListState extends State<PlaylistsList> {
                           onTap: () {
                             Navigator.push(context, MaterialPageRoute(
                               builder: (context) {
-                                return PlaylistScreen(_playlist);
+                                return PlaylistScreen(context, _playlist);
                               },
                             ));
                           },

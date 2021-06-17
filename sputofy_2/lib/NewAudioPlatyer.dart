@@ -88,7 +88,7 @@ class _MainScreenState extends State<MainScreen> {
             PrimaPagina(context),
             ListaCanzoni(),
             // PlaylistScreen(),
-            PlaylistsList(),
+            PlaylistsList(context),
             FourthPage(),
           ],
         ));

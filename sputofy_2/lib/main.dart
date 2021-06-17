@@ -53,43 +53,45 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     DBHelper _database = DBHelper();
     return Scaffold(
-        backgroundColor: mainColor,
-        appBar: AppBar(
-          title: Text("test"),
-          bottom: TabBar(
-            tabs: [
-              Tab(
-                icon: Icon(
-                  Icons.home,
-                ),
+      backgroundColor: mainColor,
+      appBar: AppBar(
+        title: Text("test"),
+        bottom: TabBar(
+          tabs: [
+            Tab(
+              icon: Icon(
+                Icons.home,
               ),
-              Tab(
-                icon: Icon(
-                  Icons.playlist_add,
-                ),
+            ),
+            Tab(
+              icon: Icon(
+                Icons.playlist_add,
               ),
-              Tab(
-                icon: Icon(
-                  Icons.playlist_add,
-                ),
+            ),
+            Tab(
+              icon: Icon(
+                Icons.playlist_add,
               ),
-              Tab(
-                icon: Icon(
-                  Icons.playlist_add,
-                ),
+            ),
+            Tab(
+              icon: Icon(
+                Icons.playlist_add,
               ),
-            ],
-          ),
-        ),
-        body: TabBarView(
-          children: [
-            PrimaPagina(context),
-            ListaCanzoni(),
-            // PlaylistScreen(),
-            PlaylistsList(),
-            FourthPage(),
+            ),
           ],
-        ));
+        ),
+      ),
+      body: TabBarView(
+        children: [
+          PrimaPagina(context),
+          ListaCanzoni(),
+          // PlaylistScreen(),
+          PlaylistsList(context),
+          FourthPage(),
+        ],
+      ),
+      // bottomSheet: MiniPlayer(),
+    );
   }
 
   //* AudioService lo usi per parlare con la background task

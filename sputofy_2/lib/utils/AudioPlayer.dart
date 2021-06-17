@@ -36,11 +36,11 @@ class AudioPlayerTask extends BackgroundAudioTask {
     _broadcasteMediaItemChanges();
     _propogateEventsFromAudioPlayerToAudioServiceClients();
     _performSpecialProcessingForStateTransitions();
-    await _firstLoad();
+    _firstLoad();
     // _loadQueue();
   }
 
-  _loadMediaItemsIntoQueue(final songs) async {
+  Future<void> _loadMediaItemsIntoQueue(final songs) async {
     _queue.clear();
 
     for (var song in songs) {
@@ -56,7 +56,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
     await onPlay();
   }
 
-  _addSongToQueue(final songs) {
+  Future<void> _addSongToQueue(final songs) async {
     List<MediaItem> newSongs = [];
     int previousQueueLength = _queue.length;
 
@@ -70,10 +70,10 @@ class AudioPlayerTask extends BackgroundAudioTask {
       _queue.add(item);
       newSongs.add(item);
     }
-    AudioServiceBackground.setQueue(_queue);
+    await AudioServiceBackground.setQueue(_queue);
 
     for (var mediaItem in newSongs) {
-      _playlist
+      await _playlist
           .add(AudioSource.uri(Uri.parse(mediaItem.id), tag: mediaItem.id));
     }
     // print("ho aggiunto una canzone $_playlist");
@@ -81,34 +81,30 @@ class AudioPlayerTask extends BackgroundAudioTask {
     // print("dovresti essre 0? $previousQueueLength");
 
     if (previousQueueLength == 0) {
-      AudioServiceBackground.setMediaItem(_queue[index]);
-      _audioPlayer.load();
+      await AudioServiceBackground.setMediaItem(_queue[index]);
+      await _audioPlayer.load();
     }
   }
 
-  _removeSongFromQueue(final songPath) {
+  Future<void> _removeSongFromQueue(final songPath) async {
     final lista = _playlist.sequence;
 
     int indexToRemove = lista.indexWhere((element) => element.tag == songPath);
-    _playlist.removeAt(indexToRemove);
+    await _playlist.removeAt(indexToRemove);
     _queue.removeWhere((element) => element.id == songPath);
 
     if (_playlist.length == 0) {
       _audioPlayer.pause();
-      AudioServiceBackground.setQueue(_queue);
+      await AudioServiceBackground.setQueue(_queue);
     } else {
-      AudioServiceBackground.setQueue(_queue);
+      await AudioServiceBackground.setQueue(_queue);
       bool hasNext = index < _playlist.length - 1;
       if (hasNext) {
-        AudioServiceBackground.setMediaItem(_queue[index]);
+        await AudioServiceBackground.setMediaItem(_queue[index]);
       } else {
-        AudioServiceBackground.setMediaItem(_queue[0]);
+        await AudioServiceBackground.setMediaItem(_queue[0]);
       }
     }
-
-    // print("la queue aggiornata è $_queue");
-    // print("la _playlist aggiornata è $_playlist");
-    // print("la _playlist lunga è ${_playlist.children}");
   }
 
   Future<void> _setAudioSession() async {
@@ -118,30 +114,31 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   ///* Cambia il current item
   void _broadcasteMediaItemChanges() {
-    _audioPlayer.currentIndexStream.listen((index) {
-      if (index != null) AudioServiceBackground.setMediaItem(_queue[index]);
+    _audioPlayer.currentIndexStream.listen((index) async {
+      if (index != null)
+        await AudioServiceBackground.setMediaItem(_queue[index]);
     });
   }
 
   ///* Legge quale evento sta facendo e fa aggiornare il badge delle notifiche
   void _propogateEventsFromAudioPlayerToAudioServiceClients() {
-    _eventSubscription = _audioPlayer.playbackEventStream.listen((event) {
-      _broadcastState();
+    _eventSubscription = _audioPlayer.playbackEventStream.listen((event) async {
+      await _broadcastState();
     });
     _sequenceStateSubscription =
-        _audioPlayer.sequenceStateStream.listen((event) {
-      _broadcastState();
+        _audioPlayer.sequenceStateStream.listen((event) async {
+      await _broadcastState();
     });
   }
 
   ///* Appena finisce la playlist rimette il player alla prima canzone
   void _performSpecialProcessingForStateTransitions() {
-    _audioPlayer.processingStateStream.listen((state) {
+    _audioPlayer.processingStateStream.listen((state) async {
       switch (state) {
         case ProcessingState.completed:
           if (_playlist.length == 0) return;
-          _audioPlayer.pause();
-          _audioPlayer.seek(Duration.zero,
+          await _audioPlayer.pause();
+          await _audioPlayer.seek(Duration.zero,
               index: 0); //TODO dovrebbe tornare alla prima canzone
           break;
         case ProcessingState.ready:
@@ -156,7 +153,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   ///* Crea la lista di AudioSource
   Future<void> _loadQueue() async {
-    AudioServiceBackground.setQueue(_queue);
+    await AudioServiceBackground.setQueue(_queue);
     _playlist = ConcatenatingAudioSource(
         useLazyPreparation: true,
         children: _queue.map((item) {
@@ -168,13 +165,13 @@ class AudioPlayerTask extends BackgroundAudioTask {
     } catch (e) {
       print('Error: $e');
 
-      onStop();
+      await onStop();
     }
 
-    AudioServiceBackground.setMediaItem(_queue[index]);
+    await AudioServiceBackground.setMediaItem(_queue[index]);
   }
 
-  _firstLoad() async {
+  Future<void> _firstLoad() async {
     await AudioService.setShuffleMode(AudioServiceShuffleMode.none);
     await AudioService.setRepeatMode(AudioServiceRepeatMode.none);
   }
@@ -271,14 +268,13 @@ class AudioPlayerTask extends BackgroundAudioTask {
         AudioServiceBackground.sendCustomEvent(playlistID);
         break;
       case 'loadPlaylist':
-        _loadMediaItemsIntoQueue(arguments);
+        await _loadMediaItemsIntoQueue(arguments);
         break;
       case 'addSong':
-        _addSongToQueue(arguments);
+        await _addSongToQueue(arguments);
         break;
       case 'removeSong':
-        print("remove Song $arguments");
-        _removeSongFromQueue(arguments);
+        await _removeSongFromQueue(arguments);
         break;
     }
   }

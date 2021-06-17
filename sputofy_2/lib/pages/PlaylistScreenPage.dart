@@ -15,8 +15,9 @@ import 'package:sqflite/sqflite.dart';
 import 'package:sputofy_2/utils/AudioPlayer.dart';
 
 class PlaylistScreen extends StatefulWidget {
+  final context;
   final Playlist playlist;
-  PlaylistScreen(this.playlist);
+  PlaylistScreen(this.context, this.playlist);
 
   @override
   _PlaylistScreenState createState() => _PlaylistScreenState();
@@ -75,7 +76,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
       child: Column(
         children: <Widget>[
           _buildTopBar(),
-          _buildPlaylistData(playlistSongs),
+          _buildPlaylistData(context, playlistSongs),
           SizedBox(height: 10.0),
           _buildPlaylistActionButtons(widthScreen, playlistSongs),
         ],
@@ -109,7 +110,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     );
   }
 
-  Widget _buildPlaylistData(List<Song> playlistSongs) {
+  Widget _buildPlaylistData(BuildContext context, List<Song> playlistSongs) {
     return Container(
       padding: const EdgeInsets.only(left: 32.0, top: 16.0, right: 32.0),
       child: Row(
@@ -157,7 +158,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                             await AudioService.play();
                           }
 
-                          // showDialogWindow(context);
+                          showDialogWindow(context);
                         },
                         child: Container(
                           decoration: BoxDecoration(
@@ -251,8 +252,6 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                   stream: AudioService.playbackStateStream,
                   builder: (context, snapshot) {
                     PlaybackState playbackState = snapshot.data;
-                    AudioServiceShuffleMode shuffleMode =
-                        playbackState?.shuffleMode;
                     AudioServiceRepeatMode repeatMode =
                         playbackState?.repeatMode;
                     return Row(
@@ -311,7 +310,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                                 color: accentColor,
                                 borderRadius: BorderRadius.circular(64.0)),
                             child: Icon(
-                              AppIcon.shuffle,
+                              AppIcon.shuffle, //TODO use svgIcon package
                               size: 32.0,
                             ),
                           ),
