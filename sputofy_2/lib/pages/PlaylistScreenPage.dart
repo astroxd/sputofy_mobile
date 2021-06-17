@@ -148,14 +148,13 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: <Widget>[
                       GestureDetector(
-                        onTap: () {
+                        onTap: () async {
                           if (playingPlaylistID != widget.playlist.id) {
                             if (playlistSongs.isNotEmpty) {
-                              _loadQueue(playlistSongs);
+                              await _loadQueue(playlistSongs);
                             }
                           } else {
-                            print("sono qui giusto=?");
-                            AudioService.play();
+                            await AudioService.play();
                           }
 
                           // showDialogWindow(context);
@@ -213,8 +212,8 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
 
   Widget _buildPlaylistActionButtons(
       double widthScreen, List<Song> playlistSongs) {
-    Duration tempo = Duration.zero;
-    playlistSongs.map((e) => tempo += e.duration).toList();
+    Duration playlistDuration = Duration.zero;
+    playlistSongs.map((e) => playlistDuration += e.duration).toList();
 
     return Container(
       width: widthScreen,
@@ -237,7 +236,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                 child: Padding(
                   padding: const EdgeInsets.only(left: 16.0, top: 16.0),
                   child: Text(
-                    "$tempo",
+                    "$playlistDuration",
                     style: TextStyle(fontSize: 16.0, color: accentColor),
                   ),
                 ),
@@ -248,39 +247,78 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
             padding: const EdgeInsets.only(right: 32.0),
             child: Align(
               alignment: Alignment.centerRight,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  GestureDetector(
-                    onTap: () {},
-                    child: Container(
-                      padding: const EdgeInsets.all(12.0),
-                      decoration: BoxDecoration(
-                          color: thirdColor,
-                          borderRadius: BorderRadius.circular(64.0)),
-                      child: Icon(
-                        Icons.repeat,
-                        size: 32.0,
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: 10.0,
-                  ),
-                  GestureDetector(
-                    child: Container(
-                      padding: const EdgeInsets.all(20.0),
-                      decoration: BoxDecoration(
-                          color: accentColor,
-                          borderRadius: BorderRadius.circular(64.0)),
-                      child: Icon(
-                        AppIcon.shuffle,
-                        size: 32.0,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              child: StreamBuilder<PlaybackState>(
+                  stream: AudioService.playbackStateStream,
+                  builder: (context, snapshot) {
+                    PlaybackState playbackState = snapshot.data;
+                    AudioServiceShuffleMode shuffleMode =
+                        playbackState?.shuffleMode;
+                    AudioServiceRepeatMode repeatMode =
+                        playbackState?.repeatMode;
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        GestureDetector(
+                          onTap: () async {
+                            if (playlistSongs.isNotEmpty) {
+                              if (playingPlaylistID != widget.playlist.id) {
+                                await _loadQueue(playlistSongs);
+                              }
+
+                              if (repeatMode == AudioServiceRepeatMode.all) {
+                                await AudioService.setRepeatMode(
+                                    AudioServiceRepeatMode.none);
+                              } else {
+                                await AudioService.setRepeatMode(
+                                    AudioServiceRepeatMode.all);
+                              }
+                              if (!playbackState.playing)
+                                await AudioService.play();
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(12.0),
+                            decoration: BoxDecoration(
+                                color: repeatMode == AudioServiceRepeatMode.all
+                                    ? accentColor
+                                    : thirdColor,
+                                borderRadius: BorderRadius.circular(64.0)),
+                            child: Icon(
+                              Icons.repeat,
+                              size: 32.0,
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 10.0,
+                        ),
+                        GestureDetector(
+                          onTap: () async {
+                            if (playlistSongs.isNotEmpty) {
+                              if (playingPlaylistID != widget.playlist.id) {
+                                await _loadQueue(playlistSongs);
+                              }
+
+                              await AudioService.setShuffleMode(
+                                  AudioServiceShuffleMode.all);
+                              if (!playbackState.playing)
+                                await AudioService.play();
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(20.0),
+                            decoration: BoxDecoration(
+                                color: accentColor,
+                                borderRadius: BorderRadius.circular(64.0)),
+                            child: Icon(
+                              AppIcon.shuffle,
+                              size: 32.0,
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }),
             ),
           ),
         ],
@@ -339,12 +377,11 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                   onTap: () {
                     if (playingPlaylistID == widget.playlist.id) {
                       AudioService.skipToQueueItem(song.path);
-                      // AudioService.play();
+                      if (!AudioService.playbackState.playing) {
+                        AudioService.play();
+                      }
                     } else {
                       _loadQueue(playlistSongs, songPath: song.path);
-                      print("ma sta cosa la fai?");
-                      // AudioService.skipToQueueItem(song.path);
-                      print("e questa?");
                     }
                   },
                   child: Column(
@@ -407,10 +444,10 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     for (Song song in playlistSongs) {
       songs.add(song.toMap());
     }
-    await AudioService.customAction('loadPlaylist', songs);
+
     await AudioService.customAction('setPlaylistID', widget.playlist.id);
+    await AudioService.customAction('loadPlaylist', songs);
     if (songPath != null) {
-      print("voglio skippare");
       await AudioService.skipToQueueItem(songPath);
     }
   }
