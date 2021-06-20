@@ -2,10 +2,14 @@ import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:sputofy_2/utils/CustomSlider.dart';
+import 'package:sputofy_2/utils/Database.dart';
 import 'package:sputofy_2/utils/palette.dart';
 import 'package:sputofy_2/NewAudioPlatyer.dart';
 
 class DetailMusicPlayer extends StatelessWidget {
+  final playlistID;
+  DetailMusicPlayer(this.playlistID);
+  DBHelper _database = DBHelper();
   Stream get _playingMediaItemStream =>
       Rx.combineLatest3<MediaItem, Duration, PlaybackState, PlayingMediaItem>(
           AudioService.currentMediaItemStream,
@@ -17,7 +21,7 @@ class DetailMusicPlayer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     //TODO implement functions
-    void _showPopupMenu() {
+    void _showPopupMenu(MediaItem playingMediaItem) {
       showMenu<String>(
         context: context,
         position: RelativeRect.fromLTRB(16.0, 0.0, 0.0,
@@ -42,6 +46,15 @@ class DetailMusicPlayer extends StatelessWidget {
         if (itemSelected == "1") {
           print("1");
         } else if (itemSelected == "2") {
+          print(playingMediaItem.extras['id']);
+          _database.deletePlaylistSong(
+              playlistID, playingMediaItem.extras['id']);
+          AudioService.customAction(
+            'removeSong',
+            playingMediaItem.id,
+          );
+          AudioService.removeQueueItem(playingMediaItem);
+
           print("2");
         } else {
           //code here
@@ -58,21 +71,22 @@ class DetailMusicPlayer extends StatelessWidget {
             if (snapshot.data != null) {
               final PlayingMediaItem playingMediaItemStream = snapshot.data;
               final MediaItem playingMediaItem =
-                  playingMediaItemStream.mediaItem;
-              final Duration position = playingMediaItemStream.position;
-              final Duration duration = playingMediaItem.duration;
+                  playingMediaItemStream?.mediaItem;
+              final Duration position = playingMediaItemStream?.position;
+              final Duration duration = playingMediaItem?.duration;
               final PlaybackState playbackState =
-                  playingMediaItemStream.playbackState;
+                  playingMediaItemStream?.playbackState;
 
               return Container(
                 padding: const EdgeInsets.only(
-                    left: 16.0, right: 16.0, top: 64.0, bottom: 48.0),
+                    left: 16.0, right: 16.0, top: 16.0, bottom: 48.0),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: <Widget>[
                     Column(
                       children: <Widget>[
-                        _buildWidgetTopBar(context, _showPopupMenu),
+                        _buildWidgetTopBar(
+                            context, _showPopupMenu, playingMediaItem),
                         SizedBox(
                           height: 32.0,
                         ),
@@ -88,8 +102,8 @@ class DetailMusicPlayer extends StatelessWidget {
                         SliderTheme(
                           data: CustomTheme,
                           child: Slider(
-                            value: position.inSeconds.toDouble(),
-                            max: duration.inSeconds.toDouble(),
+                            value: position?.inSeconds?.toDouble(),
+                            max: duration?.inSeconds?.toDouble(),
                             min: 0.0,
                             onChanged: (double value) {
                               AudioService.seekTo(
@@ -116,7 +130,8 @@ class DetailMusicPlayer extends StatelessWidget {
     );
   }
 
-  Widget _buildWidgetTopBar(BuildContext context, void _showPopupMenu()) {
+  Widget _buildWidgetTopBar(BuildContext context,
+      Function(MediaItem) _showPopupMenu, MediaItem playingMediaItem) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: <Widget>[
@@ -164,7 +179,9 @@ class DetailMusicPlayer extends StatelessWidget {
           ],
         ),
         GestureDetector(
-          onTap: _showPopupMenu,
+          onTap: () {
+            _showPopupMenu(playingMediaItem);
+          },
           child: Icon(
             Icons.more_vert,
             size: 32.0,
@@ -176,7 +193,7 @@ class DetailMusicPlayer extends StatelessWidget {
   }
 
   Widget _buildWidgetMediaItemInfo(MediaItem playingMediaItem) {
-    String cover = playingMediaItem.artUri;
+    String cover = playingMediaItem?.artUri;
     String title = playingMediaItem?.title ?? "Unknown Title";
     String artist = playingMediaItem?.album ?? "Unknown Artist";
     return Column(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:sputofy_2/model/PlaylistModel.dart';
+import 'package:sputofy_2/pages/MiniPlayerPage.dart';
 import 'package:sputofy_2/pages/PlaylistScreenPage.dart';
 import 'package:sputofy_2/utils/Database.dart';
 
@@ -82,6 +83,7 @@ class _PlaylistsListState extends State<PlaylistsList> {
           )
         ],
       ),
+      // bottomSheet: MiniPlayer(),
     );
   }
 }

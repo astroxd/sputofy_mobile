@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:sputofy_2/app_icons.dart';
@@ -8,6 +6,7 @@ import 'package:sputofy_2/model/PlaylistSongModel.dart';
 import 'package:sputofy_2/model/SongModel.dart';
 import 'package:sputofy_2/pages/MiniPlayerPage.dart';
 import 'package:sputofy_2/pages/SelectSongPage.dart';
+import 'package:sputofy_2/pages/SongDetailPage.dart';
 import 'package:sputofy_2/utils/Database.dart';
 import 'package:sputofy_2/utils/DatabaseProvider.dart';
 import 'package:sputofy_2/utils/palette.dart';
@@ -158,7 +157,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                             await AudioService.play();
                           }
 
-                          showDialogWindow(context);
+                          // showDialogWindow(context);
                         },
                         child: Container(
                           decoration: BoxDecoration(
@@ -183,7 +182,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                               )).then((value) => setState(() {
                                 if (value != null &&
                                     playingPlaylistID == widget.playlist.id) {
-                                  AudioService.customAction('addSong', value);
+                                  AudioService.updateQueue(value);
                                 } else {
                                   print("sono qui dentro=? $value+");
                                 }
@@ -298,10 +297,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                                 await _loadQueue(playlistSongs);
                               }
 
-                              await AudioService.setShuffleMode(
-                                  AudioServiceShuffleMode.all);
-                              if (!playbackState.playing)
-                                await AudioService.play();
+                              AudioService.customAction('shufflePlay');
                             }
                           },
                           child: Container(
@@ -350,7 +346,8 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
           _database.deletePlaylistSong(widget.playlist.id, song.id);
           setState(() {
             if (playingPlaylistID == widget.playlist.id) {
-              AudioService.customAction('removeSong', song.path);
+              AudioService.removeQueueItem(
+                  MediaItem(id: song.path, album: "album", title: song.title));
             }
           });
         } else if (itemSelected == "2") {
@@ -376,12 +373,18 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                   onTap: () {
                     if (playingPlaylistID == widget.playlist.id) {
                       AudioService.skipToQueueItem(song.path);
-                      if (!AudioService.playbackState.playing) {
-                        AudioService.play();
-                      }
                     } else {
                       _loadQueue(playlistSongs, songPath: song.path);
                     }
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            DetailMusicPlayer(playingPlaylistID),
+                      ),
+                    ).then((value) {
+                      setState(() {});
+                    });
                   },
                   child: Column(
                     children: <Widget>[

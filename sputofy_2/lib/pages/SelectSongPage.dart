@@ -108,16 +108,27 @@ class _SelectSongListState extends State<SelectSongList> {
   }
 
   void saveSongs() {
-    List<Map<String, dynamic>> songMaps = [];
+    List<MediaItem> songs = [];
     for (var i = 0; i < toAddSongs.length; i++) {
       _database.savePlaylistSong(PlaylistSong(
         null,
         widget.playlistID,
         toAddSongs[i].id,
       ));
-      songMaps.add(toAddSongs[i].toMap());
+
+      songs.add(
+        MediaItem(
+          id: toAddSongs[i].path,
+          album: "album",
+          title: toAddSongs[i].title,
+          duration: toAddSongs[i].duration,
+          extras: <String, dynamic>{
+            'id': toAddSongs[i].id,
+          },
+        ),
+      );
     }
 
-    Navigator.pop(context, songMaps);
+    Navigator.pop(context, songs);
   }
 }

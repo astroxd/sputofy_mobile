@@ -49,6 +49,9 @@ class AudioPlayerTask extends BackgroundAudioTask {
         album: "album",
         title: song['title'],
         duration: Duration(milliseconds: song['duration']),
+        extras: <String, dynamic>{
+          'id': song['id'],
+        },
       );
       _queue.add(item);
     }
@@ -56,19 +59,14 @@ class AudioPlayerTask extends BackgroundAudioTask {
     await onPlay();
   }
 
-  Future<void> _addSongToQueue(final songs) async {
+  @override
+  Future<void> onUpdateQueue(List<MediaItem> songs) async {
     List<MediaItem> newSongs = [];
     int previousQueueLength = _queue.length;
 
     for (var song in songs) {
-      MediaItem item = MediaItem(
-        id: song['path'],
-        album: "album",
-        title: song['title'],
-        duration: Duration(milliseconds: song['duration']),
-      );
-      _queue.add(item);
-      newSongs.add(item);
+      _queue.add(song);
+      newSongs.add(song);
     }
     await AudioServiceBackground.setQueue(_queue);
 
@@ -76,9 +74,6 @@ class AudioPlayerTask extends BackgroundAudioTask {
       await _playlist
           .add(AudioSource.uri(Uri.parse(mediaItem.id), tag: mediaItem.id));
     }
-    // print("ho aggiunto una canzone $_playlist");
-    // print("ho aggiunto una queue $_queue");
-    // print("dovresti essre 0? $previousQueueLength");
 
     if (previousQueueLength == 0) {
       await AudioServiceBackground.setMediaItem(_queue[index]);
@@ -86,12 +81,13 @@ class AudioPlayerTask extends BackgroundAudioTask {
     }
   }
 
-  Future<void> _removeSongFromQueue(final songPath) async {
+  @override
+  Future<void> onRemoveQueueItem(MediaItem song) async {
     final lista = _playlist.sequence;
 
-    int indexToRemove = lista.indexWhere((element) => element.tag == songPath);
+    int indexToRemove = lista.indexWhere((element) => element.tag == song.id);
     await _playlist.removeAt(indexToRemove);
-    _queue.removeWhere((element) => element.id == songPath);
+    _queue.removeWhere((element) => element.id == song.id);
 
     if (_playlist.length == 0) {
       _audioPlayer.pause();
@@ -185,6 +181,8 @@ class AudioPlayerTask extends BackgroundAudioTask {
     _eventSubscription.cancel();
     _sequenceStateSubscription.cancel();
     await _broadcastState();
+    print("Ultimo onStop");
+    //TODO sharedPreferences last playing song
     await super.onStop();
   }
 
@@ -214,12 +212,28 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   @override
   Future<void> onSkipToNext() async {
-    await _audioPlayer.seekToNext();
+    if (_audioPlayer.loopMode == LoopMode.one) {
+      //* If has next
+      if (_audioPlayer.effectiveIndices.reversed.first != index) {
+        print("avanti ${index + 1}");
+        _audioPlayer.seek(Duration.zero, index: index + 1);
+      }
+    } else {
+      await _audioPlayer.seekToNext();
+    }
   }
 
   @override
   Future<void> onSkipToPrevious() async {
-    await _audioPlayer.seekToPrevious();
+    if (_audioPlayer.loopMode == LoopMode.one) {
+      //* If has next
+      if (_audioPlayer.effectiveIndices.first != index) {
+        print("indietro ${index - 1}");
+        _audioPlayer.seek(Duration.zero, index: index - 1);
+      }
+    } else {
+      await _audioPlayer.seekToPrevious();
+    }
   }
 
   @override
@@ -243,8 +257,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
         : AudioProcessingState.skippingToPrevious;
 
     await _audioPlayer.seek(Duration.zero, index: newIndex);
-    if (!_audioPlayer.playing) await _audioPlayer.play();
-    // await _audioPlayer.play();
+    if (!_audioPlayer.playing) await AudioService.play();
   }
 
   @override
@@ -254,9 +267,6 @@ class AudioPlayerTask extends BackgroundAudioTask {
         await _audioPlayer.setVolume(arguments);
         AudioServiceBackground.sendCustomEvent(_audioPlayer.volume);
         break;
-      case 'openPlaylist':
-        await _loadMediaItemsIntoQueue(arguments); //TODO remove
-        break;
       case 'getPlaylistID':
         if (playlistID != null) {
           AudioServiceBackground.sendCustomEvent(playlistID);
@@ -264,17 +274,13 @@ class AudioPlayerTask extends BackgroundAudioTask {
         break;
       case 'setPlaylistID':
         _playlistID = arguments;
-        await onSetShuffleMode(AudioServiceShuffleMode.none);
         AudioServiceBackground.sendCustomEvent(playlistID);
         break;
       case 'loadPlaylist':
         await _loadMediaItemsIntoQueue(arguments);
         break;
-      case 'addSong':
-        await _addSongToQueue(arguments);
-        break;
-      case 'removeSong':
-        await _removeSongFromQueue(arguments);
+      case 'shufflePlay':
+        await _shufflePlay();
         break;
     }
   }
@@ -283,14 +289,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
   Future<void> onSetShuffleMode(AudioServiceShuffleMode shuffleMode) async {
     switch (shuffleMode) {
       case AudioServiceShuffleMode.all:
-        if (_audioPlayer.playing) {
-          onSkipToQueueItem(_queue[Random().nextInt(_queue.length)].id);
-        }
         await _audioPlayer.setShuffleModeEnabled(true);
-        await _audioPlayer.shuffle();
-        //* If is alreay playing create a new list of shuffledIndexes but the first index is always
-        //* the one it is playing
-        //* e.g [0,2,1], shuffle() -> [0,1,2]
 
         break;
       case AudioServiceShuffleMode.none:
@@ -299,7 +298,17 @@ class AudioPlayerTask extends BackgroundAudioTask {
       case AudioServiceShuffleMode.group:
         break;
     }
-    _audioPlayer.setLoopMode(LoopMode.off);
+  }
+
+  _shufflePlay() async {
+    if (_queue.length > 1)
+      await onSkipToQueueItem(_queue[Random().nextInt(_queue.length)].id);
+    await _audioPlayer.shuffle();
+    await _audioPlayer.setShuffleModeEnabled(true);
+    if (!_audioPlayer.playing) await AudioService.play();
+    //* If is alreay playing create a new list of shuffledIndexes but the first index is always
+    //* the one it is playing
+    //* e.g [0,2,1], shuffle() -> [0,1,2]
   }
 
   @override
@@ -317,7 +326,21 @@ class AudioPlayerTask extends BackgroundAudioTask {
       case AudioServiceRepeatMode.group:
         break;
     }
-    _audioPlayer.setShuffleModeEnabled(false);
+    // _audioPlayer.setShuffleModeEnabled(false);
+  }
+
+  _getRepeatMode() {
+    switch (_audioPlayer.loopMode) {
+      case LoopMode.off:
+        return AudioServiceRepeatMode.none;
+        break;
+      case LoopMode.one:
+        return AudioServiceRepeatMode.one;
+        break;
+      case LoopMode.all:
+        return AudioServiceRepeatMode.all;
+        break;
+    }
   }
 
   ///* Cambia il badge delle notifiche
@@ -349,20 +372,6 @@ class AudioPlayerTask extends BackgroundAudioTask {
           : AudioServiceShuffleMode.none,
       repeatMode: _getRepeatMode(),
     );
-  }
-
-  _getRepeatMode() {
-    switch (_audioPlayer.loopMode) {
-      case LoopMode.off:
-        return AudioServiceRepeatMode.none;
-        break;
-      case LoopMode.one:
-        return AudioServiceRepeatMode.one;
-        break;
-      case LoopMode.all:
-        return AudioServiceRepeatMode.all;
-        break;
-    }
   }
 
   ///* Prende il processo che sta facendo

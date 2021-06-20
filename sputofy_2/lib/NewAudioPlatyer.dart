@@ -201,7 +201,7 @@ class PrimaPagina extends StatelessWidget {
                       MaterialButton(
                         child: Text("Play"),
                         onPressed: () {
-                          showDialogWindow(context);
+                          // showDialogWindow(context);
                           play();
                         },
                         color: Colors.green,

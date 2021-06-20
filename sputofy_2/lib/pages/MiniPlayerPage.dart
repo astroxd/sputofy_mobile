@@ -6,21 +6,23 @@ import 'package:sputofy_2/NewAudioPlatyer.dart';
 import 'package:sputofy_2/pages/SongDetailPage.dart';
 import 'package:sputofy_2/utils/palette.dart';
 
-void showDialogWindow(BuildContext context) {
-  showBottomSheet(
-    context: context,
-    builder: (context) => MiniPlayer(),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.only(
-        topLeft: Radius.circular(24.0),
-        topRight: Radius.circular(24.0),
-      ),
-    ),
-    elevation: 1.0,
-  );
-}
+// void showDialogWindow(BuildContext context) {
+//   showBottomSheet(
+//     context: context,
+//     builder: (context) => MiniPlayer(),
+//     shape: RoundedRectangleBorder(
+//       borderRadius: BorderRadius.only(
+//         topLeft: Radius.circular(24.0),
+//         topRight: Radius.circular(24.0),
+//       ),
+//     ),
+//     elevation: 1.0,
+//   );
+// }
 
 class MiniPlayer extends StatelessWidget {
+  final playlistID;
+  MiniPlayer(this.playlistID);
   Stream get _playingMediaItemStream =>
       Rx.combineLatest3<MediaItem, Duration, PlaybackState, PlayingMediaItem>(
           AudioService.currentMediaItemStream,
@@ -33,22 +35,22 @@ class MiniPlayer extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // Navigator.push(
-        //   context,
-        //   MaterialPageRoute(
-        //     builder: (context) {
-        //       return DetailMusicPlayer();
-        //     },
-        //   ),
-        // );
-        showModalBottomSheet(
-          context: context,
-          builder: (context) {
-            return DetailMusicPlayer();
-          },
-          isDismissible: false,
-          isScrollControlled: true,
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) {
+              return DetailMusicPlayer(playlistID);
+            },
+          ),
         );
+        // showModalBottomSheet(
+        //   context: context,
+        //   builder: (context) {
+        //     return DetailMusicPlayer();
+        //   },
+        //   isDismissible: false,
+        //   isScrollControlled: true,
+        // );
       },
       child: StreamBuilder<PlayingMediaItem>(
           stream: _playingMediaItemStream,
