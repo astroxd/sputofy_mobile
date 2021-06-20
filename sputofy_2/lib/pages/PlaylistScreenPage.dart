@@ -14,9 +14,8 @@ import 'package:sqflite/sqflite.dart';
 import 'package:sputofy_2/utils/AudioPlayer.dart';
 
 class PlaylistScreen extends StatefulWidget {
-  final context;
   final Playlist playlist;
-  PlaylistScreen(this.context, this.playlist);
+  PlaylistScreen(this.playlist);
 
   @override
   _PlaylistScreenState createState() => _PlaylistScreenState();
@@ -52,8 +51,8 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
               List<Song> playlistSongs = snapshot.data;
               return Column(
                 children: <Widget>[
-                  _buildWidgetPlaylistInfo(
-                      widthScreen, context, safePadding, playlistSongs),
+                  _buildWidgetPlaylistInfo(widthScreen, context, safePadding,
+                      playlistSongs, _database),
                   SizedBox(height: 16.0),
                   _buildWidgetPlaylistSongsList(playlistSongs, _database),
                 ],
@@ -64,17 +63,18 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
           },
         ),
       ),
+      bottomSheet: MiniPlayer(widget.playlist.id),
     );
   }
 
   Widget _buildWidgetPlaylistInfo(double widthScreen, BuildContext context,
-      double safePadding, List<Song> playlistSongs) {
+      double safePadding, List<Song> playlistSongs, DBHelper _database) {
     return Container(
       width: widthScreen,
       color: secondaryColor,
       child: Column(
         children: <Widget>[
-          _buildTopBar(),
+          _buildTopBar(context, _database),
           _buildPlaylistData(context, playlistSongs),
           SizedBox(height: 10.0),
           _buildPlaylistActionButtons(widthScreen, playlistSongs),
@@ -83,7 +83,38 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     );
   }
 
-  Widget _buildTopBar() {
+  Widget _buildTopBar(BuildContext context, DBHelper _database) {
+    _showPopupMenu(Offset offset) async {
+      double left = offset.dx;
+      double top = offset.dy;
+      await showMenu<String>(
+        context: context,
+        position: RelativeRect.fromLTRB(left, 0.0, 0.0,
+            0.0), //position where you want to show the menu on screen
+        color: mainColor,
+        items: [
+          PopupMenuItem(
+            child: const Text("Delete Playlist"),
+            value: '1',
+            textStyle: TextStyle(color: Colors.red, fontSize: 18),
+          )
+        ],
+        elevation: 6.0,
+      ).then<void>((String itemSelected) {
+        if (itemSelected == null) return;
+
+        if (itemSelected == "1") {
+          _database.deleteAllPlaylistSongs(widget.playlist.id);
+          _database.deletePlaylist(widget.playlist.id);
+          Navigator.pop(context);
+        } else if (itemSelected == "2") {
+          //code here
+        } else {
+          //code here
+        }
+      });
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Row(
@@ -96,8 +127,8 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
             child: Icon(Icons.arrow_back_ios),
           ),
           GestureDetector(
-            onTap: () {
-              // _showPopupMenu();
+            onTapDown: (TapDownDetails details) {
+              _showPopupMenu(details.globalPosition);
             },
             child: Icon(
               Icons.more_vert,
@@ -212,8 +243,17 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
 
   Widget _buildPlaylistActionButtons(
       double widthScreen, List<Song> playlistSongs) {
-    Duration playlistDuration = Duration.zero;
-    playlistSongs.map((e) => playlistDuration += e.duration).toList();
+    String _getPlaylistDuration() {
+      Duration playlistDuration = Duration.zero;
+      playlistSongs.map((e) => playlistDuration += e.duration).toList();
+
+      String twoDigits(int n) => n.toString().padLeft(2, "0");
+      String twoDigitMinutes =
+          twoDigits(playlistDuration.inMinutes.remainder(60));
+      String twoDigitSeconds =
+          twoDigits(playlistDuration.inSeconds.remainder(60));
+      return "${twoDigits(playlistDuration.inHours)}:$twoDigitMinutes:$twoDigitSeconds Hours";
+    }
 
     return Container(
       width: widthScreen,
@@ -236,7 +276,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                 child: Padding(
                   padding: const EdgeInsets.only(left: 16.0, top: 16.0),
                   child: Text(
-                    "$playlistDuration",
+                    _getPlaylistDuration(),
                     style: TextStyle(fontSize: 16.0, color: accentColor),
                   ),
                 ),

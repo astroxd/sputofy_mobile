@@ -23,7 +23,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(primarySwatch: Colors.orange),
+      theme: ThemeData(
+          primarySwatch: Colors.orange,
+          bottomSheetTheme: BottomSheetThemeData(backgroundColor: mainColor)),
       title: "Test",
       home: AudioServiceWidget(
         child: DefaultTabController(length: 4, child: MainScreen()),
@@ -84,9 +86,10 @@ class _MainScreenState extends State<MainScreen> {
       body: TabBarView(
         children: [
           PrimaPagina(context),
-          ListaCanzoni(),
+          // ListaCanzoni(),
+          Container(),
           // PlaylistScreen(),
-          PlaylistsList(context),
+          PlaylistsList(),
           FourthPage(),
         ],
       ),

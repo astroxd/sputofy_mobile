@@ -221,6 +221,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
     } else {
       await _audioPlayer.seekToNext();
     }
+    if (!_audioPlayer.playing) await AudioService.play();
   }
 
   @override
@@ -234,6 +235,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
     } else {
       await _audioPlayer.seekToPrevious();
     }
+    if (!_audioPlayer.playing) await AudioService.play();
   }
 
   @override

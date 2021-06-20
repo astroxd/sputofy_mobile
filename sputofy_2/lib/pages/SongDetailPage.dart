@@ -1,10 +1,10 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:sputofy_2/main.dart';
 import 'package:sputofy_2/utils/CustomSlider.dart';
 import 'package:sputofy_2/utils/Database.dart';
 import 'package:sputofy_2/utils/palette.dart';
-import 'package:sputofy_2/NewAudioPlatyer.dart';
 
 class DetailMusicPlayer extends StatelessWidget {
   final playlistID;

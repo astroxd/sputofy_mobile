@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:sleek_circular_slider/sleek_circular_slider.dart';
 import 'package:sputofy_2/NewAudioPlatyer.dart';
+import 'package:sputofy_2/main.dart';
 import 'package:sputofy_2/pages/SongDetailPage.dart';
 import 'package:sputofy_2/utils/palette.dart';
 
@@ -43,14 +44,6 @@ class MiniPlayer extends StatelessWidget {
             },
           ),
         );
-        // showModalBottomSheet(
-        //   context: context,
-        //   builder: (context) {
-        //     return DetailMusicPlayer();
-        //   },
-        //   isDismissible: false,
-        //   isScrollControlled: true,
-        // );
       },
       child: StreamBuilder<PlayingMediaItem>(
           stream: _playingMediaItemStream,
