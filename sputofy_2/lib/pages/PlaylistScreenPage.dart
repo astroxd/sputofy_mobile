@@ -63,7 +63,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
           },
         ),
       ),
-      bottomSheet: MiniPlayer(widget.playlist.id),
+      bottomSheet: MiniPlayer(),
     );
   }
 
@@ -183,12 +183,11 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                           if (playingPlaylistID != widget.playlist.id) {
                             if (playlistSongs.isNotEmpty) {
                               await _loadQueue(playlistSongs);
+                              await AudioService.play();
                             }
                           } else {
                             await AudioService.play();
                           }
-
-                          // showDialogWindow(context);
                         },
                         child: Container(
                           decoration: BoxDecoration(
@@ -419,8 +418,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) =>
-                            DetailMusicPlayer(playingPlaylistID),
+                        builder: (context) => DetailMusicPlayer(),
                       ),
                     ).then((value) {
                       setState(() {});
@@ -488,9 +486,8 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     }
 
     await AudioService.customAction('setPlaylistID', widget.playlist.id);
-    await AudioService.customAction('loadPlaylist', songs);
-    if (songPath != null) {
-      await AudioService.skipToQueueItem(songPath);
-    }
+    await AudioService.customAction('loadPlaylist', songs).then((value) => {
+          if (songPath != null) {AudioService.skipToQueueItem(songPath)}
+        });
   }
 }

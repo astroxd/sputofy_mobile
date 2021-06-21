@@ -22,8 +22,6 @@ import 'package:sputofy_2/utils/palette.dart';
 // }
 
 class MiniPlayer extends StatelessWidget {
-  final playlistID;
-  MiniPlayer(this.playlistID);
   Stream get _playingMediaItemStream =>
       Rx.combineLatest3<MediaItem, Duration, PlaybackState, PlayingMediaItem>(
           AudioService.currentMediaItemStream,
@@ -34,26 +32,26 @@ class MiniPlayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) {
-              return DetailMusicPlayer(playlistID);
-            },
-          ),
-        );
-      },
-      child: StreamBuilder<PlayingMediaItem>(
-          stream: _playingMediaItemStream,
-          builder: (context, snapshot) {
-            if (snapshot.data != null) {
-              final playingMediaItemStream = snapshot.data;
-              final mediaItem = playingMediaItemStream.mediaItem;
-              final position = playingMediaItemStream.position;
-              final playbackState = playingMediaItemStream.playbackState;
-              return Container(
+    return StreamBuilder<PlayingMediaItem>(
+        stream: _playingMediaItemStream,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            final playingMediaItemStream = snapshot.data;
+            final mediaItem = playingMediaItemStream.mediaItem;
+            final position = playingMediaItemStream.position;
+            final playbackState = playingMediaItemStream.playbackState;
+            return GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) {
+                      return DetailMusicPlayer();
+                    },
+                  ),
+                );
+              },
+              child: Container(
                 // height: 80.0,
                 padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
                 decoration: BoxDecoration(
@@ -112,12 +110,14 @@ class MiniPlayer extends StatelessWidget {
                     _buildWidgetMediaControl(playbackState),
                   ],
                 ),
-              );
-            } else {
-              return CircularProgressIndicator();
-            }
-          }),
-    );
+              ),
+            );
+          } else {
+            return Container(
+              height: 0,
+            );
+          }
+        });
   }
 
   Widget _buildWidgetMediaControl(PlaybackState playbackState) {

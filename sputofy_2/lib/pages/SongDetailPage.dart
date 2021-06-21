@@ -7,8 +7,6 @@ import 'package:sputofy_2/utils/Database.dart';
 import 'package:sputofy_2/utils/palette.dart';
 
 class DetailMusicPlayer extends StatelessWidget {
-  final playlistID;
-  DetailMusicPlayer(this.playlistID);
   DBHelper _database = DBHelper();
   Stream get _playingMediaItemStream =>
       Rx.combineLatest3<MediaItem, Duration, PlaybackState, PlayingMediaItem>(
@@ -48,7 +46,7 @@ class DetailMusicPlayer extends StatelessWidget {
         } else if (itemSelected == "2") {
           print(playingMediaItem.extras['id']);
           _database.deletePlaylistSong(
-              playlistID, playingMediaItem.extras['id']);
+              int.parse(playingMediaItem.album), playingMediaItem.extras['id']);
           AudioService.customAction(
             'removeSong',
             playingMediaItem.id,

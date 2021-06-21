@@ -8,6 +8,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:sputofy_2/model/SongModel.dart';
 import 'package:sputofy_2/utils/Database.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AudioPlayerTask extends BackgroundAudioTask {
   AudioPlayer _audioPlayer = AudioPlayer();
@@ -22,7 +23,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
   int get playlistID => _playlistID == null ? null : _playlistID;
 
   ConcatenatingAudioSource _playlist;
-
+  Future<SharedPreferences> _prefs;
   //*  Qui overridi le varie funzioni
 
   //* START-------------------------------------------------
@@ -32,6 +33,8 @@ class AudioPlayerTask extends BackgroundAudioTask {
     //* params sarà la playlist
     print("onStart");
     // _loadMediaItemsIntoQueue(params);
+    // SharedPreferences.setMockInitialValues(<String, dynamic>{'playlist': 5});
+    _prefs = SharedPreferences.getInstance();
     await _setAudioSession();
     _broadcasteMediaItemChanges();
     _propogateEventsFromAudioPlayerToAudioServiceClients();
@@ -46,7 +49,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
     for (var song in songs) {
       MediaItem item = MediaItem(
         id: song['path'],
-        album: "album",
+        album: "$playlistID",
         title: song['title'],
         duration: Duration(milliseconds: song['duration']),
         extras: <String, dynamic>{
@@ -56,7 +59,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
       _queue.add(item);
     }
     await _loadQueue();
-    await onPlay();
+    // await onPlay();
   }
 
   @override
@@ -109,10 +112,13 @@ class AudioPlayerTask extends BackgroundAudioTask {
   }
 
   ///* Cambia il current item
-  void _broadcasteMediaItemChanges() {
+  void _broadcasteMediaItemChanges() async {
+    final pref = await _prefs;
     _audioPlayer.currentIndexStream.listen((index) async {
-      if (index != null)
+      if (index != null) {
         await AudioServiceBackground.setMediaItem(_queue[index]);
+        pref.setString('song_path', _queue[index].id);
+      }
     });
   }
 
@@ -170,6 +176,19 @@ class AudioPlayerTask extends BackgroundAudioTask {
   Future<void> _firstLoad() async {
     await AudioService.setShuffleMode(AudioServiceShuffleMode.none);
     await AudioService.setRepeatMode(AudioServiceRepeatMode.none);
+
+    final pref = await _prefs;
+    DBHelper _database = DBHelper();
+    List<Song> playlistSongs =
+        await _database.getPlaylistSongs(pref.getInt('playlist'));
+    List<Map> mapPlaylistSongs = [];
+    playlistSongs.forEach((song) {
+      mapPlaylistSongs.add(song.toMap());
+    });
+
+    String lastPlayingSong = pref.getString('song_path');
+    await _loadMediaItemsIntoQueue(mapPlaylistSongs).then(
+        (value) async => {await AudioService.skipToQueueItem(lastPlayingSong)});
   }
 
 //* ---------------------------------------------------------------------------
@@ -265,7 +284,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
   @override
   Future<void> onCustomAction(String funcName, dynamic arguments) async {
     switch (funcName) {
-      case 'setVolume':
+      case 'setVolume': //TODO remove
         await _audioPlayer.setVolume(arguments);
         AudioServiceBackground.sendCustomEvent(_audioPlayer.volume);
         break;
@@ -276,6 +295,9 @@ class AudioPlayerTask extends BackgroundAudioTask {
         break;
       case 'setPlaylistID':
         _playlistID = arguments;
+        final pref = await _prefs;
+        pref.setInt('playlist', _playlistID);
+
         AudioServiceBackground.sendCustomEvent(playlistID);
         break;
       case 'loadPlaylist':

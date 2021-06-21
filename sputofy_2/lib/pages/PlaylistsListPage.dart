@@ -1,3 +1,4 @@
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:sputofy_2/model/PlaylistModel.dart';
@@ -20,6 +21,22 @@ class _PlaylistsListState extends State<PlaylistsList> {
         mainAxisSize: MainAxisSize.max,
         // mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
+          MaterialButton(
+            color: Colors.red,
+            onPressed: () {
+              _database.savePlaylist(
+                Playlist(
+                  null,
+                  'playlsit',
+                  'cover',
+                  DateTime.now(),
+                  Duration(milliseconds: 300),
+                ),
+              );
+              setState(() {});
+            },
+            child: Text("data"),
+          ),
           Expanded(
             child: FutureBuilder(
               future: _database.getPlaylists(),
@@ -65,25 +82,22 @@ class _PlaylistsListState extends State<PlaylistsList> {
               },
             ),
           ),
-          MaterialButton(
-            color: Colors.red,
-            onPressed: () {
-              _database.savePlaylist(
-                Playlist(
-                  null,
-                  'playlsit',
-                  'cover',
-                  DateTime.now(),
-                  Duration(milliseconds: 300),
-                ),
-              );
-              setState(() {});
-            },
-            child: Text("data"),
-          )
         ],
       ),
-      // bottomSheet: MiniPlayer(),
+      bottomSheet: MiniPlayer(),
+      //  StreamBuilder(
+      //   stream: AudioService.currentMediaItemStream,
+      //   builder: (context, snapshot) {
+      //     if (snapshot.hasData) {
+      //       return MiniPlayer();
+      //     } else {
+      //       return Container(
+      //         height: 0,
+      //       );
+      //     }
+      //   },
+      // )
+      //TODO could work
     );
   }
 }
