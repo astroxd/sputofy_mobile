@@ -37,10 +37,11 @@ class AudioPlayerTask extends BackgroundAudioTask {
     // SharedPreferences.setMockInitialValues(<String, dynamic>{'playlist': 5});
     _prefs = SharedPreferences.getInstance();
     await _setAudioSession();
+    await _firstLoad();
+
     _broadcasteMediaItemChanges();
     _propogateEventsFromAudioPlayerToAudioServiceClients();
     _performSpecialProcessingForStateTransitions();
-    _firstLoad();
     // _loadQueue();
   }
 
@@ -50,7 +51,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
     for (var song in songs) {
       MediaItem item = MediaItem(
         id: song['path'],
-        album: "$playlistID",
+        album: '${playlistID ?? -1}',
         title: song['title'],
         duration: Duration(milliseconds: song['duration']),
         extras: <String, dynamic>{
@@ -118,7 +119,10 @@ class AudioPlayerTask extends BackgroundAudioTask {
     _audioPlayer.currentIndexStream.listen((index) async {
       if (index != null) {
         await AudioServiceBackground.setMediaItem(_queue[index]);
+
         pref.setString('song_path', _queue[index].id);
+        // pref.setString('song_title', _queue[index].title);
+        // pref.setInt('song_duration', _queue[index].duration.inMilliseconds);
       }
     });
   }
@@ -180,16 +184,14 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
     final pref = await _prefs;
     DBHelper _database = DBHelper();
-    _playlistID = pref.getInt('playlist');
-    List<Song> playlistSongs = await _database.getPlaylistSongs(playlistID);
-    List<Map> mapPlaylistSongs = [];
-    playlistSongs.forEach((song) {
-      mapPlaylistSongs.add(song.toMap());
-    });
+    List<Song> songs = await _database.getSongs();
+    List<Map> mapSongs = [];
+    for (final song in songs) {
+      mapSongs.add(song.toMap());
+    }
 
-    String lastPlayingSong = pref.getString('song_path');
-    await _loadMediaItemsIntoQueue(mapPlaylistSongs).then(
-        (value) async => {await AudioService.skipToQueueItem(lastPlayingSong)});
+    await _loadMediaItemsIntoQueue(mapSongs).then((value) async =>
+        AudioService.skipToQueueItem(pref.getString('song_path')));
   }
 
 //* ---------------------------------------------------------------------------
@@ -197,6 +199,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
   @override
   Future<void> onStop() async {
     print("onStop");
+    final pref = await _prefs;
     await _audioPlayer.dispose();
     _eventSubscription.cancel();
     _sequenceStateSubscription.cancel();
@@ -279,7 +282,6 @@ class AudioPlayerTask extends BackgroundAudioTask {
         : AudioProcessingState.skippingToPrevious;
 
     await _audioPlayer.seek(Duration.zero, index: newIndex);
-    if (!_audioPlayer.playing) await AudioService.play();
   }
 
   @override
@@ -296,8 +298,6 @@ class AudioPlayerTask extends BackgroundAudioTask {
         break;
       case 'setPlaylistID':
         _playlistID = arguments;
-        final pref = await _prefs;
-        pref.setInt('playlist', _playlistID);
 
         AudioServiceBackground.sendCustomEvent(playlistID);
         break;

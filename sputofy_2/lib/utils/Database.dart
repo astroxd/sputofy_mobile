@@ -123,6 +123,25 @@ class DBHelper {
     return songs;
   }
 
+  Future<Song> getSong(int songID) async {
+    var dbClient = await db;
+    List<Map> maps = await dbClient.query(SONG_TABLE, columns: [
+      SONG_ID,
+      SONG_PATH,
+      SONG_TITLE,
+      SONG_AUTHOR,
+      SONG_COVER,
+      SONG_DURATION
+    ]);
+    Song song;
+    if (maps.length > 0) {
+      for (int i = 0; i < maps.length; i++) {
+        song = (Song.fromMap(maps[i]));
+      }
+    }
+    return song;
+  }
+
   Future<Playlist> savePlaylist(Playlist playlist) async {
     var dbClient = await db;
     playlist.id = await dbClient.insert(PLAYLIST_TABLE, playlist.toMap());

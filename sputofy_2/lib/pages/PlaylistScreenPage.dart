@@ -187,7 +187,10 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                         onTap: () async {
                           if (playingPlaylistID != widget.playlist.id) {
                             if (playlistSongs.isNotEmpty) {
+                              await AudioService.setShuffleMode(
+                                  AudioServiceShuffleMode.none);
                               await _loadQueue(playlistSongs);
+
                               await AudioService.play();
                             }
                           } else {
@@ -218,8 +221,6 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                             if (value != null &&
                                 playingPlaylistID == widget.playlist.id) {
                               AudioService.updateQueue(value);
-                            } else {
-                              print("sono qui dentro=? $value+");
                             }
                           });
                         },
@@ -417,6 +418,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                   onTap: () {
                     if (playingPlaylistID == widget.playlist.id) {
                       AudioService.skipToQueueItem(song.path);
+                      AudioService.play();
                     } else {
                       _loadQueue(playlistSongs, songPath: song.path);
                     }
@@ -492,7 +494,11 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
 
     await AudioService.customAction('setPlaylistID', widget.playlist.id);
     await AudioService.customAction('loadPlaylist', songs).then((value) => {
-          if (songPath != null) {AudioService.skipToQueueItem(songPath)}
+          if (songPath != null)
+            {
+              AudioService.skipToQueueItem(songPath)
+                  .then((value) async => await AudioService.play())
+            }
         });
   }
 }

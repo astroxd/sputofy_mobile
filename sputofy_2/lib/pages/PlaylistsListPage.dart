@@ -18,16 +18,30 @@ class PlaylistsList extends StatefulWidget {
 }
 
 class _PlaylistsListState extends State<PlaylistsList> {
+  Stream<PlayingMediaItem> get _playingMediaItemStream =>
+      Rx.combineLatest2<MediaItem, PlaybackState, PlayingMediaItem>(
+          AudioService.currentMediaItemStream,
+          AudioService.playbackStateStream,
+          (mediaItem, playbackState) =>
+              PlayingMediaItem(mediaItem, playbackState));
+  int playingPlaylistID;
+  @override
+  void initState() {
+    AudioService.customEventStream.listen((event) {
+      // setState(() {
+      playingPlaylistID = event;
+      // });
+    });
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
-    MediaQueryData mediaQueryData = MediaQuery.of(context);
-    double widthScreen = mediaQueryData.size.width;
     DBHelper _database = DBHelper();
 
-    return Container(
-      color: mainColor,
-      width: widthScreen,
-      child: Column(
+    return Scaffold(
+      backgroundColor: mainColor,
+      body: Column(
         children: <Widget>[
           MaterialButton(
             color: Colors.red,
@@ -45,50 +59,115 @@ class _PlaylistsListState extends State<PlaylistsList> {
             },
             child: Text("data"),
           ),
-          _buildWidgetButtonController(widthScreen),
+          _buildWidgetButtonController(_database),
           _buildWidgetPlaylistList(context, _database),
           SizedBox(height: 50),
         ],
       ),
+      bottomSheet: MiniPlayer(),
     );
   }
 
-  Widget _buildWidgetButtonController(double widthScreen) {
-    return Padding(
-      padding: const EdgeInsets.only(
-          left: 16.0, right: 16.0, top: 10.0, bottom: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              GestureDetector(
-                child: Icon(
-                  AppIcon.shuffle,
-                  size: 24.0,
+  Widget _buildWidgetButtonController(DBHelper _database) {
+    return StreamBuilder<PlaybackState>(
+        stream: AudioService.playbackStateStream,
+        builder: (context, snapshot) {
+          final repeatMode = snapshot?.data?.repeatMode;
+          final isPlaying = snapshot?.data?.playing;
+          return Padding(
+            padding: const EdgeInsets.only(
+                left: 16.0, right: 16.0, top: 10.0, bottom: 8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    GestureDetector(
+                      onTap: () async {
+                        List<Playlist> playlists =
+                            await _database.getPlaylists();
+                        List<Map> playlistSongs = [];
+                        for (final playlist in playlists) {
+                          List<Song> songs =
+                              await _database.getPlaylistSongs(playlist.id);
+                          songs.forEach((song) {
+                            playlistSongs.add(song.toMap());
+                          });
+                        }
+                        if (playlistSongs.isEmpty) return;
+                        await AudioService.customAction('setPlaylistID', -1);
+                        await AudioService.customAction(
+                            'loadPlaylist', playlistSongs);
+                        AudioService.customAction('shufflePlay');
+                        if (!isPlaying) await AudioService.play();
+                      },
+                      child: Icon(
+                        AppIcon.shuffle,
+                        color: accentColor,
+                        size: 24.0,
+                      ),
+                    ),
+                    // SizedBox(
+                    //   width: 12.0,
+                    // ),
+                    // GestureDetector(
+                    //   onTap: () async {
+                    //     if (playingPlaylistID != -1) {
+                    //       List<Playlist> playlists =
+                    //           await _database.getPlaylists();
+                    //       List<Map> playlistSongs = [];
+                    //       for (final playlist in playlists) {
+                    //         List<Song> songs =
+                    //             await _database.getPlaylistSongs(playlist.id);
+                    //         songs.forEach((song) {
+                    //           playlistSongs.add(song.toMap());
+                    //         });
+                    //       }
+                    //       if (playlistSongs.isEmpty) return;
+                    //       await AudioService.customAction('setPlaylistID', -1);
+                    //       await AudioService.customAction(
+                    //           'loadPlaylist', playlistSongs);
+
+                    //       if (repeatMode == AudioServiceRepeatMode.all) {
+                    //         await AudioService.setRepeatMode(
+                    //             AudioServiceRepeatMode.none);
+                    //       } else {
+                    //         await AudioService.setRepeatMode(
+                    //             AudioServiceRepeatMode.all);
+                    //       }
+                    //     } else {
+                    //       if (repeatMode == AudioServiceRepeatMode.all) {
+                    //         await AudioService.setRepeatMode(
+                    //             AudioServiceRepeatMode.none);
+                    //       } else {
+                    //         await AudioService.setRepeatMode(
+                    //             AudioServiceRepeatMode.all);
+                    //       }
+                    //     }
+                    //     if (!isPlaying) await AudioService.play();
+                    //   },
+                    //   child: Icon(
+                    //     Icons.repeat,
+                    //     color: playingPlaylistID == -1 &&
+                    //             repeatMode == AudioServiceRepeatMode.all
+                    //         ? accentColor
+                    //         : Colors.black,
+                    //     size: 28.0,
+                    //   ),
+                    // ),
+                  ],
                 ),
-              ),
-              SizedBox(
-                width: 12.0,
-              ),
-              GestureDetector(
-                child: Icon(
-                  Icons.repeat,
-                  size: 28.0,
+                GestureDetector(
+                  child: Icon(
+                    AppIcon.arrow_up_down,
+                    size: 22.0,
+                    color: accentColor,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          GestureDetector(
-            child: Icon(
-              AppIcon.arrow_up_down,
-              size: 22.0,
-              color: accentColor,
+              ],
             ),
-          ),
-        ],
-      ),
-    );
+          );
+        });
   }
 
   Widget _buildWidgetPlaylistList(BuildContext context, DBHelper _database) {
@@ -108,13 +187,6 @@ class _PlaylistsListState extends State<PlaylistsList> {
 
   Widget playlistList(
       BuildContext context, List<Playlist> playlists, DBHelper _database) {
-    Stream _playingMediaItemStream =
-        Rx.combineLatest2<MediaItem, PlaybackState, PlayingMediaItem>(
-            AudioService.currentMediaItemStream,
-            AudioService.playbackStateStream,
-            (mediaItem, playbackState) =>
-                PlayingMediaItem(mediaItem, playbackState));
-
     return StreamBuilder<PlayingMediaItem>(
         stream: _playingMediaItemStream,
         builder: (context, snapshot) {
@@ -196,9 +268,12 @@ class _PlaylistsListState extends State<PlaylistsList> {
                   right: 5,
                   child: GestureDetector(
                     onTap: () async {
-                      if (playingSong.playingItem.album !=
+                      if (playingSong?.playingItem?.album !=
                           playlist.id.toString()) {
+                        await AudioService.setShuffleMode(
+                            AudioServiceShuffleMode.none);
                         await _loadQueue(_database, playlist.id);
+
                         await AudioService.play();
                       } else {
                         if (playingSong.playbackState.playing)
@@ -208,7 +283,8 @@ class _PlaylistsListState extends State<PlaylistsList> {
                       }
                     },
                     child: Icon(
-                      playingSong.playingItem.album == playlist.id.toString() &&
+                      playingSong?.playingItem?.album ==
+                                  playlist.id.toString() &&
                               playingSong.playbackState.playing
                           ? Icons.pause_circle_filled
                           : Icons.play_circle_filled_sharp,
@@ -221,7 +297,7 @@ class _PlaylistsListState extends State<PlaylistsList> {
             ),
           ),
           Container(
-            width: 170,
+            width: 170.0,
             padding: const EdgeInsets.symmetric(horizontal: 2.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -242,11 +318,6 @@ class _PlaylistsListState extends State<PlaylistsList> {
                     GestureDetector(
                       onTapDown: (TapDownDetails details) {
                         _showPopupMenu(details.globalPosition);
-
-                        // Provider.of<DatabaseValue>(context, listen: false)
-                        //     .deleteAllPlaylistSongs(playlist.id);
-                        // Provider.of<DatabaseValue>(context, listen: false)
-                        //     .deletePlaylist(playlist.id);
                       },
                       child: Icon(
                         Icons.more_vert,
