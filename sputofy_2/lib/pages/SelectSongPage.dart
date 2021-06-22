@@ -1,7 +1,10 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:sputofy_2/model/PlaylistModel.dart';
 import 'package:sputofy_2/model/PlaylistSongModel.dart';
 import 'package:sputofy_2/model/SongModel.dart';
+import 'package:sputofy_2/provider/provider.dart';
 import 'package:sputofy_2/utils/Database.dart';
 import 'package:sputofy_2/utils/palette.dart';
 
@@ -108,9 +111,10 @@ class _SelectSongListState extends State<SelectSongList> {
   }
 
   void saveSongs() {
+    List<PlaylistSong> playlistSongs = [];
     List<MediaItem> songs = [];
     for (var i = 0; i < toAddSongs.length; i++) {
-      _database.savePlaylistSong(PlaylistSong(
+      playlistSongs.add(PlaylistSong(
         null,
         widget.playlistID,
         toAddSongs[i].id,
@@ -119,7 +123,7 @@ class _SelectSongListState extends State<SelectSongList> {
       songs.add(
         MediaItem(
           id: toAddSongs[i].path,
-          album: "album",
+          album: "${widget.playlistID}",
           title: toAddSongs[i].title,
           duration: toAddSongs[i].duration,
           extras: <String, dynamic>{
@@ -128,7 +132,8 @@ class _SelectSongListState extends State<SelectSongList> {
         ),
       );
     }
-
+    Provider.of<DBProvider>(context, listen: false)
+        .savePlaylistSongs(widget.playlistID, playlistSongs);
     Navigator.pop(context, songs);
   }
 }

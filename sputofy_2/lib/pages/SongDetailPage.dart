@@ -1,13 +1,14 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:sputofy_2/main.dart';
+import 'package:sputofy_2/provider/provider.dart';
 import 'package:sputofy_2/utils/CustomSlider.dart';
 import 'package:sputofy_2/utils/Database.dart';
 import 'package:sputofy_2/utils/palette.dart';
 
 class DetailMusicPlayer extends StatelessWidget {
-  DBHelper _database = DBHelper();
   Stream get _playingMediaItemStream =>
       Rx.combineLatest3<MediaItem, Duration, PlaybackState, PlayingMediaItem>(
           AudioService.currentMediaItemStream,
@@ -45,7 +46,7 @@ class DetailMusicPlayer extends StatelessWidget {
           print("1");
         } else if (itemSelected == "2") {
           print(playingMediaItem.extras['id']);
-          _database.deletePlaylistSong(
+          Provider.of<DBProvider>(context, listen: false).deletePlaylistSong(
               int.parse(playingMediaItem.album), playingMediaItem.extras['id']);
           AudioService.customAction(
             'removeSong',

@@ -1,5 +1,6 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:sputofy_2/app_icons.dart';
 import 'package:sputofy_2/model/PlaylistModel.dart';
 import 'package:sputofy_2/model/PlaylistSongModel.dart';
@@ -7,6 +8,7 @@ import 'package:sputofy_2/model/SongModel.dart';
 import 'package:sputofy_2/pages/MiniPlayerPage.dart';
 import 'package:sputofy_2/pages/SelectSongPage.dart';
 import 'package:sputofy_2/pages/SongDetailPage.dart';
+import 'package:sputofy_2/provider/provider.dart';
 import 'package:sputofy_2/utils/Database.dart';
 import 'package:sputofy_2/utils/DatabaseProvider.dart';
 import 'package:sputofy_2/utils/palette.dart';
@@ -40,12 +42,14 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     double widthScreen = mediaQueryData.size.width;
     double safePadding = mediaQueryData.padding.top;
     DBHelper _database = DBHelper();
+    Provider.of<DBProvider>(context, listen: false)
+        .getPlaylistSongs(widget.playlist.id);
 
     return Scaffold(
       backgroundColor: mainColor,
       body: SafeArea(
         child: FutureBuilder(
-          future: _database.getPlaylistSongs(widget.playlist.id),
+          future: Provider.of<DBProvider>(context).playlistSongs,
           builder: (context, snapshot) {
             if (snapshot.hasData) {
               List<Song> playlistSongs = snapshot.data;
@@ -54,7 +58,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                   _buildWidgetPlaylistInfo(widthScreen, context, safePadding,
                       playlistSongs, _database),
                   SizedBox(height: 16.0),
-                  _buildWidgetPlaylistSongsList(playlistSongs, _database),
+                  _buildWidgetPlaylistSongsList(playlistSongs),
                 ],
               );
             } else {
@@ -104,6 +108,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
         if (itemSelected == null) return;
 
         if (itemSelected == "1") {
+          //TODO not need to add to provider because the window closes
           _database.deleteAllPlaylistSongs(widget.playlist.id);
           _database.deletePlaylist(widget.playlist.id);
           Navigator.pop(context);
@@ -209,14 +214,14 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                                   playlistID: widget.playlist.id,
                                   playlistSongs: playlistSongs,
                                 ),
-                              )).then((value) => setState(() {
-                                if (value != null &&
-                                    playingPlaylistID == widget.playlist.id) {
-                                  AudioService.updateQueue(value);
-                                } else {
-                                  print("sono qui dentro=? $value+");
-                                }
-                              }));
+                              )).then((value) {
+                            if (value != null &&
+                                playingPlaylistID == widget.playlist.id) {
+                              AudioService.updateQueue(value);
+                            } else {
+                              print("sono qui dentro=? $value+");
+                            }
+                          });
                         },
                         child: Container(
                           decoration: BoxDecoration(
@@ -360,8 +365,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     );
   }
 
-  Widget _buildWidgetPlaylistSongsList(
-      List<Song> playlistSongs, DBHelper _database) {
+  Widget _buildWidgetPlaylistSongsList(List<Song> playlistSongs) {
     _showPopupMenu(Offset offset, Song song) async {
       double left = offset.dx;
       double top = offset.dy;
@@ -382,13 +386,14 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
         if (itemSelected == null) return;
 
         if (itemSelected == "1") {
-          _database.deletePlaylistSong(widget.playlist.id, song.id);
-          setState(() {
-            if (playingPlaylistID == widget.playlist.id) {
-              AudioService.removeQueueItem(
-                  MediaItem(id: song.path, album: "album", title: song.title));
-            }
-          });
+          Provider.of<DBProvider>(context, listen: false)
+              .deletePlaylistSong(widget.playlist.id, song.id);
+          if (playingPlaylistID == widget.playlist.id) {
+            AudioService.removeQueueItem(MediaItem(
+                id: song.path,
+                album: "${widget.playlist.id}",
+                title: song.title));
+          }
         } else if (itemSelected == "2") {
           //code here
         } else {

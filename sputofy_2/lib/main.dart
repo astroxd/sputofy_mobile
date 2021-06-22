@@ -9,7 +9,8 @@ import 'package:sputofy_2/pages/FouthPage.dart';
 import 'package:sputofy_2/pages/MiniPlayerPage.dart';
 import 'package:sputofy_2/pages/PaginaPerFarVedereLeCanzoni.dart';
 import 'package:sputofy_2/pages/PlaylistsListPage.dart';
-
+import 'package:provider/provider.dart';
+import 'package:sputofy_2/provider/provider.dart';
 import 'package:sputofy_2/utils/AudioPlayer.dart';
 import 'package:sputofy_2/utils/Database.dart';
 import 'package:sputofy_2/utils/palette.dart';
@@ -21,14 +22,19 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-          primarySwatch: Colors.orange,
-          bottomSheetTheme: BottomSheetThemeData(backgroundColor: mainColor)),
-      title: "Test",
-      home: AudioServiceWidget(
-        child: DefaultTabController(length: 4, child: MainScreen()),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => DBProvider()),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+            primarySwatch: Colors.orange,
+            bottomSheetTheme: BottomSheetThemeData(backgroundColor: mainColor)),
+        title: "Test",
+        home: AudioServiceWidget(
+          child: DefaultTabController(length: 4, child: MainScreen()),
+        ),
       ),
     );
   }

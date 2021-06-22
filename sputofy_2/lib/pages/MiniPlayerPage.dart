@@ -21,7 +21,12 @@ import 'package:sputofy_2/utils/palette.dart';
 //   );
 // }
 
-class MiniPlayer extends StatelessWidget {
+class MiniPlayer extends StatefulWidget {
+  @override
+  _MiniPlayerState createState() => _MiniPlayerState();
+}
+
+class _MiniPlayerState extends State<MiniPlayer> {
   Stream get _playingMediaItemStream =>
       Rx.combineLatest3<MediaItem, Duration, PlaybackState, PlayingMediaItem>(
           AudioService.currentMediaItemStream,

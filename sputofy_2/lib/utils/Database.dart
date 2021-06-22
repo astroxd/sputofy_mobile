@@ -7,6 +7,7 @@ import 'package:sputofy_2/model/SongModel.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:sputofy_2/model/PlaylistModel.dart';
+import 'package:rxdart/rxdart.dart';
 
 class DBHelper {
   static Database _db;
@@ -129,16 +130,25 @@ class DBHelper {
     return playlist;
   }
 
-  Future<int> deletePlaylist(int id) async {
+  Future<int> deletePlaylist(int playlistID) async {
     var dbClient = await db;
-    return await dbClient
-        .delete(PLAYLIST_TABLE, where: '$PLAYLIST_ID = ?', whereArgs: [id]);
+    return await dbClient.delete(PLAYLIST_TABLE,
+        where: '$PLAYLIST_ID = ?', whereArgs: [playlistID]);
   }
 
-  Future<int> updatePlaylist(Playlist playlist) async {
+  Future<int> updatePlaylist(Duration playlistDuration, int playlistID) async {
     var dbClient = await db;
-    return await dbClient.update(PLAYLIST_TABLE, playlist.toMap(),
-        where: '$PLAYLIST_ID = ?', whereArgs: [playlist.id]);
+    // return await dbClient.update(PLAYLIST_TABLE, playlist.toMap(),
+    //     where: '$PLAYLIST_ID = ?', whereArgs: [playlist.id]);
+    return await dbClient.rawUpdate(
+      '''
+    UPDATE $PLAYLIST_TABLE
+    SET $PLAYLIST_DURATION = ?
+    WHERE $PLAYLIST_ID = ?
+     ''',
+      [playlistDuration.inMilliseconds, playlistID],
+    );
+    //TODO maybe implement
   }
 
   Future<List<Playlist>> getPlaylists() async {

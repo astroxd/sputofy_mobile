@@ -15,6 +15,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
   AudioProcessingState _skipState;
   StreamSubscription<PlaybackEvent> _eventSubscription;
   StreamSubscription<SequenceState> _sequenceStateSubscription;
+  Future<SharedPreferences> _prefs;
 
   List<MediaItem> _queue = [];
   int get index => _audioPlayer.currentIndex;
@@ -23,7 +24,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
   int get playlistID => _playlistID == null ? null : _playlistID;
 
   ConcatenatingAudioSource _playlist;
-  Future<SharedPreferences> _prefs;
+
   //*  Qui overridi le varie funzioni
 
   //* START-------------------------------------------------
@@ -179,8 +180,8 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
     final pref = await _prefs;
     DBHelper _database = DBHelper();
-    List<Song> playlistSongs =
-        await _database.getPlaylistSongs(pref.getInt('playlist'));
+    _playlistID = pref.getInt('playlist');
+    List<Song> playlistSongs = await _database.getPlaylistSongs(playlistID);
     List<Map> mapPlaylistSongs = [];
     playlistSongs.forEach((song) {
       mapPlaylistSongs.add(song.toMap());
