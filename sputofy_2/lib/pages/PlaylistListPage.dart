@@ -1,13 +1,13 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:provider/provider.dart';
 import 'package:sputofy_2/app_icons.dart';
-import 'package:sputofy_2/main.dart';
 import 'package:sputofy_2/model/PlaylistModel.dart';
-import 'package:sputofy_2/model/PlaylistSongModel.dart';
 import 'package:sputofy_2/model/SongModel.dart';
 import 'package:sputofy_2/pages/MiniPlayerPage.dart';
 import 'package:sputofy_2/pages/PlaylistScreenPage.dart';
+import 'package:sputofy_2/provider/provider.dart';
 import 'package:sputofy_2/utils/Database.dart';
 import 'package:sputofy_2/utils/palette.dart';
 import 'package:rxdart/rxdart.dart';
@@ -24,21 +24,11 @@ class _PlaylistsListState extends State<PlaylistsList> {
           AudioService.playbackStateStream,
           (mediaItem, playbackState) =>
               PlayingMediaItem(mediaItem, playbackState));
-  int playingPlaylistID;
-  @override
-  void initState() {
-    AudioService.customEventStream.listen((event) {
-      // setState(() {
-      playingPlaylistID = event;
-      // });
-    });
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {
     DBHelper _database = DBHelper();
-
+    Provider.of<DBProvider>(context, listen: false).getPlaylists();
     return Scaffold(
       backgroundColor: mainColor,
       body: Column(
@@ -46,16 +36,15 @@ class _PlaylistsListState extends State<PlaylistsList> {
           MaterialButton(
             color: Colors.red,
             onPressed: () {
-              _database.savePlaylist(
+              Provider.of<DBProvider>(context, listen: false).savePlaylist(
                 Playlist(
                   null,
-                  'playlsit',
+                  'Atest',
                   'cover',
                   DateTime.now(),
                   Duration.zero,
                 ),
               );
-              setState(() {});
             },
             child: Text("data"),
           ),
@@ -158,6 +147,10 @@ class _PlaylistsListState extends State<PlaylistsList> {
                   ],
                 ),
                 GestureDetector(
+                  onTap: () {
+                    Provider.of<DBProvider>(context, listen: false)
+                        .sortPlaylists();
+                  },
                   child: Icon(
                     AppIcon.arrow_up_down,
                     size: 22.0,
@@ -173,10 +166,11 @@ class _PlaylistsListState extends State<PlaylistsList> {
   Widget _buildWidgetPlaylistList(BuildContext context, DBHelper _database) {
     return Expanded(
       child: FutureBuilder(
-        future: _database.getPlaylists(),
+        future: Provider.of<DBProvider>(context).playlists,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
-            return playlistList(context, snapshot.data, _database);
+            List<Playlist> playlists = snapshot.data;
+            return playlistList(context, playlists, _database);
           } else {
             return CircularProgressIndicator();
           }
@@ -190,6 +184,7 @@ class _PlaylistsListState extends State<PlaylistsList> {
     return StreamBuilder<PlayingMediaItem>(
         stream: _playingMediaItemStream,
         builder: (context, snapshot) {
+          PlayingMediaItem playingMediaItem = snapshot.data;
           return GridView.count(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             crossAxisCount: 2,
@@ -199,14 +194,13 @@ class _PlaylistsListState extends State<PlaylistsList> {
                 (playlist) => GestureDetector(
                   onTap: () {
                     Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => PlaylistScreen(playlist)))
-                        .then((value) {
-                      setState(() {});
-                    });
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PlaylistScreen(playlist),
+                      ),
+                    );
                   },
-                  child: playlistTile(playlist, _database, snapshot.data),
+                  child: playlistTile(playlist, _database, playingMediaItem),
                 ),
               ),
             ),
@@ -219,8 +213,6 @@ class _PlaylistsListState extends State<PlaylistsList> {
     _showPopupMenu(Offset offset) async {
       double left = offset.dx;
       double top = offset.dy;
-      print(left);
-      print(top);
       await showMenu<String>(
         context: context,
         //TODO check position
@@ -239,9 +231,8 @@ class _PlaylistsListState extends State<PlaylistsList> {
         if (itemSelected == null) return;
 
         if (itemSelected == "1") {
-          _database.deleteAllPlaylistSongs(playlist.id);
-          _database.deletePlaylist(playlist.id);
-          setState(() {});
+          Provider.of<DBProvider>(context, listen: false)
+              .deletePlaylist(playlist.id);
         } else if (itemSelected == "2") {
           //code here
         } else {
@@ -273,8 +264,6 @@ class _PlaylistsListState extends State<PlaylistsList> {
                         await AudioService.setShuffleMode(
                             AudioServiceShuffleMode.none);
                         await _loadQueue(_database, playlist.id);
-
-                        await AudioService.play();
                       } else {
                         if (playingSong.playbackState.playing)
                           await AudioService.pause();
@@ -329,9 +318,10 @@ class _PlaylistsListState extends State<PlaylistsList> {
                 FutureBuilder<List<Song>>(
                     future: _database.getPlaylistSongs(playlist.id),
                     builder: (context, snapshot) {
-                      if (!snapshot.hasData) return CircularProgressIndicator();
+                      List<Song> playlistSongs = snapshot?.data ?? [];
+                      // if (!snapshot.hasData) return CircularProgressIndicator();
                       return Text(
-                        "${snapshot.data.length} songs",
+                        "${playlistSongs.length} songs",
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(color: accentColor, fontSize: 14),
                       );
@@ -353,105 +343,9 @@ class _PlaylistsListState extends State<PlaylistsList> {
     }
 
     await AudioService.customAction('setPlaylistID', playlistID);
-    await AudioService.customAction('loadPlaylist', songs);
+    await AudioService.customAction('loadPlaylist', songs)
+        .then((value) => AudioService.play());
   }
-  // @override
-  // Widget build(BuildContext context) {
-  //   DBHelper _database = DBHelper();
-  //   return Scaffold(
-  //     body: Column(
-  //       crossAxisAlignment: CrossAxisAlignment.center,
-  //       mainAxisSize: MainAxisSize.max,
-  //       children: <Widget>[
-  //         MaterialButton(
-  //           color: Colors.red,
-  //           onPressed: () {
-  //             _database.savePlaylist(
-  //               Playlist(
-  //                 null,
-  //                 'playlsit',
-  //                 'cover',
-  //                 DateTime.now(),
-  //                 Duration.zero,
-  //               ),
-  //             );
-  //             setState(() {});
-  //           },
-  //           child: Text("data"),
-  //         ),
-  //         Expanded(
-  //           child: FutureBuilder(
-  //             future: _database.getPlaylists(),
-  //             builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
-  //               if (snapshot.hasData) {
-  //                 List<Playlist> _playlists = snapshot.data;
-
-  //                 return ListView.builder(
-  //                   itemCount: _playlists.length,
-  //                   itemBuilder: (context, index) {
-  //                     Playlist _playlist = _playlists[index];
-
-  //                     return StreamBuilder<MediaItem>(
-  //                         stream: AudioService.currentMediaItemStream,
-  //                         builder: (context, snapshot) {
-  //                           if (!snapshot.hasData)
-  //                             return CircularProgressIndicator();
-  //                           MediaItem playingSong = snapshot.data;
-  //                           return GestureDetector(
-  //                               onLongPress: () {
-  //                                 _database.deletePlaylist(_playlist.id);
-  //                                 setState(() {});
-  //                               },
-  //                               onTap: () {
-  //                                 Navigator.push(context, MaterialPageRoute(
-  //                                   builder: (context) {
-  //                                     return PlaylistScreen(_playlist);
-  //                                   },
-  //                                 )).then((value) {
-  //                                   setState(() {});
-  //                                 });
-  //                               },
-  //                               child: Container(
-  //                                   // width: 40,
-  //                                   height: 100,
-  //                                   color: playingSong.album ==
-  //                                           _playlist.id.toString()
-  //                                       ? Colors.red
-  //                                       : Colors.blue,
-  //                                   child: Column(
-  //                                     children: [
-  //                                       Text(_playlist.id.toString()),
-  //                                       Text(_playlist.creationDate.toString()),
-  //                                       Text(_playlist.name.toString()),
-  //                                     ],
-  //                                   )));
-  //                         });
-  //                   },
-  //                 );
-  //               } else {
-  //                 return CircularProgressIndicator();
-  //               }
-  //             },
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //     bottomSheet: MiniPlayer(),
-  //     //  StreamBuilder(
-  //     //   stream: AudioService.currentMediaItemStream,
-  //     //   builder: (context, snapshot) {
-  //     //     if (snapshot.hasData) {
-  //     //       return MiniPlayer();
-  //     //     } else {
-  //     //       return Container(
-  //     //         height: 0,
-  //     //       );
-  //     //     }
-  //     //   },
-  //     // )
-  //     //TODO could work
-  //   );
-  // }
 }
 
 class PlayingMediaItem {

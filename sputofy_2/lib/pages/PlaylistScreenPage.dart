@@ -59,6 +59,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                       playlistSongs, _database),
                   SizedBox(height: 16.0),
                   _buildWidgetPlaylistSongsList(playlistSongs),
+                  SizedBox(height: 50),
                 ],
               );
             } else {
@@ -108,9 +109,8 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
         if (itemSelected == null) return;
 
         if (itemSelected == "1") {
-          //TODO not need to add to provider because the window closes
-          _database.deleteAllPlaylistSongs(widget.playlist.id);
-          _database.deletePlaylist(widget.playlist.id);
+          Provider.of<DBProvider>(context, listen: false)
+              .deletePlaylist(widget.playlist.id);
           Navigator.pop(context);
         } else if (itemSelected == "2") {
           //code here
@@ -427,9 +427,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                       MaterialPageRoute(
                         builder: (context) => DetailMusicPlayer(),
                       ),
-                    ).then((value) {
-                      setState(() {});
-                    });
+                    );
                   },
                   child: Column(
                     children: <Widget>[

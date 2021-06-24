@@ -19,7 +19,6 @@ class DetailMusicPlayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    //TODO implement functions
     void _showPopupMenu(MediaItem playingMediaItem) {
       showMenu<String>(
         context: context,
@@ -28,7 +27,7 @@ class DetailMusicPlayer extends StatelessWidget {
         color: secondaryColor,
         items: [
           PopupMenuItem(
-            child: const Text("Share Song"),
+            child: const Text("Share Song[WIP]"),
             value: '1',
             textStyle: TextStyle(color: accentColor, fontSize: 18),
           ),
@@ -43,9 +42,8 @@ class DetailMusicPlayer extends StatelessWidget {
         if (itemSelected == null) return;
 
         if (itemSelected == "1") {
-          print("1");
+          return;
         } else if (itemSelected == "2") {
-          print(playingMediaItem.extras['id']);
           Provider.of<DBProvider>(context, listen: false).deletePlaylistSong(
               int.parse(playingMediaItem.album), playingMediaItem.extras['id']);
           AudioService.customAction(
@@ -53,8 +51,6 @@ class DetailMusicPlayer extends StatelessWidget {
             playingMediaItem.id,
           );
           AudioService.removeQueueItem(playingMediaItem);
-
-          print("2");
         } else {
           //code here
         }

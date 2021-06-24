@@ -8,8 +8,9 @@ import 'package:sputofy_2/model/SongModel.dart';
 import 'package:sputofy_2/pages/FouthPage.dart';
 import 'package:sputofy_2/pages/MiniPlayerPage.dart';
 import 'package:sputofy_2/pages/PaginaPerFarVedereLeCanzoni.dart';
-import 'package:sputofy_2/pages/PlaylistsListPage.dart';
+import 'package:sputofy_2/pages/PlaylistListPage.dart';
 import 'package:provider/provider.dart';
+import 'package:sputofy_2/pages/SongListPage.dart';
 import 'package:sputofy_2/provider/provider.dart';
 import 'package:sputofy_2/utils/AudioPlayer.dart';
 import 'package:sputofy_2/utils/Database.dart';
@@ -92,9 +93,7 @@ class _MainScreenState extends State<MainScreen> {
       body: TabBarView(
         children: [
           PrimaPagina(context),
-          // ListaCanzoni(),
-          Container(),
-          // PlaylistScreen(),
+          SongList(),
           PlaylistsList(),
           FourthPage(),
         ],
