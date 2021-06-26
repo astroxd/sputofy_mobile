@@ -3,24 +3,30 @@ import 'package:flutter/material.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:sleek_circular_slider/sleek_circular_slider.dart';
 import 'package:sputofy_2/NewAudioPlatyer.dart';
+import 'package:sputofy_2/main.dart';
 import 'package:sputofy_2/pages/SongDetailPage.dart';
 import 'package:sputofy_2/utils/palette.dart';
 
-void showDialogWindow(BuildContext context) {
-  showBottomSheet(
-    context: context,
-    builder: (context) => MiniPlayer(),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.only(
-        topLeft: Radius.circular(24.0),
-        topRight: Radius.circular(24.0),
-      ),
-    ),
-    elevation: 1.0,
-  );
+// void showDialogWindow(BuildContext context) {
+//   showBottomSheet(
+//     context: context,
+//     builder: (context) => MiniPlayer(),
+//     shape: RoundedRectangleBorder(
+//       borderRadius: BorderRadius.only(
+//         topLeft: Radius.circular(24.0),
+//         topRight: Radius.circular(24.0),
+//       ),
+//     ),
+//     elevation: 1.0,
+//   );
+// }
+
+class MiniPlayer extends StatefulWidget {
+  @override
+  _MiniPlayerState createState() => _MiniPlayerState();
 }
 
-class MiniPlayer extends StatelessWidget {
+class _MiniPlayerState extends State<MiniPlayer> {
   Stream get _playingMediaItemStream =>
       Rx.combineLatest3<MediaItem, Duration, PlaybackState, PlayingMediaItem>(
           AudioService.currentMediaItemStream,
@@ -31,34 +37,27 @@ class MiniPlayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        // Navigator.push(
-        //   context,
-        //   MaterialPageRoute(
-        //     builder: (context) {
-        //       return DetailMusicPlayer();
-        //     },
-        //   ),
-        // );
-        showModalBottomSheet(
-          context: context,
-          builder: (context) {
-            return DetailMusicPlayer();
-          },
-          isDismissible: false,
-          isScrollControlled: true,
-        );
-      },
-      child: StreamBuilder<PlayingMediaItem>(
-          stream: _playingMediaItemStream,
-          builder: (context, snapshot) {
-            if (snapshot.data != null) {
-              final playingMediaItemStream = snapshot.data;
-              final mediaItem = playingMediaItemStream.mediaItem;
-              final position = playingMediaItemStream.position;
-              final playbackState = playingMediaItemStream.playbackState;
-              return Container(
+    return StreamBuilder<PlayingMediaItem>(
+        stream: _playingMediaItemStream,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            final playingMediaItemStream = snapshot.data;
+            final mediaItem = playingMediaItemStream?.mediaItem;
+            final position = playingMediaItemStream?.position;
+            final isPlaying =
+                playingMediaItemStream?.playbackState?.playing ?? false;
+            return GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) {
+                      return DetailMusicPlayer();
+                    },
+                  ),
+                );
+              },
+              child: Container(
                 // height: 80.0,
                 padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
                 decoration: BoxDecoration(
@@ -114,18 +113,20 @@ class MiniPlayer extends StatelessWidget {
                         ],
                       ),
                     ),
-                    _buildWidgetMediaControl(playbackState),
+                    _buildWidgetMediaControl(isPlaying),
                   ],
                 ),
-              );
-            } else {
-              return CircularProgressIndicator();
-            }
-          }),
-    );
+              ),
+            );
+          } else {
+            return Container(
+              height: 0,
+            );
+          }
+        });
   }
 
-  Widget _buildWidgetMediaControl(PlaybackState playbackState) {
+  Widget _buildWidgetMediaControl(bool isPlaying) {
     return Row(
       children: <Widget>[
         GestureDetector(
@@ -136,11 +137,9 @@ class MiniPlayer extends StatelessWidget {
           ),
         ),
         GestureDetector(
-          onTap: playbackState.playing ? AudioService.pause : AudioService.play,
+          onTap: isPlaying ? AudioService.pause : AudioService.play,
           child: Icon(
-            playbackState.playing
-                ? Icons.pause_outlined
-                : Icons.play_arrow_rounded,
+            isPlaying ? Icons.pause_outlined : Icons.play_arrow_rounded,
             size: 36,
           ),
         ),

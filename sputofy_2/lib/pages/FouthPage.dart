@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:sputofy_2/model/SongModel.dart';
 import 'package:sputofy_2/utils/Database.dart';
 import 'package:just_audio/just_audio.dart';
@@ -88,11 +89,16 @@ class _FourthPageState extends State<FourthPage> {
   }
 
   void getFolder() async {
-    FilePicker.platform.getDirectoryPath().then((String folder) {
-      if (folder != null) {
-        loadSingleFolderItem(folder);
-      }
-    });
+    PermissionHandler _permissionHandler = PermissionHandler();
+    var result =
+        await _permissionHandler.requestPermissions([PermissionGroup.storage]);
+    if (result[PermissionGroup.storage] == PermissionStatus.granted) {
+      FilePicker.platform.getDirectoryPath().then((String folder) {
+        if (folder != null) {
+          loadSingleFolderItem(folder);
+        }
+      });
+    }
   }
 
   void loadSingleFolderItem(String path) async {
@@ -125,19 +131,23 @@ class _FourthPageState extends State<FourthPage> {
 
     files.removeWhere((e) => toRemove.contains(e));
     for (var i = 0; i < files.length; i++) {
-      Duration songDuration = await _audioPlayer
-          .setAudioSource(AudioSource.uri(Uri.parse(files[i].path)));
-      print("percorso da aggiungere ${files[i].path}");
-      toADD.add(
-        Song(
-          null,
-          files[i].path,
-          files[i].path.split("/").last.replaceAll('.mp3', ''),
-          "author",
-          "cover",
-          songDuration,
-        ),
-      );
+      try {
+        Duration songDuration = await _audioPlayer
+            .setAudioSource(AudioSource.uri(Uri.parse(files[i].path)));
+        print("percorso da aggiungere ${files[i].path}");
+        toADD.add(
+          Song(
+            null,
+            files[i].path,
+            files[i].path.split("/").last.replaceAll('.mp3', ''),
+            "author",
+            "cover",
+            songDuration,
+          ),
+        );
+      } catch (e) {
+        print("errore aggiunta song $e");
+      }
     }
 
     for (var i = 0; i < toADD.length; i++) {

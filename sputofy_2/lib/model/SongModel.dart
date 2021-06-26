@@ -21,11 +21,6 @@ class Song {
   }
 
   Song.fromMap(Map<String, dynamic> map) {
-    print(map['duration']);
-    print(map['id']);
-    print(map['title']);
-    print(map['author']);
-    print(map['cover']);
     id = map['id'];
     path = map['path'];
     title = map['title'];
