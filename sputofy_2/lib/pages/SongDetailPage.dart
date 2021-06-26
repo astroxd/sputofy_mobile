@@ -205,7 +205,7 @@ class DetailMusicPlayer extends StatelessWidget {
           height: 16.0,
         ),
         SizedBox(
-          height: 62.0,
+          height: 75.0,
           child: Text(
             title,
             // "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",

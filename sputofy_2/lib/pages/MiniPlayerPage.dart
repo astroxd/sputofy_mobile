@@ -42,9 +42,10 @@ class _MiniPlayerState extends State<MiniPlayer> {
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             final playingMediaItemStream = snapshot.data;
-            final mediaItem = playingMediaItemStream.mediaItem;
-            final position = playingMediaItemStream.position;
-            final playbackState = playingMediaItemStream.playbackState;
+            final mediaItem = playingMediaItemStream?.mediaItem;
+            final position = playingMediaItemStream?.position;
+            final isPlaying =
+                playingMediaItemStream?.playbackState?.playing ?? false;
             return GestureDetector(
               onTap: () {
                 Navigator.push(
@@ -112,7 +113,7 @@ class _MiniPlayerState extends State<MiniPlayer> {
                         ],
                       ),
                     ),
-                    _buildWidgetMediaControl(playbackState),
+                    _buildWidgetMediaControl(isPlaying),
                   ],
                 ),
               ),
@@ -125,7 +126,7 @@ class _MiniPlayerState extends State<MiniPlayer> {
         });
   }
 
-  Widget _buildWidgetMediaControl(PlaybackState playbackState) {
+  Widget _buildWidgetMediaControl(bool isPlaying) {
     return Row(
       children: <Widget>[
         GestureDetector(
@@ -136,11 +137,9 @@ class _MiniPlayerState extends State<MiniPlayer> {
           ),
         ),
         GestureDetector(
-          onTap: playbackState.playing ? AudioService.pause : AudioService.play,
+          onTap: isPlaying ? AudioService.pause : AudioService.play,
           child: Icon(
-            playbackState.playing
-                ? Icons.pause_outlined
-                : Icons.play_arrow_rounded,
+            isPlaying ? Icons.pause_outlined : Icons.play_arrow_rounded,
             size: 36,
           ),
         ),

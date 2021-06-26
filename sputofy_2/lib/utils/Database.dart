@@ -94,6 +94,8 @@ class DBHelper {
 
   Future<int> deleteSong(int id) async {
     var dbClient = await db;
+    await dbClient.delete(PLAYLISTSONG_TABLE,
+        where: '$PLAYLISTSONG_SONG_ID = ?', whereArgs: [id]);
     return await dbClient
         .delete(SONG_TABLE, where: '$SONG_ID = ?', whereArgs: [id]);
   }

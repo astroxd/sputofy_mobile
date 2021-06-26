@@ -1,5 +1,10 @@
+import 'dart:io';
+
 import 'package:audio_service/audio_service.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:sputofy_2/app_icons.dart';
 import 'package:sputofy_2/model/SongModel.dart';
@@ -86,12 +91,18 @@ class _SongListState extends State<SongList> {
                       size: 28,
                     ),
                     SizedBox(width: 8.0),
-                    Icon(
-                      Icons.thumbs_up_down_sharp,
-                      size: 28,
+                    GestureDetector(
+                      // onTap: () =>
+                      //     Provider.of<DBProvider>(context, listen: false)
+                      //         .deletePlaylist(5),
+                      child: Icon(
+                        Icons.thumbs_up_down_sharp,
+                        size: 28,
+                      ),
                     ),
                     SizedBox(width: 8.0),
                     GestureDetector(
+                      onTap: () => getFolder(),
                       child: Icon(
                         Icons.create_new_folder_outlined,
                         size: 28,
@@ -109,7 +120,116 @@ class _SongListState extends State<SongList> {
     );
   }
 
+  void getFolder() async {
+    PermissionHandler _permissionHandler = PermissionHandler();
+    var result =
+        await _permissionHandler.requestPermissions([PermissionGroup.storage]);
+    if (result[PermissionGroup.storage] == PermissionStatus.granted) {
+      FilePicker.platform.getDirectoryPath().then((String folder) {
+        if (folder != null) {
+          print(folder);
+          loadSingleFolderItem(folder);
+        }
+      });
+    }
+  }
+
+  void loadSingleFolderItem(String path) async {
+    List<Song> songs =
+        await Provider.of<DBProvider>(context, listen: false).songs;
+    List<Song> toADD = [];
+    AudioPlayer _audioPlayer = AudioPlayer();
+    Directory folder = Directory(path);
+    List<FileSystemEntity> files = folder.listSync();
+    var toRemove = [];
+    for (FileSystemEntity file in files) {
+      if (file is Directory) {
+        toRemove.add(file);
+      }
+      if (!file.path.endsWith('mp3') && !file.path.endsWith('ogg')) {
+        print("la stiamo togliendo ${file.path}");
+        toRemove.add(file);
+      }
+
+      for (Song song in songs) {
+        if (song.path == file.path) {
+          toRemove.add(file);
+          toRemove.forEach((element) {
+            print(element.path);
+          });
+          print("BREAK");
+          break;
+        }
+      }
+    }
+
+    files.removeWhere((e) => toRemove.contains(e));
+    for (var i = 0; i < files.length; i++) {
+      try {
+        Duration songDuration = await _audioPlayer
+            .setAudioSource(AudioSource.uri(Uri.parse(files[i].path)));
+        print("percorso da aggiungere ${files[i].path}");
+        toADD.add(
+          Song(
+            null,
+            files[i].path,
+            files[i].path.split("/").last.replaceAll('.mp3', ''),
+            "author",
+            "cover",
+            songDuration,
+          ),
+        );
+      } catch (e) {
+        print("errore aggiunta song $e");
+      }
+    }
+
+    for (var i = 0; i < toADD.length; i++) {
+      Provider.of<DBProvider>(context, listen: false).saveSong(toADD[i]);
+    }
+    setState(() {});
+  }
+
   Widget _buildWidgetSongList() {
+    _showPopupMenu(Offset offset, Song song, MediaItem playingMediaItem) async {
+      double left = offset.dx;
+      double top = offset.dy;
+      await showMenu<String>(
+        context: context,
+        position: RelativeRect.fromLTRB(left, top, 0.0,
+            0.0), //position where you want to show the menu on screen
+        color: mainColor,
+        items: [
+          PopupMenuItem(
+            child: const Text("Delete Song"),
+            value: '1',
+            textStyle: TextStyle(color: Colors.red, fontSize: 18),
+          )
+        ],
+        elevation: 6.0,
+      ).then<void>((String itemSelected) {
+        if (itemSelected == null) return;
+
+        if (itemSelected == "1") {
+          if (playingMediaItem.album == (-2).toString()) {
+            AudioService.removeQueueItem(
+                MediaItem(id: song.path, album: '-2', title: song.title));
+            Provider.of<DBProvider>(context, listen: false).deleteSong(song.id);
+          } else {
+            Provider.of<DBProvider>(context, listen: false).deleteSong(song.id);
+          }
+
+          // Provider.of<DBProvider>(context, listen: false)
+          //     .deletePlaylist(widget.playlist.id);
+          // Navigator.pop(context);
+        } else if (itemSelected == "2") {
+          //code here
+        } else {
+          //code here
+        }
+      });
+    }
+
     return Expanded(
       child: FutureBuilder(
         future: Provider.of<DBProvider>(context).songs,
@@ -160,10 +280,15 @@ class _SongListState extends State<SongList> {
                                     color: Colors.black,
                                   ),
                                   SizedBox(width: 12.0),
-                                  Icon(
-                                    Icons.more_vert,
-                                    size: 30.0,
-                                    color: accentColor,
+                                  GestureDetector(
+                                    onTapDown: (TapDownDetails details) =>
+                                        _showPopupMenu(details.globalPosition,
+                                            song, playingSong),
+                                    child: Icon(
+                                      Icons.more_vert,
+                                      size: 30.0,
+                                      color: accentColor,
+                                    ),
                                   )
                                 ],
                               ),

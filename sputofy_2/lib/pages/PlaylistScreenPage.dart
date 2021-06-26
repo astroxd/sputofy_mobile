@@ -194,6 +194,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                               await AudioService.play();
                             }
                           } else {
+                            // _loadQueue(playlistSongs); //TODO TOGLI
                             await AudioService.play();
                           }
                         },

@@ -19,6 +19,7 @@ class DBProvider extends ChangeNotifier {
 
   DBProvider() {
     _database = DBHelper();
+    getSongs();
   }
 
   Future<void> getPlaylistSongs(int playlistID) async {
@@ -69,5 +70,15 @@ class DBProvider extends ChangeNotifier {
 
   Future<void> getSongs() async {
     _songs = _database.getSongs();
+  }
+
+  Future<void> saveSong(Song song) async {
+    _database.saveSong(song);
+    notifyListeners();
+  }
+
+  Future<void> deleteSong(int songID) async {
+    _database.deleteSong(songID);
+    notifyListeners();
   }
 }

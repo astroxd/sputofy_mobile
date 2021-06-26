@@ -181,7 +181,6 @@ class AudioPlayerTask extends BackgroundAudioTask {
   Future<void> _firstLoad() async {
     await AudioService.setShuffleMode(AudioServiceShuffleMode.none);
     await AudioService.setRepeatMode(AudioServiceRepeatMode.none);
-
     final pref = await _prefs;
     DBHelper _database = DBHelper();
     List<Song> songs = await _database.getSongs();
@@ -195,6 +194,16 @@ class AudioPlayerTask extends BackgroundAudioTask {
   }
 
 //* ---------------------------------------------------------------------------
+
+  @override
+  Future<void> onTaskRemoved() async {
+    if (!AudioServiceBackground.state.playing) {
+      print("sto chiudendo #############");
+      await onStop();
+    }
+    print("sto chiudendo #############");
+    return super.onTaskRemoved();
+  }
 
   @override
   Future<void> onStop() async {
@@ -212,7 +221,6 @@ class AudioPlayerTask extends BackgroundAudioTask {
   @override
   Future<void> onPlay() async {
     if (_playlist.length == 0) return;
-    // await _audioPlayer.seek(Duration.zero);
     await _audioPlayer.play();
   }
 
