@@ -20,7 +20,7 @@ class SongList extends StatefulWidget {
 
 class _SongListState extends State<SongList> {
   Stream<PlayingMediaItem> get _playingMediaItemStream =>
-      Rx.combineLatest2<MediaItem, PlaybackState, PlayingMediaItem>(
+      Rx.combineLatest2<MediaItem?, PlaybackState, PlayingMediaItem>(
           AudioService.currentMediaItemStream,
           AudioService.playbackStateStream,
           (mediaItem, playbackState) =>
@@ -48,8 +48,8 @@ class _SongListState extends State<SongList> {
       stream: _playingMediaItemStream,
       builder: (context, snapshot) {
         if (snapshot.hasData) {
-          final isPlaying = snapshot?.data?.playbackState?.playing;
-          final playingItem = snapshot?.data?.playingItem;
+          final isPlaying = snapshot.data?.playbackState.playing;
+          final playingItem = snapshot.data?.playingItem;
           return Padding(
             padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 12.0),
             child: Row(
@@ -59,17 +59,17 @@ class _SongListState extends State<SongList> {
                   children: <Widget>[
                     GestureDetector(
                       onTap: () async {
-                        if (playingItem.album != (-2).toString()) {
+                        if (playingItem!.album != (-2).toString()) {
                           List<Song> songs = await Provider.of<DBProvider>(
                                   context,
                                   listen: false)
-                              .songs;
+                              .songs!;
 
                           _loadQueue(songs);
                         }
 
                         AudioService.customAction('shufflePlay');
-                        if (!isPlaying) await AudioService.play();
+                        if (!isPlaying!) await AudioService.play();
                       },
                       child: Icon(
                         AppIcon.shuffle,
@@ -121,22 +121,22 @@ class _SongListState extends State<SongList> {
   }
 
   void getFolder() async {
-    PermissionHandler _permissionHandler = PermissionHandler();
-    var result =
-        await _permissionHandler.requestPermissions([PermissionGroup.storage]);
-    if (result[PermissionGroup.storage] == PermissionStatus.granted) {
-      FilePicker.platform.getDirectoryPath().then((String folder) {
+    bool canAccesStorage = await Permission.storage.request().isGranted;
+    if (canAccesStorage) {
+      FilePicker.platform.getDirectoryPath().then((String? folder) {
         if (folder != null) {
           print(folder);
           loadSingleFolderItem(folder);
         }
       });
+    } else {
+      print("non posso entrare");
     }
   }
 
   void loadSingleFolderItem(String path) async {
     List<Song> songs =
-        await Provider.of<DBProvider>(context, listen: false).songs;
+        await Provider.of<DBProvider>(context, listen: false).songs!;
     List<Song> toADD = [];
     AudioPlayer _audioPlayer = AudioPlayer();
     Directory folder = Directory(path);
@@ -166,7 +166,7 @@ class _SongListState extends State<SongList> {
     files.removeWhere((e) => toRemove.contains(e));
     for (var i = 0; i < files.length; i++) {
       try {
-        Duration songDuration = await _audioPlayer
+        Duration? songDuration = await _audioPlayer
             .setAudioSource(AudioSource.uri(Uri.parse(files[i].path)));
         print("percorso da aggiungere ${files[i].path}");
         toADD.add(
@@ -191,7 +191,8 @@ class _SongListState extends State<SongList> {
   }
 
   Widget _buildWidgetSongList() {
-    _showPopupMenu(Offset offset, Song song, MediaItem playingMediaItem) async {
+    _showPopupMenu(
+        Offset offset, Song song, MediaItem? playingMediaItem) async {
       double left = offset.dx;
       double top = offset.dy;
       await showMenu<String>(
@@ -207,13 +208,13 @@ class _SongListState extends State<SongList> {
           )
         ],
         elevation: 6.0,
-      ).then<void>((String itemSelected) {
+      ).then<void>((String? itemSelected) {
         if (itemSelected == null) return;
 
         if (itemSelected == "1") {
-          if (playingMediaItem.album == (-2).toString()) {
+          if (playingMediaItem!.album == (-2).toString()) {
             AudioService.removeQueueItem(
-                MediaItem(id: song.path, album: '-2', title: song.title));
+                MediaItem(id: song.path!, album: '-2', title: song.title!));
             Provider.of<DBProvider>(context, listen: false).deleteSong(song.id);
           } else {
             Provider.of<DBProvider>(context, listen: false).deleteSong(song.id);
@@ -235,16 +236,16 @@ class _SongListState extends State<SongList> {
         future: Provider.of<DBProvider>(context).songs,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
-            List<Song> songs = snapshot.data;
-            return StreamBuilder<MediaItem>(
+            List<Song>? songs = snapshot.data as List<Song>?;
+            return StreamBuilder<MediaItem?>(
                 stream: AudioService.currentMediaItemStream,
                 builder: (context, snapshot) {
-                  MediaItem playingSong = snapshot?.data;
+                  MediaItem? playingSong = snapshot.data;
                   return ListView.separated(
                     separatorBuilder: (context, index) => Divider(
                       color: Colors.black,
                     ),
-                    itemCount: songs.length,
+                    itemCount: songs!.length,
                     itemBuilder: (context, index) {
                       Song song = songs[index];
                       return GestureDetector(
@@ -255,20 +256,21 @@ class _SongListState extends State<SongList> {
                                 if (playingSong?.album != (-2).toString()) {
                                   await _loadQueue(songs, songPath: song.path);
                                 } else {
-                                  await AudioService.skipToQueueItem(song.path);
+                                  await AudioService.skipToQueueItem(
+                                      song.path!);
                                   await AudioService.play();
                                 }
                               },
                               title: Text(
                                 "${song.title}",
                                 style: TextStyle(
-                                    color: song.path == playingSong?.id ?? ''
+                                    color: song.path == playingSong?.id
                                         ? accentColor
                                         : Colors.black),
                                 overflow: TextOverflow.ellipsis,
                               ),
                               subtitle: Text(
-                                "${_getSongDuration(song.duration)}",
+                                "${_getSongDuration(song.duration!)}",
                                 style: TextStyle(color: secondaryColor),
                               ),
                               trailing: Row(
@@ -314,7 +316,7 @@ class _SongListState extends State<SongList> {
     return "${songDuration.inMinutes}:$twoDigitSeconds";
   }
 
-  Future<void> _loadQueue(List<Song> songs, {String songPath}) async {
+  Future<void> _loadQueue(List<Song> songs, {String? songPath}) async {
     if (songs.isEmpty) return;
     List<Map> mapSongs = [];
     for (Song song in songs) {
@@ -333,7 +335,7 @@ class _SongListState extends State<SongList> {
 }
 
 class PlayingMediaItem {
-  MediaItem playingItem;
+  MediaItem? playingItem;
   PlaybackState playbackState;
   PlayingMediaItem(this.playingItem, this.playbackState);
 }

@@ -1,10 +1,10 @@
 class Song {
-  int id;
-  String path;
-  String title;
-  String author;
-  String cover;
-  Duration duration;
+  int? id;
+  String? path;
+  String? title;
+  String? author;
+  String? cover;
+  Duration? duration;
 
   Song(this.id, this.path, this.title, this.author, this.cover, this.duration);
 
@@ -15,7 +15,7 @@ class Song {
       'title': title,
       'author': author,
       'cover': cover,
-      'duration': duration.inMilliseconds,
+      'duration': duration!.inMilliseconds,
     };
     return map;
   }

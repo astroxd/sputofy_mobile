@@ -9,10 +9,10 @@ import 'package:sputofy_2/utils/Database.dart';
 import 'package:sputofy_2/utils/palette.dart';
 
 class SelectSongList extends StatefulWidget {
-  final int playlistID;
-  final List<Song> playlistSongs;
+  final int? playlistID;
+  final List<Song>? playlistSongs;
 
-  const SelectSongList({Key key, this.playlistID, this.playlistSongs})
+  const SelectSongList({Key? key, this.playlistID, this.playlistSongs})
       : super(key: key);
 
   @override
@@ -49,7 +49,7 @@ class _SelectSongListState extends State<SelectSongList> {
               future: _database.getSongs(),
               builder: (context, snapshot) {
                 if (snapshot.hasData) {
-                  List<Song> songs = snapshot.data;
+                  List<Song> songs = snapshot.data as List<Song>;
                   return ListView.builder(
                     itemCount: songs.length,
                     itemBuilder: (context, index) {
@@ -57,7 +57,7 @@ class _SelectSongListState extends State<SelectSongList> {
 
                       return Theme(
                         data: ThemeData(disabledColor: Colors.red),
-                        child: widget.playlistSongs
+                        child: widget.playlistSongs!
                                 .any((element) => element.id == song.id)
                             ? _unselectableSong(song)
                             : _selectableSong(song),
@@ -73,7 +73,7 @@ class _SelectSongListState extends State<SelectSongList> {
                 child: ListView.builder(
               itemCount: toAddSongs.length,
               itemBuilder: (context, index) {
-                return Text(toAddSongs[index].path);
+                return Text(toAddSongs[index].path!);
               },
             )),
           ],
@@ -85,7 +85,7 @@ class _SelectSongListState extends State<SelectSongList> {
   Widget _unselectableSong(Song song) {
     return CheckboxListTile(
         title: Text(
-          song.title,
+          song.title!,
           style: TextStyle(color: Colors.blue),
         ),
         value: true,
@@ -94,9 +94,9 @@ class _SelectSongListState extends State<SelectSongList> {
 
   Widget _selectableSong(Song song) {
     return CheckboxListTile(
-      title: Text(song.path),
+      title: Text(song.path!),
       value: toAddSongs.any((element) => element.id == song.id),
-      onChanged: (bool value) {
+      onChanged: (bool? value) {
         if (toAddSongs.any((element) => element.id == song.id)) {
           setState(() {
             toAddSongs.removeWhere((element) => element.id == song.id);
@@ -122,9 +122,9 @@ class _SelectSongListState extends State<SelectSongList> {
 
       songs.add(
         MediaItem(
-          id: toAddSongs[i].path,
+          id: toAddSongs[i].path!,
           album: "${widget.playlistID}",
-          title: toAddSongs[i].title,
+          title: toAddSongs[i].title!,
           duration: toAddSongs[i].duration,
           extras: <String, dynamic>{
             'id': toAddSongs[i].id,

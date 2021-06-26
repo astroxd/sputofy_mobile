@@ -1,9 +1,9 @@
 class Playlist {
-  int id;
-  String name;
-  String cover;
-  DateTime creationDate;
-  Duration duration;
+  int? id;
+  String? name;
+  String? cover;
+  DateTime? creationDate;
+  Duration? duration;
 
   Playlist(this.id, this.name, this.cover, this.creationDate, this.duration);
 
@@ -12,8 +12,8 @@ class Playlist {
       'id': id,
       'name': name,
       'cover': cover,
-      'creation_date': creationDate.millisecondsSinceEpoch,
-      'duration': duration.inMilliseconds,
+      'creation_date': creationDate!.millisecondsSinceEpoch,
+      'duration': duration!.inMilliseconds,
     };
     return map;
   }

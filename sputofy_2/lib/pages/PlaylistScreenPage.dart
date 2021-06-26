@@ -16,7 +16,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:sputofy_2/utils/AudioPlayer.dart';
 
 class PlaylistScreen extends StatefulWidget {
-  final Playlist playlist;
+  Playlist playlist;
   PlaylistScreen(this.playlist);
 
   @override
@@ -24,7 +24,7 @@ class PlaylistScreen extends StatefulWidget {
 }
 
 class _PlaylistScreenState extends State<PlaylistScreen> {
-  int playingPlaylistID;
+  int? playingPlaylistID;
 
   @override
   void initState() {
@@ -43,7 +43,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     double safePadding = mediaQueryData.padding.top;
     DBHelper _database = DBHelper();
     Provider.of<DBProvider>(context, listen: false)
-        .getPlaylistSongs(widget.playlist.id);
+        .getPlaylistSongs(widget.playlist.id!);
 
     return Scaffold(
       backgroundColor: mainColor,
@@ -52,7 +52,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
           future: Provider.of<DBProvider>(context).playlistSongs,
           builder: (context, snapshot) {
             if (snapshot.hasData) {
-              List<Song> playlistSongs = snapshot.data;
+              List<Song> playlistSongs = snapshot.data as List<Song>;
               return Column(
                 children: <Widget>[
                   _buildWidgetPlaylistInfo(widthScreen, context, safePadding,
@@ -73,7 +73,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
   }
 
   Widget _buildWidgetPlaylistInfo(double widthScreen, BuildContext context,
-      double safePadding, List<Song> playlistSongs, DBHelper _database) {
+      double safePadding, List<Song>? playlistSongs, DBHelper _database) {
     return Container(
       width: widthScreen,
       color: secondaryColor,
@@ -105,12 +105,12 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
           )
         ],
         elevation: 6.0,
-      ).then<void>((String itemSelected) {
+      ).then<void>((String? itemSelected) {
         if (itemSelected == null) return;
 
         if (itemSelected == "1") {
           Provider.of<DBProvider>(context, listen: false)
-              .deletePlaylist(widget.playlist.id);
+              .deletePlaylist(widget.playlist.id!);
           Navigator.pop(context);
         } else if (itemSelected == "2") {
           //code here
@@ -145,7 +145,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     );
   }
 
-  Widget _buildPlaylistData(BuildContext context, List<Song> playlistSongs) {
+  Widget _buildPlaylistData(BuildContext context, List<Song>? playlistSongs) {
     return Container(
       padding: const EdgeInsets.only(left: 32.0, top: 16.0, right: 32.0),
       child: Row(
@@ -186,7 +186,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                       GestureDetector(
                         onTap: () async {
                           if (playingPlaylistID != widget.playlist.id) {
-                            if (playlistSongs.isNotEmpty) {
+                            if (playlistSongs!.isNotEmpty) {
                               await AudioService.setShuffleMode(
                                   AudioServiceShuffleMode.none);
                               await _loadQueue(playlistSongs);
@@ -248,10 +248,10 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
   }
 
   Widget _buildPlaylistActionButtons(
-      double widthScreen, List<Song> playlistSongs) {
+      double widthScreen, List<Song>? playlistSongs) {
     String _getPlaylistDuration() {
       Duration playlistDuration = Duration.zero;
-      playlistSongs.map((e) => playlistDuration += e.duration).toList();
+      playlistSongs!.map((e) => playlistDuration += e.duration!).toList();
 
       String twoDigits(int n) => n.toString().padLeft(2, "0");
       String twoDigitMinutes =
@@ -296,15 +296,15 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
               child: StreamBuilder<PlaybackState>(
                   stream: AudioService.playbackStateStream,
                   builder: (context, snapshot) {
-                    PlaybackState playbackState = snapshot.data;
-                    AudioServiceRepeatMode repeatMode =
+                    PlaybackState? playbackState = snapshot.data;
+                    AudioServiceRepeatMode? repeatMode =
                         playbackState?.repeatMode;
                     return Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         GestureDetector(
                           onTap: () async {
-                            if (playlistSongs.isNotEmpty) {
+                            if (playlistSongs!.isNotEmpty) {
                               if (playingPlaylistID != widget.playlist.id) {
                                 await _loadQueue(playlistSongs);
                               }
@@ -316,7 +316,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                                 await AudioService.setRepeatMode(
                                     AudioServiceRepeatMode.all);
                               }
-                              if (!playbackState.playing)
+                              if (!playbackState!.playing)
                                 await AudioService.play();
                             }
                           },
@@ -338,7 +338,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                         ),
                         GestureDetector(
                           onTap: () async {
-                            if (playlistSongs.isNotEmpty) {
+                            if (playlistSongs!.isNotEmpty) {
                               if (playingPlaylistID != widget.playlist.id) {
                                 await _loadQueue(playlistSongs);
                               }
@@ -367,7 +367,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     );
   }
 
-  Widget _buildWidgetPlaylistSongsList(List<Song> playlistSongs) {
+  Widget _buildWidgetPlaylistSongsList(List<Song>? playlistSongs) {
     _showPopupMenu(Offset offset, Song song) async {
       double left = offset.dx;
       double top = offset.dy;
@@ -384,17 +384,17 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
           )
         ],
         elevation: 6.0,
-      ).then<void>((String itemSelected) {
+      ).then<void>((String? itemSelected) {
         if (itemSelected == null) return;
 
         if (itemSelected == "1") {
           Provider.of<DBProvider>(context, listen: false)
-              .deletePlaylistSong(widget.playlist.id, song.id);
+              .deletePlaylistSong(widget.playlist.id!, song.id);
           if (playingPlaylistID == widget.playlist.id) {
             AudioService.removeQueueItem(MediaItem(
-                id: song.path,
+                id: song.path!,
                 album: "${widget.playlist.id}",
-                title: song.title));
+                title: song.title!));
           }
         } else if (itemSelected == "2") {
           //code here
@@ -405,12 +405,12 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     }
 
     return Expanded(
-      child: StreamBuilder<MediaItem>(
+      child: StreamBuilder<MediaItem?>(
           stream: AudioService.currentMediaItemStream,
           builder: (context, snapshot) {
             String playingSongPath = snapshot.data?.id ?? '';
             return ListView.builder(
-              itemCount: playlistSongs.length,
+              itemCount: playlistSongs!.length,
               itemBuilder: (context, index) {
                 Song song = playlistSongs[index];
 
@@ -418,7 +418,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                   behavior: HitTestBehavior.translucent,
                   onTap: () {
                     if (playingPlaylistID == widget.playlist.id) {
-                      AudioService.skipToQueueItem(song.path);
+                      AudioService.skipToQueueItem(song.path!);
                       AudioService.play();
                     } else {
                       _loadQueue(playlistSongs, songPath: song.path);
@@ -445,7 +445,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                             SizedBox(width: 10.0),
                             Expanded(
                               child: Text(
-                                song.title,
+                                song.title!,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontWeight: FontWeight.w500,
@@ -484,7 +484,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     );
   }
 
-  _loadQueue(List<Song> playlistSongs, {String songPath}) async {
+  _loadQueue(List<Song> playlistSongs, {String? songPath}) async {
     //TODO se non funziona metty async e await
     List<Map> songs = [];
     for (Song song in playlistSongs) {

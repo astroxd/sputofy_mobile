@@ -47,7 +47,7 @@ class _FourthPageState extends State<FourthPage> {
               future: _database.getSongs(),
               builder: (context, snapshot) {
                 if (snapshot.hasData) {
-                  List<Song> songs = snapshot.data;
+                  List<Song> songs = snapshot.data as List<Song>;
                   return ListView.builder(
                     itemCount: songs.length,
                     itemBuilder: (context, index) {
@@ -89,11 +89,8 @@ class _FourthPageState extends State<FourthPage> {
   }
 
   void getFolder() async {
-    PermissionHandler _permissionHandler = PermissionHandler();
-    var result =
-        await _permissionHandler.requestPermissions([PermissionGroup.storage]);
-    if (result[PermissionGroup.storage] == PermissionStatus.granted) {
-      FilePicker.platform.getDirectoryPath().then((String folder) {
+    if (await Permission.storage.request().isGranted) {
+      FilePicker.platform.getDirectoryPath().then((String? folder) {
         if (folder != null) {
           loadSingleFolderItem(folder);
         }
@@ -132,7 +129,7 @@ class _FourthPageState extends State<FourthPage> {
     files.removeWhere((e) => toRemove.contains(e));
     for (var i = 0; i < files.length; i++) {
       try {
-        Duration songDuration = await _audioPlayer
+        Duration? songDuration = await _audioPlayer
             .setAudioSource(AudioSource.uri(Uri.parse(files[i].path)));
         print("percorso da aggiungere ${files[i].path}");
         toADD.add(

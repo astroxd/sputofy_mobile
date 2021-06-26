@@ -12,25 +12,25 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class AudioPlayerTask extends BackgroundAudioTask {
   AudioPlayer _audioPlayer = AudioPlayer();
-  AudioProcessingState _skipState;
-  StreamSubscription<PlaybackEvent> _eventSubscription;
-  StreamSubscription<SequenceState> _sequenceStateSubscription;
-  Future<SharedPreferences> _prefs;
+  AudioProcessingState? _skipState;
+  late StreamSubscription<PlaybackEvent> _eventSubscription;
+  late StreamSubscription<SequenceState?> _sequenceStateSubscription;
+  Future<SharedPreferences>? _prefs;
 
   List<MediaItem> _queue = [];
-  int get index => _audioPlayer.currentIndex;
-  MediaItem get mediaItem => index == null ? null : _queue[index];
-  int _playlistID;
-  int get playlistID => _playlistID == null ? null : _playlistID;
+  int? get index => _audioPlayer.currentIndex;
+  MediaItem? get mediaItem => index == null ? null : _queue[index!];
+  int? _playlistID;
+  int? get playlistID => _playlistID == null ? null : _playlistID;
 
-  ConcatenatingAudioSource _playlist;
+  late ConcatenatingAudioSource _playlist;
 
   //*  Qui overridi le varie funzioni
 
   //* START-------------------------------------------------
 
   @override
-  Future<void> onStart(Map<String, dynamic> params) async {
+  Future<void> onStart(Map<String, dynamic>? params) async {
     //* params sarà la playlist
     print("onStart");
     // _loadMediaItemsIntoQueue(params);
@@ -81,7 +81,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
     }
 
     if (previousQueueLength == 0) {
-      await AudioServiceBackground.setMediaItem(_queue[index]);
+      await AudioServiceBackground.setMediaItem(_queue[index!]);
       await _audioPlayer.load();
     }
   }
@@ -99,9 +99,9 @@ class AudioPlayerTask extends BackgroundAudioTask {
       await AudioServiceBackground.setQueue(_queue);
     } else {
       await AudioServiceBackground.setQueue(_queue);
-      bool hasNext = index < _playlist.length - 1;
+      bool hasNext = index! < _playlist.length - 1;
       if (hasNext) {
-        await AudioServiceBackground.setMediaItem(_queue[index]);
+        await AudioServiceBackground.setMediaItem(_queue[index!]);
       } else {
         await AudioServiceBackground.setMediaItem(_queue[0]);
       }
@@ -115,7 +115,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   ///* Cambia il current item
   void _broadcasteMediaItemChanges() async {
-    final pref = await _prefs;
+    final pref = await _prefs!;
     _audioPlayer.currentIndexStream.listen((index) async {
       if (index != null) {
         await AudioServiceBackground.setMediaItem(_queue[index]);
@@ -175,13 +175,13 @@ class AudioPlayerTask extends BackgroundAudioTask {
       await onStop();
     }
 
-    await AudioServiceBackground.setMediaItem(_queue[index]);
+    await AudioServiceBackground.setMediaItem(_queue[index!]);
   }
 
   Future<void> _firstLoad() async {
     await AudioService.setShuffleMode(AudioServiceShuffleMode.none);
     await AudioService.setRepeatMode(AudioServiceRepeatMode.none);
-    final pref = await _prefs;
+    final pref = await _prefs!;
     DBHelper _database = DBHelper();
     List<Song> songs = await _database.getSongs();
     List<Map> mapSongs = [];
@@ -190,7 +190,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
     }
 
     await _loadMediaItemsIntoQueue(mapSongs).then((value) async =>
-        AudioService.skipToQueueItem(pref.getString('song_path')));
+        AudioService.skipToQueueItem(pref.getString('song_path')!));
   }
 
 //* ---------------------------------------------------------------------------
@@ -208,7 +208,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
   @override
   Future<void> onStop() async {
     print("onStop");
-    final pref = await _prefs;
+    final pref = await _prefs!;
     await _audioPlayer.dispose();
     _eventSubscription.cancel();
     _sequenceStateSubscription.cancel();
@@ -245,9 +245,9 @@ class AudioPlayerTask extends BackgroundAudioTask {
   Future<void> onSkipToNext() async {
     if (_audioPlayer.loopMode == LoopMode.one) {
       //* If has next
-      if (_audioPlayer.effectiveIndices.reversed.first != index) {
-        print("avanti ${index + 1}");
-        _audioPlayer.seek(Duration.zero, index: index + 1);
+      if (_audioPlayer.effectiveIndices!.reversed.first != index) {
+        print("avanti ${index! + 1}");
+        _audioPlayer.seek(Duration.zero, index: index! + 1);
       }
     } else {
       await _audioPlayer.seekToNext();
@@ -259,9 +259,9 @@ class AudioPlayerTask extends BackgroundAudioTask {
   Future<void> onSkipToPrevious() async {
     if (_audioPlayer.loopMode == LoopMode.one) {
       //* If has next
-      if (_audioPlayer.effectiveIndices.first != index) {
-        print("indietro ${index - 1}");
-        _audioPlayer.seek(Duration.zero, index: index - 1);
+      if (_audioPlayer.effectiveIndices!.first != index) {
+        print("indietro ${index! - 1}");
+        _audioPlayer.seek(Duration.zero, index: index! - 1);
       }
     } else {
       await _audioPlayer.seekToPrevious();
@@ -270,7 +270,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
   }
 
   @override
-  Future<void> onSetRating(Rating rating, Map extras) {
+  Future<void> onSetRating(Rating rating, Map? extras) {
     // TODO: implement onSetRating
     // MediaItem item =
     //     _queue[index].copyWith(rating: Rating.newHeartRating(true));
@@ -285,7 +285,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
     final newIndex = lista.indexWhere((song) => song.tag == mediaId);
 
     if (newIndex == -1 || index == null || index == newIndex) return;
-    _skipState = newIndex > index
+    _skipState = newIndex > index!
         ? AudioProcessingState.skippingToNext
         : AudioProcessingState.skippingToPrevious;
 
@@ -408,7 +408,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
   }
 
   ///* Prende il processo che sta facendo
-  AudioProcessingState _getProcessingState() {
+  AudioProcessingState? _getProcessingState() {
     if (_skipState != null) return _skipState;
     switch (_audioPlayer.processingState) {
       case ProcessingState.idle:

@@ -1,7 +1,7 @@
 class PlaylistSong {
-  int id;
-  int playlistID;
-  int songID;
+  int? id;
+  int? playlistID;
+  int? songID;
 
   PlaylistSong(this.id, this.playlistID, this.songID);
 

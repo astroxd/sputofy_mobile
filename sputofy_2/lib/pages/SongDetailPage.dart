@@ -5,12 +5,11 @@ import 'package:rxdart/rxdart.dart';
 import 'package:sputofy_2/main.dart';
 import 'package:sputofy_2/provider/provider.dart';
 import 'package:sputofy_2/utils/CustomSlider.dart';
-import 'package:sputofy_2/utils/Database.dart';
 import 'package:sputofy_2/utils/palette.dart';
 
 class DetailMusicPlayer extends StatelessWidget {
   Stream get _playingMediaItemStream =>
-      Rx.combineLatest3<MediaItem, Duration, PlaybackState, PlayingMediaItem>(
+      Rx.combineLatest3<MediaItem?, Duration, PlaybackState, PlayingMediaItem>(
           AudioService.currentMediaItemStream,
           AudioService.positionStream,
           AudioService.playbackStateStream,
@@ -38,14 +37,15 @@ class DetailMusicPlayer extends StatelessWidget {
           ),
         ],
         elevation: 8.0,
-      ).then<void>((String itemSelected) {
+      ).then<void>((String? itemSelected) {
         if (itemSelected == null) return;
 
         if (itemSelected == "1") {
           return;
         } else if (itemSelected == "2") {
           Provider.of<DBProvider>(context, listen: false).deletePlaylistSong(
-              int.parse(playingMediaItem.album), playingMediaItem.extras['id']);
+              int.parse(playingMediaItem.album),
+              playingMediaItem.extras!['id']);
           AudioService.customAction(
             'removeSong',
             playingMediaItem.id,
@@ -61,16 +61,15 @@ class DetailMusicPlayer extends StatelessWidget {
       backgroundColor: mainColor,
       body: SafeArea(
         child: StreamBuilder<PlayingMediaItem>(
-          stream: _playingMediaItemStream,
+          stream: _playingMediaItemStream as Stream<PlayingMediaItem>?,
           builder: (context, snapshot) {
-            if (snapshot.data != null) {
-              final PlayingMediaItem playingMediaItemStream = snapshot.data;
-              final MediaItem playingMediaItem =
-                  playingMediaItemStream?.mediaItem;
-              final Duration position = playingMediaItemStream?.position;
-              final Duration duration = playingMediaItem?.duration;
-              final PlaybackState playbackState =
-                  playingMediaItemStream?.playbackState;
+            if (snapshot.hasData) {
+              PlayingMediaItem playingMediaItemStream = snapshot.data!;
+              MediaItem playingMediaItem = playingMediaItemStream.mediaItem!;
+              Duration position = playingMediaItemStream.position;
+              Duration duration = playingMediaItem.duration!;
+              PlaybackState playbackState =
+                  playingMediaItemStream.playbackState;
 
               return Container(
                 padding: const EdgeInsets.only(
@@ -97,8 +96,8 @@ class DetailMusicPlayer extends StatelessWidget {
                         SliderTheme(
                           data: CustomTheme,
                           child: Slider(
-                            value: position?.inSeconds?.toDouble(),
-                            max: duration?.inSeconds?.toDouble(),
+                            value: position.inSeconds.toDouble(),
+                            max: duration.inSeconds.toDouble(),
                             min: 0.0,
                             onChanged: (double value) {
                               AudioService.seekTo(
@@ -138,41 +137,6 @@ class DetailMusicPlayer extends StatelessWidget {
             color: accentColor,
           ),
         ),
-        Row(
-          children: <Widget>[
-            Icon(
-              Icons.volume_down,
-              size: 32.0,
-            ),
-            SizedBox(
-              width: 8.0,
-            ),
-            StreamBuilder(
-              stream: AudioService.customEventStream,
-              initialData: 1.0,
-              builder: (context, snapshot) {
-                return SliderTheme(
-                  data: CustomTheme,
-                  child: Slider(
-                    value: snapshot.data,
-                    max: 2.0,
-                    min: 0.0,
-                    onChanged: (double value) {
-                      AudioService.customAction("setVolume", value);
-                    },
-                  ),
-                );
-              },
-            ),
-            SizedBox(
-              width: 8.0,
-            ),
-            Icon(
-              Icons.volume_up,
-              size: 32.0,
-            ),
-          ],
-        ),
         GestureDetector(
           onTap: () {
             _showPopupMenu(playingMediaItem);
@@ -188,18 +152,19 @@ class DetailMusicPlayer extends StatelessWidget {
   }
 
   Widget _buildWidgetMediaItemInfo(MediaItem playingMediaItem) {
-    String cover = playingMediaItem?.artUri;
-    String title = playingMediaItem?.title ?? "Unknown Title";
-    String artist = playingMediaItem?.album ?? "Unknown Artist";
+    String? cover = playingMediaItem.artUri?.toString() ?? "";
+    String? title = playingMediaItem.title;
+    String? artist = playingMediaItem.album;
     return Column(
       children: <Widget>[
         ClipRRect(
           child: ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: 300.0),
-            child: cover != null
-                ? Image.network(cover)
-                : Image.asset("cover.jpeg"),
-          ),
+              constraints: BoxConstraints(maxHeight: 300.0),
+              child:
+                  // Image.asset('cover.jpeg')
+                  cover.isNotEmpty
+                      ? Image.network(cover)
+                      : Image.asset("cover.jpeg")), //TODO maybe crash
         ),
         SizedBox(
           height: 16.0,
@@ -269,7 +234,7 @@ class DetailMusicPlayer extends StatelessWidget {
 
   Widget _buildWidgetSpecialMediaControl(MediaItem playingMediaItem,
       Duration position, PlaybackState playbackState) {
-    Duration duration = playingMediaItem.duration;
+    Duration duration = playingMediaItem.duration!;
     AudioServiceShuffleMode shuffleMode = playbackState.shuffleMode;
     AudioServiceRepeatMode repeatMode = playbackState.repeatMode;
     return Row(
@@ -336,19 +301,21 @@ class DetailMusicPlayer extends StatelessWidget {
 
   // ignore: missing_return
   Icon _getRepeatIcon(AudioServiceRepeatMode repeatMode) {
+    Icon icon = Icon(Icons.error, size: 32);
     switch (repeatMode) {
       case AudioServiceRepeatMode.none:
-        return Icon(Icons.repeat, size: 32);
+        icon = Icon(Icons.repeat, size: 32);
         break;
       case AudioServiceRepeatMode.one:
-        return Icon(Icons.repeat_one, size: 32, color: accentColor);
+        icon = Icon(Icons.repeat_one, size: 32, color: accentColor);
         break;
       case AudioServiceRepeatMode.all:
-        return Icon(Icons.repeat, size: 32, color: accentColor);
+        icon = Icon(Icons.repeat, size: 32, color: accentColor);
         break;
       case AudioServiceRepeatMode.group:
         break;
     }
+    return icon;
   }
 }
 

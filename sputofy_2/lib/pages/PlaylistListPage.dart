@@ -19,7 +19,7 @@ class PlaylistsList extends StatefulWidget {
 
 class _PlaylistsListState extends State<PlaylistsList> {
   Stream<PlayingMediaItem> get _playingMediaItemStream =>
-      Rx.combineLatest2<MediaItem, PlaybackState, PlayingMediaItem>(
+      Rx.combineLatest2<MediaItem?, PlaybackState, PlayingMediaItem>(
           AudioService.currentMediaItemStream,
           AudioService.playbackStateStream,
           (mediaItem, playbackState) =>
@@ -61,8 +61,8 @@ class _PlaylistsListState extends State<PlaylistsList> {
     return StreamBuilder<PlaybackState>(
         stream: AudioService.playbackStateStream,
         builder: (context, snapshot) {
-          final repeatMode = snapshot?.data?.repeatMode;
-          final isPlaying = snapshot?.data?.playing;
+          final repeatMode = snapshot.data?.repeatMode;
+          final isPlaying = snapshot.data?.playing;
           return Padding(
             padding: const EdgeInsets.only(
                 left: 16.0, right: 16.0, top: 10.0, bottom: 8.0),
@@ -78,7 +78,7 @@ class _PlaylistsListState extends State<PlaylistsList> {
                         List<Map> playlistSongs = [];
                         for (final playlist in playlists) {
                           List<Song> songs =
-                              await _database.getPlaylistSongs(playlist.id);
+                              await _database.getPlaylistSongs(playlist.id!);
                           songs.forEach((song) {
                             playlistSongs.add(song.toMap());
                           });
@@ -88,7 +88,7 @@ class _PlaylistsListState extends State<PlaylistsList> {
                         await AudioService.customAction(
                             'loadPlaylist', playlistSongs);
                         AudioService.customAction('shufflePlay');
-                        if (!isPlaying) await AudioService.play();
+                        if (!isPlaying!) await AudioService.play();
                       },
                       child: Icon(
                         AppIcon.shuffle,
@@ -169,7 +169,7 @@ class _PlaylistsListState extends State<PlaylistsList> {
         future: Provider.of<DBProvider>(context).playlists,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
-            List<Playlist> playlists = snapshot.data;
+            List<Playlist>? playlists = snapshot.data as List<Playlist>;
             return playlistList(context, playlists, _database);
           } else {
             return CircularProgressIndicator();
@@ -180,17 +180,17 @@ class _PlaylistsListState extends State<PlaylistsList> {
   }
 
   Widget playlistList(
-      BuildContext context, List<Playlist> playlists, DBHelper _database) {
+      BuildContext context, List<Playlist>? playlists, DBHelper _database) {
     return StreamBuilder<PlayingMediaItem>(
         stream: _playingMediaItemStream,
         builder: (context, snapshot) {
-          PlayingMediaItem playingMediaItem = snapshot.data;
+          PlayingMediaItem? playingMediaItem = snapshot.data;
           return GridView.count(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             crossAxisCount: 2,
             childAspectRatio: 170 / 210,
             children: List.of(
-              playlists.map(
+              playlists!.map(
                 (playlist) => GestureDetector(
                   onTap: () {
                     Navigator.push(
@@ -209,7 +209,7 @@ class _PlaylistsListState extends State<PlaylistsList> {
   }
 
   Widget playlistTile(
-      Playlist playlist, DBHelper _database, PlayingMediaItem playingSong) {
+      Playlist playlist, DBHelper _database, PlayingMediaItem? playingSong) {
     _showPopupMenu(Offset offset) async {
       double left = offset.dx;
       double top = offset.dy;
@@ -227,12 +227,12 @@ class _PlaylistsListState extends State<PlaylistsList> {
           )
         ],
         elevation: 6.0,
-      ).then<void>((String itemSelected) {
+      ).then<void>((String? itemSelected) {
         if (itemSelected == null) return;
 
         if (itemSelected == "1") {
           Provider.of<DBProvider>(context, listen: false)
-              .deletePlaylist(playlist.id);
+              .deletePlaylist(playlist.id!);
         } else if (itemSelected == "2") {
           //code here
         } else {
@@ -263,9 +263,9 @@ class _PlaylistsListState extends State<PlaylistsList> {
                           playlist.id.toString()) {
                         await AudioService.setShuffleMode(
                             AudioServiceShuffleMode.none);
-                        await _loadQueue(_database, playlist.id);
+                        await _loadQueue(_database, playlist.id!);
                       } else {
-                        if (playingSong.playbackState.playing)
+                        if (playingSong!.playbackState.playing)
                           await AudioService.pause();
                         else
                           await AudioService.play();
@@ -274,7 +274,7 @@ class _PlaylistsListState extends State<PlaylistsList> {
                     child: Icon(
                       playingSong?.playingItem?.album ==
                                   playlist.id.toString() &&
-                              playingSong.playbackState.playing
+                              playingSong!.playbackState.playing
                           ? Icons.pause_circle_filled
                           : Icons.play_circle_filled_sharp,
                       size: 36.0,
@@ -296,7 +296,7 @@ class _PlaylistsListState extends State<PlaylistsList> {
                   children: <Widget>[
                     Expanded(
                       child: Text(
-                        playlist.name,
+                        playlist.name!,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                             color: accentColor,
@@ -316,10 +316,9 @@ class _PlaylistsListState extends State<PlaylistsList> {
                   ],
                 ),
                 FutureBuilder<List<Song>>(
-                    future: _database.getPlaylistSongs(playlist.id),
+                    future: _database.getPlaylistSongs(playlist.id!),
                     builder: (context, snapshot) {
-                      List<Song> playlistSongs = snapshot?.data ?? [];
-                      // if (!snapshot.hasData) return CircularProgressIndicator();
+                      List<Song> playlistSongs = snapshot.data ?? [];
                       return Text(
                         "${playlistSongs.length} songs",
                         overflow: TextOverflow.ellipsis,
@@ -349,7 +348,7 @@ class _PlaylistsListState extends State<PlaylistsList> {
 }
 
 class PlayingMediaItem {
-  MediaItem playingItem;
+  MediaItem? playingItem;
   PlaybackState playbackState;
   PlayingMediaItem(this.playingItem, this.playbackState);
 }

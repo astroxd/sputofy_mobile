@@ -28,7 +28,7 @@ class MiniPlayer extends StatefulWidget {
 
 class _MiniPlayerState extends State<MiniPlayer> {
   Stream get _playingMediaItemStream =>
-      Rx.combineLatest3<MediaItem, Duration, PlaybackState, PlayingMediaItem>(
+      Rx.combineLatest3<MediaItem?, Duration, PlaybackState, PlayingMediaItem>(
           AudioService.currentMediaItemStream,
           AudioService.positionStream,
           AudioService.playbackStateStream,
@@ -38,14 +38,14 @@ class _MiniPlayerState extends State<MiniPlayer> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<PlayingMediaItem>(
-        stream: _playingMediaItemStream,
+        stream: _playingMediaItemStream as Stream<PlayingMediaItem>?,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             final playingMediaItemStream = snapshot.data;
             final mediaItem = playingMediaItemStream?.mediaItem;
             final position = playingMediaItemStream?.position;
             final isPlaying =
-                playingMediaItemStream?.playbackState?.playing ?? false;
+                playingMediaItemStream?.playbackState.playing ?? false;
             return GestureDetector(
               onTap: () {
                 Navigator.push(
@@ -88,8 +88,8 @@ class _MiniPlayerState extends State<MiniPlayer> {
                         startAngle: -90.0,
                       ),
                       min: 0.0,
-                      max: mediaItem?.duration?.inSeconds?.toDouble() ?? 100.0,
-                      initialValue: position?.inSeconds?.toDouble() ?? 0.0,
+                      max: mediaItem?.duration?.inSeconds.toDouble() ?? 100.0,
+                      initialValue: position?.inSeconds.toDouble() ?? 0.0,
                     ),
                     SizedBox(
                       width: 10,
@@ -101,7 +101,7 @@ class _MiniPlayerState extends State<MiniPlayer> {
                         children: [
                           Text(
                             "Now Playing",
-                            style: Theme.of(context).textTheme.subtitle2.merge(
+                            style: Theme.of(context).textTheme.subtitle2!.merge(
                                   TextStyle(color: Colors.black),
                                 ),
                           ),

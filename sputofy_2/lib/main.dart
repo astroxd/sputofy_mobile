@@ -7,7 +7,6 @@ import 'package:sputofy_2/model/SongModel.dart';
 
 import 'package:sputofy_2/pages/FouthPage.dart';
 import 'package:sputofy_2/pages/MiniPlayerPage.dart';
-import 'package:sputofy_2/pages/PaginaPerFarVedereLeCanzoni.dart';
 import 'package:sputofy_2/pages/PlaylistListPage.dart';
 import 'package:provider/provider.dart';
 import 'package:sputofy_2/pages/SongListPage.dart';
@@ -128,14 +127,14 @@ class _MainScreenState extends State<MainScreen> {
 }
 
 class QueueState {
-  final List<MediaItem> queue;
-  final MediaItem mediaItem;
+  final List<MediaItem>? queue;
+  final MediaItem? mediaItem;
 
   QueueState(this.queue, this.mediaItem);
 }
 
 class PlayingMediaItem {
-  final MediaItem mediaItem;
+  final MediaItem? mediaItem;
   final Duration position;
   final PlaybackState playbackState;
 
@@ -158,7 +157,7 @@ class PrimaPagina extends StatelessWidget {
   ];
 
   Stream<QueueState> get _queueStateStream =>
-      Rx.combineLatest2<List<MediaItem>, MediaItem, QueueState>(
+      Rx.combineLatest2<List<MediaItem>?, MediaItem?, QueueState>(
           AudioService.queueStream,
           AudioService.currentMediaItemStream,
           (queue, mediaItem) => QueueState(queue, mediaItem));
@@ -218,21 +217,21 @@ class PrimaPagina extends StatelessWidget {
             StreamBuilder(
               stream: _queueStateStream,
               builder: (context, snapshot) {
-                if (snapshot.data != null) {
-                  final queueStateStream = snapshot.data;
+                if (snapshot.hasData) {
+                  QueueState queueStateStream = snapshot.data as QueueState;
                   return Container(
                     width: double.infinity,
                     height: 300,
                     child: ListView.builder(
-                      itemCount: queueStateStream.queue.length,
+                      itemCount: queueStateStream.queue?.length,
                       itemBuilder: (context, index) {
-                        final mediaItem = queueStateStream.queue[index];
+                        final mediaItem = queueStateStream.queue![index];
                         final currentMediaItem = queueStateStream.mediaItem;
                         return MaterialButton(
                           onPressed: () => seek(mediaItem.id),
                           child: mediaItem == currentMediaItem
                               ? Text(
-                                  "${currentMediaItem.title}---${currentMediaItem.duration.toString()}",
+                                  "${currentMediaItem?.title}---${currentMediaItem?.duration.toString()}",
                                   style: TextStyle(color: Colors.blue),
                                 )
                               : Text(
@@ -279,11 +278,11 @@ class PrimaPagina extends StatelessWidget {
     for (var song in playlist) {
       print(song);
       final mediaItem = MediaItem(
-        id: song.path,
-        album: song.author,
-        title: song.title,
+        id: song.path!,
+        album: song.author!,
+        title: song.title!,
         duration: song.duration,
-        artUri: song.cover,
+        artUri: Uri.parse(song.cover!),
       );
       mediaList.add(mediaItem.toJson());
     }

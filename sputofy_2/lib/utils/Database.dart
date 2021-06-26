@@ -10,7 +10,7 @@ import 'package:sputofy_2/model/PlaylistModel.dart';
 import 'package:rxdart/rxdart.dart';
 
 class DBHelper {
-  static Database _db;
+  static Database? _db;
   static const String DB_NAME = 'SSSSSSSSSsssssSSSSSSSSSputofy.db';
   //* SONG TABLE
   static const String SONG_TABLE = 'song';
@@ -42,11 +42,11 @@ class DBHelper {
       StreamController<List<Song>>();
 
   Future<Database> get db async {
-    if (_db != null) {
-      return _db;
-    }
+    // if (_db != null) {
+    //   return _db;
+    // }
     _db = await initDb();
-    return _db;
+    return _db!;
   }
 
   initDb() async {
@@ -87,13 +87,13 @@ class DBHelper {
   }
 
   Future<Song> saveSong(Song song) async {
-    var dbClient = await db;
+    var dbClient = await (db);
     song.id = await dbClient.insert(SONG_TABLE, song.toMap());
     return song;
   }
 
-  Future<int> deleteSong(int id) async {
-    var dbClient = await db;
+  Future<int> deleteSong(int? id) async {
+    Database dbClient = await (db);
     await dbClient.delete(PLAYLISTSONG_TABLE,
         where: '$PLAYLISTSONG_SONG_ID = ?', whereArgs: [id]);
     return await dbClient
@@ -101,13 +101,13 @@ class DBHelper {
   }
 
   Future<int> updateSong(Song song) async {
-    var dbClient = await db;
+    var dbClient = await (db);
     return await dbClient.update(SONG_TABLE, song.toMap(),
         where: '$SONG_ID = ?', whereArgs: [song.id]);
   }
 
   Future<List<Song>> getSongs() async {
-    var dbClient = await db;
+    var dbClient = await (db);
     List<Map> maps = await dbClient.query(SONG_TABLE, columns: [
       SONG_ID,
       SONG_PATH,
@@ -119,14 +119,14 @@ class DBHelper {
     List<Song> songs = [];
     if (maps.length > 0) {
       for (int i = 0; i < maps.length; i++) {
-        songs.add(Song.fromMap(maps[i]));
+        songs.add(Song.fromMap(maps[i] as Map<String, dynamic>));
       }
     }
     return songs;
   }
 
-  Future<Song> getSong(int songID) async {
-    var dbClient = await db;
+  Future<Song?> getSong(int songID) async {
+    var dbClient = await (db);
     List<Map> maps = await dbClient.query(SONG_TABLE, columns: [
       SONG_ID,
       SONG_PATH,
@@ -135,30 +135,30 @@ class DBHelper {
       SONG_COVER,
       SONG_DURATION
     ]);
-    Song song;
+    Song? song;
     if (maps.length > 0) {
       for (int i = 0; i < maps.length; i++) {
-        song = (Song.fromMap(maps[i]));
+        song = (Song.fromMap(maps[i] as Map<String, dynamic>));
       }
     }
     return song;
   }
 
   Future<Playlist> savePlaylist(Playlist playlist) async {
-    var dbClient = await db;
+    var dbClient = await (db);
     playlist.id = await dbClient.insert(PLAYLIST_TABLE, playlist.toMap());
 
     return playlist;
   }
 
   Future<int> deletePlaylist(int playlistID) async {
-    var dbClient = await db;
+    var dbClient = await (db);
     return await dbClient.delete(PLAYLIST_TABLE,
         where: '$PLAYLIST_ID = ?', whereArgs: [playlistID]);
   }
 
   Future<int> updatePlaylist(Duration playlistDuration, int playlistID) async {
-    var dbClient = await db;
+    var dbClient = await (db);
     // return await dbClient.update(PLAYLIST_TABLE, playlist.toMap(),
     //     where: '$PLAYLIST_ID = ?', whereArgs: [playlist.id]);
     return await dbClient.rawUpdate(
@@ -173,7 +173,7 @@ class DBHelper {
   }
 
   Future<List<Playlist>> getPlaylists() async {
-    var dbClient = await db;
+    var dbClient = await (db);
     List<Map> maps = await dbClient.query(PLAYLIST_TABLE, columns: [
       PLAYLIST_ID,
       PLAYLIST_NAME,
@@ -184,28 +184,28 @@ class DBHelper {
     List<Playlist> playlists = [];
     if (maps.length > 0) {
       for (int i = 0; i < maps.length; i++) {
-        playlists.add(Playlist.fromMap(maps[i]));
+        playlists.add(Playlist.fromMap(maps[i] as Map<String, dynamic>));
       }
     }
     return playlists;
   }
 
   Future<PlaylistSong> savePlaylistSong(PlaylistSong playlistSong) async {
-    var dbClient = await db;
+    var dbClient = await (db);
     playlistSong.id =
         await dbClient.insert(PLAYLISTSONG_TABLE, playlistSong.toMap());
     return playlistSong;
   }
 
-  Future<int> deletePlaylistSong(int playlistID, int songID) async {
-    var dbClient = await db;
+  Future<int> deletePlaylistSong(int playlistID, int? songID) async {
+    var dbClient = await (db);
     return await dbClient.delete(PLAYLISTSONG_TABLE,
         where: '$PLAYLISTSONG_PLAYLIST_ID = ? and $PLAYLISTSONG_SONG_ID = ?',
         whereArgs: [playlistID, songID]);
   }
 
   Future<int> deleteAllPlaylistSongs(int playlistID) async {
-    var dbClient = await db;
+    var dbClient = await (db);
     return await dbClient.delete(PLAYLISTSONG_TABLE,
         where: '$PLAYLISTSONG_PLAYLIST_ID = ?', whereArgs: [playlistID]);
   }
@@ -214,7 +214,7 @@ class DBHelper {
 
   //! maybe useless
   Future<List<PlaylistSong>> testGetPlaylistSongs(int playlistID) async {
-    var dbClient = await db;
+    var dbClient = await (db);
     List<Map> maps = await dbClient.query(
       PLAYLISTSONG_TABLE,
       columns: [
@@ -228,7 +228,8 @@ class DBHelper {
     List<PlaylistSong> playlistSongs = [];
     if (maps.length > 0) {
       for (int i = 0; i < maps.length; i++) {
-        playlistSongs.add(PlaylistSong.fromMap(maps[i]));
+        playlistSongs
+            .add(PlaylistSong.fromMap(maps[i] as Map<String, dynamic>));
       }
     }
     return playlistSongs;
@@ -253,7 +254,7 @@ class DBHelper {
         where: '$SONG_ID = ?',
         whereArgs: [playlistSongs[i].songID],
       );
-      returnedSongs.add(Song.fromMap(maps[0]));
+      returnedSongs.add(Song.fromMap(maps[0] as Map<String, dynamic>));
     }
     _controller.add(returnedSongs);
     return returnedSongs;
@@ -263,7 +264,7 @@ class DBHelper {
       _controller.stream.asBroadcastStream();
 
   Future close() async {
-    var dbClient = await db;
+    var dbClient = await (db);
     dbClient.close();
   }
 }
