@@ -1,8 +1,19 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.sputofy_2">
+
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/> <!-- Permission Handler -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/> <!-- Permission Handler -->
+    <uses-permission android:name="android.permission.INTERNET"/> <!-- Just Audio -->
+    <uses-permission android:name="android.permission.WAKE_LOCK"/> <!-- Audio Service -->
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/> <!-- Audio Service -->
+   
    <application
+   
         android:label="sputofy_2"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="true"         
+        >
+
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"
@@ -37,5 +48,18 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- Audio Service -->
+        <service android:name="com.ryanheise.audioservice.AudioService">
+          <intent-filter>
+            <action android:name="android.media.browse.MediaBrowserService" />
+          </intent-filter>
+        </service>
+        
+        <!-- Audio Service -->
+        <receiver android:name="com.ryanheise.audioservice.MediaButtonReceiver" >
+          <intent-filter>
+            <action android:name="android.intent.action.MEDIA_BUTTON" />
+          </intent-filter>
+        </receiver> 
     </application>
 </manifest>
