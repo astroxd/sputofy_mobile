@@ -18,8 +18,8 @@ class AudioPlayerTask extends BackgroundAudioTask {
   Future<SharedPreferences>? _prefs;
 
   List<MediaItem> _queue = [];
-  int? get index => _audioPlayer.currentIndex;
-  MediaItem? get mediaItem => index == null ? null : _queue[index!];
+  int get index => _audioPlayer.currentIndex ?? -1;
+  MediaItem? get mediaItem => _queue[index];
   int? _playlistID;
   int? get playlistID => _playlistID == null ? null : _playlistID;
 
@@ -51,7 +51,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
     for (var song in songs) {
       MediaItem item = MediaItem(
         id: song['path'],
-        album: '${playlistID ?? -1}',
+        album: '${playlistID ?? -3}',
         title: song['title'],
         duration: Duration(milliseconds: song['duration']),
         extras: <String, dynamic>{
@@ -81,7 +81,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
     }
 
     if (previousQueueLength == 0) {
-      await AudioServiceBackground.setMediaItem(_queue[index!]);
+      await AudioServiceBackground.setMediaItem(_queue[index]);
       await _audioPlayer.load();
     }
   }
@@ -99,9 +99,9 @@ class AudioPlayerTask extends BackgroundAudioTask {
       await AudioServiceBackground.setQueue(_queue);
     } else {
       await AudioServiceBackground.setQueue(_queue);
-      bool hasNext = index! < _playlist.length - 1;
+      bool hasNext = index < _playlist.length - 1;
       if (hasNext) {
-        await AudioServiceBackground.setMediaItem(_queue[index!]);
+        await AudioServiceBackground.setMediaItem(_queue[index]);
       } else {
         await AudioServiceBackground.setMediaItem(_queue[0]);
       }
@@ -175,7 +175,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
       await onStop();
     }
 
-    await AudioServiceBackground.setMediaItem(_queue[index!]);
+    await AudioServiceBackground.setMediaItem(_queue[index]);
   }
 
   Future<void> _firstLoad() async {
@@ -208,13 +208,11 @@ class AudioPlayerTask extends BackgroundAudioTask {
   @override
   Future<void> onStop() async {
     print("onStop");
-    final pref = await _prefs!;
     await _audioPlayer.dispose();
     _eventSubscription.cancel();
     _sequenceStateSubscription.cancel();
     await _broadcastState();
     print("Ultimo onStop");
-    //TODO sharedPreferences last playing song
     await super.onStop();
   }
 
@@ -246,8 +244,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
     if (_audioPlayer.loopMode == LoopMode.one) {
       //* If has next
       if (_audioPlayer.effectiveIndices!.reversed.first != index) {
-        print("avanti ${index! + 1}");
-        _audioPlayer.seek(Duration.zero, index: index! + 1);
+        _audioPlayer.seek(Duration.zero, index: index + 1);
       }
     } else {
       await _audioPlayer.seekToNext();
@@ -260,8 +257,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
     if (_audioPlayer.loopMode == LoopMode.one) {
       //* If has next
       if (_audioPlayer.effectiveIndices!.first != index) {
-        print("indietro ${index! - 1}");
-        _audioPlayer.seek(Duration.zero, index: index! - 1);
+        _audioPlayer.seek(Duration.zero, index: index - 1);
       }
     } else {
       await _audioPlayer.seekToPrevious();
@@ -284,8 +280,8 @@ class AudioPlayerTask extends BackgroundAudioTask {
     final lista = _playlist.sequence;
     final newIndex = lista.indexWhere((song) => song.tag == mediaId);
 
-    if (newIndex == -1 || index == null || index == newIndex) return;
-    _skipState = newIndex > index!
+    if (newIndex == -1 || index == newIndex) return;
+    _skipState = newIndex > index
         ? AudioProcessingState.skippingToNext
         : AudioProcessingState.skippingToPrevious;
 
@@ -366,13 +362,10 @@ class AudioPlayerTask extends BackgroundAudioTask {
     switch (_audioPlayer.loopMode) {
       case LoopMode.off:
         return AudioServiceRepeatMode.none;
-        break;
       case LoopMode.one:
         return AudioServiceRepeatMode.one;
-        break;
       case LoopMode.all:
         return AudioServiceRepeatMode.all;
-        break;
     }
   }
 
