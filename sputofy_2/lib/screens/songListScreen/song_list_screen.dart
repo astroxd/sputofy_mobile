@@ -1,8 +1,18 @@
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sputofy_2/models/song_model.dart';
+import 'package:sputofy_2/providers/provider.dart';
+import 'package:sputofy_2/services/audioPlayer.dart';
 import 'package:sputofy_2/theme/palette.dart';
+import 'package:provider/provider.dart';
+import 'package:rxdart/rxdart.dart';
+
+_backgroundTaskEntryPoint() {
+  print("entrypoint");
+  AudioServiceBackground.run(() => AudioPlayerTask());
+}
 
 class SongListScreen extends StatefulWidget {
   const SongListScreen({Key? key}) : super(key: key);
@@ -13,48 +23,83 @@ class SongListScreen extends StatefulWidget {
 
 class _SongListScreenState extends State<SongListScreen> {
   @override
+  void initState() {
+    _start();
+    super.initState();
+  }
+
+  _start() {
+    AudioService.start(backgroundTaskEntrypoint: _backgroundTaskEntryPoint);
+  }
+
+  Stream<PlayingMediaItem> get _playingMediaItemStream =>
+      Rx.combineLatest2<MediaItem?, PlaybackState, PlayingMediaItem>(
+          AudioService.currentMediaItemStream,
+          AudioService.playbackStateStream,
+          (playingItem, playbackState) =>
+              PlayingMediaItem(playingItem, playbackState));
+
+  @override
   Widget build(BuildContext context) {
+    final songs = context.watch<DBProvider>().songs;
+    print(songs);
+
     return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.max,
-          children: <Widget>[
-            _buildActionButtons(context),
-            SizedBox(height: 16.0),
-            _buildListSongs(context),
-          ],
-        ),
-      ),
+      body: StreamBuilder<PlayingMediaItem>(
+          stream: _playingMediaItemStream,
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) return CircularProgressIndicator();
+            PlayingMediaItem? playingMediaItem = snapshot.data;
+            MediaItem? playingItem = playingMediaItem?.playingItem;
+            PlaybackState playbackState = playingMediaItem!.playbackState;
+
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.max,
+                children: <Widget>[
+                  _buildActionButtons(context),
+                  SizedBox(height: 16.0),
+                  _buildListSongs(context, songs, playingItem),
+                ],
+              ),
+            );
+          }),
     );
   }
 }
 
 class _buildListSongs extends StatelessWidget {
   final BuildContext context;
-  _buildListSongs(this.context);
+  final List<Song> songs;
+  final MediaItem? playingItem;
+  _buildListSongs(this.context, this.songs, this.playingItem);
 
-  final List<Song> songs = List.generate(
-      10,
-      (index) => Song(index, "path", "title", "author", "cover",
-          Duration(milliseconds: 300000)));
+  // final List<Song> songs = List.generate(
+  //     10,
+  //     (index) => Song(index, "path", "title", "author", "cover",
+  //         Duration(milliseconds: 300000)));
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: ListView.builder(
-        // separatorBuilder: (context, index) => Divider(
-        //   indent: 16.0,
-        // ),
         itemCount: songs.length,
         itemBuilder: (context, index) {
           Song song = songs[index];
           return Container(
             decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: kSecondaryColor))),
+                border: Border(bottom: BorderSide(color: kPrimaryColor))),
             margin: const EdgeInsets.only(left: 16.0),
             child: InkWell(
-              onTap: () => print("object"),
+              onTap: () async {
+                if (playingItem?.album != (-2).toString()) {
+                  await _loadQueue(songPath: song.path);
+                } else {
+                  await AudioService.skipToQueueItem(song.path);
+                  await AudioService.play();
+                }
+              },
               child: Column(
                 children: <Widget>[
                   SizedBox(height: 12.0),
@@ -63,15 +108,8 @@ class _buildListSongs extends StatelessWidget {
                     children: <Widget>[
                       Row(
                         children: <Widget>[
-                          Text(
-                            "${index + 1}",
-                            style: TextStyle(
-                                fontSize: Theme.of(context)
-                                    .textTheme
-                                    .subtitle1
-                                    ?.fontSize,
-                                color: kSecondaryColor),
-                          ),
+                          Text("${index + 1}",
+                              style: Theme.of(context).textTheme.subtitle2),
                           SizedBox(width: 16.0),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -82,24 +120,31 @@ class _buildListSongs extends StatelessWidget {
                                 style: Theme.of(context).textTheme.subtitle1,
                               ),
                               Text(_getSongDuration(song.duration),
-                                  style: TextStyle(color: kSecondaryColor)),
+                                  style: Theme.of(context).textTheme.subtitle2),
                             ],
                           )
                         ],
                       ),
-                      Row(
-                        children: <Widget>[
-                          IconButton(
-                            onPressed: () => print("object"),
-                            icon: Icon(Icons.favorite_border),
-                            color: kSecondaryColor,
-                          ),
-                          IconButton(
-                            onPressed: () => print("object"),
-                            icon: Icon(Icons.more_horiz),
-                            color: kSecondaryColor,
-                          ),
-                        ],
+                      Padding(
+                        padding: const EdgeInsets.only(right: 20.0),
+                        child: Row(
+                          children: <Widget>[
+                            IconButton(
+                              onPressed: () => Provider.of<DBProvider>(context,
+                                      listen: false)
+                                  .saveSong(Song(null, "path212222", "title",
+                                      "author", "cover", Duration.zero)),
+                              icon: Icon(Icons.favorite_border),
+                            ),
+                            GestureDetector(
+                              onTapDown: (TapDownDetails details) =>
+                                  Provider.of<DBProvider>(context,
+                                          listen: false)
+                                      .deleteSong(song.id!),
+                              child: Icon(Icons.more_horiz),
+                            ),
+                          ],
+                        ),
                       )
                     ],
                   ),
@@ -108,31 +153,6 @@ class _buildListSongs extends StatelessWidget {
               ),
             ),
           );
-          // return ListTile(
-          //   contentPadding: const EdgeInsets.only(left: 8.0, right: 0.0),
-          //   minLeadingWidth: 4.0,
-          //   leading: Text("$index"),
-          //   title: Text(song.title),
-          //   subtitle: Text(
-          //     song.duration.toString(),
-          //     style: TextStyle(color: kSecondaryColor),
-          //   ),
-          //   trailing: Row(
-          //     mainAxisSize: MainAxisSize.min,
-          //     children: <Widget>[
-          //       IconButton(
-          //         onPressed: () => print("object"),
-          //         icon: Icon(Icons.favorite_border),
-          //         color: kSecondaryColor,
-          //       ),
-          //       IconButton(
-          //         onPressed: () => print("object"),
-          //         icon: Icon(Icons.more_horiz),
-          //         color: kSecondaryColor,
-          //       ),
-          //     ],
-          //   ),
-          // );
         },
       ),
     );
@@ -143,6 +163,23 @@ class _buildListSongs extends StatelessWidget {
 
     String twoDigitSeconds = twoDigits(songDuration.inSeconds.remainder(60));
     return "${songDuration.inMinutes}:$twoDigitSeconds";
+  }
+
+  Future<void> _loadQueue({String? songPath}) async {
+    if (songs.isEmpty) return;
+    List<Map> mapSongs = [];
+    for (Song song in songs) {
+      mapSongs.add(song.toMap());
+    }
+
+    await AudioService.customAction('setPlaylistID', -2);
+    await AudioService.customAction('loadPlaylist', mapSongs).then((value) => {
+          if (songPath != null)
+            {
+              AudioService.skipToQueueItem(songPath)
+                  .then((value) async => await AudioService.play())
+            }
+        });
   }
 }
 
@@ -175,4 +212,11 @@ class _buildActionButtons extends StatelessWidget {
       ),
     );
   }
+}
+
+class PlayingMediaItem {
+  MediaItem? playingItem;
+  PlaybackState playbackState;
+
+  PlayingMediaItem(this.playingItem, this.playbackState);
 }

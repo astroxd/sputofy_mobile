@@ -6,17 +6,19 @@ ThemeData appTheme() {
     primaryColor: kAccentColor,
     accentColor: kAccentColor,
     hintColor: kThirdColor,
-    dividerColor: kSecondaryColor,
+    dividerColor: kPrimaryColor,
     buttonColor: kAccentColor,
-    scaffoldBackgroundColor: kPrimaryColor,
+    scaffoldBackgroundColor: kBackgroundColor,
     canvasColor: Colors.black,
-    iconTheme: IconThemeData(color: kThirdColor, size: 28.0),
+    fontFamily: 'RobotoMono',
+    iconTheme: IconThemeData(color: kPrimaryColor, size: 28.0),
     textTheme: TextTheme(
-      bodyText1: TextStyle(color: kAccentColor),
-      bodyText2: TextStyle(color: kSecondaryColor),
       subtitle1: TextStyle(color: kThirdColor, fontSize: 16.0),
+      subtitle2: TextStyle(color: kPrimaryColor),
     ),
-    unselectedWidgetColor: kAccentColor,
-    disabledColor: kAccentColor,
+    popupMenuTheme: PopupMenuThemeData(
+      color: kBackgroundColor,
+      textStyle: TextStyle(color: kThirdColor, fontSize: 16.0),
+    ),
   );
 }
