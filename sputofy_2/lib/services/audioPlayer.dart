@@ -64,6 +64,9 @@ class AudioPlayerTask extends BackgroundAudioTask {
   Future<void> _setAudioSession() async {
     final session = await AudioSession.instance;
     await session.configure(AudioSessionConfiguration.music());
+    session.becomingNoisyEventStream.listen((_) {
+      if (_audioPlayer.playing) onPause();
+    });
   }
 
   ///* Cambia il current item

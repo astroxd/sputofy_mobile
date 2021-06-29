@@ -2,9 +2,9 @@ class Song {
   int? id;
   late String path;
   late String title;
-  late String author;
+  String? author;
   String? cover;
-  late Duration duration;
+  Duration? duration;
 
   Song(this.id, this.path, this.title, this.author, this.cover, this.duration);
 
@@ -13,9 +13,9 @@ class Song {
       'id': id,
       'path': path,
       'title': title,
-      'author': author,
-      'cover': cover,
-      'duration': duration.inMilliseconds,
+      'author': author ?? '',
+      'cover': cover ?? '',
+      'duration': duration?.inMilliseconds ?? 0,
     };
     return map;
   }

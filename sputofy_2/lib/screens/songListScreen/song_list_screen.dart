@@ -9,11 +9,6 @@ import 'package:sputofy_2/theme/palette.dart';
 import 'package:provider/provider.dart';
 import 'package:rxdart/rxdart.dart';
 
-_backgroundTaskEntryPoint() {
-  print("entrypoint");
-  AudioServiceBackground.run(() => AudioPlayerTask());
-}
-
 class SongListScreen extends StatefulWidget {
   const SongListScreen({Key? key}) : super(key: key);
 
@@ -22,16 +17,6 @@ class SongListScreen extends StatefulWidget {
 }
 
 class _SongListScreenState extends State<SongListScreen> {
-  @override
-  void initState() {
-    _start();
-    super.initState();
-  }
-
-  _start() {
-    AudioService.start(backgroundTaskEntrypoint: _backgroundTaskEntryPoint);
-  }
-
   Stream<PlayingMediaItem> get _playingMediaItemStream =>
       Rx.combineLatest2<MediaItem?, PlaybackState, PlayingMediaItem>(
           AudioService.currentMediaItemStream,
@@ -75,9 +60,9 @@ class _buildListSongs extends StatelessWidget {
   final MediaItem? playingItem;
   _buildListSongs(this.context, this.songs, this.playingItem);
 
-  // final List<Song> songs = List.generate(
+  // final List<Song> songss = List.generate(
   //     10,
-  //     (index) => Song(index, "path", "title", "author", "cover",
+  //     (index) => Song(index, "path", "titleaaa", "author", "cover",
   //         Duration(milliseconds: 300000)));
 
   @override
@@ -87,6 +72,7 @@ class _buildListSongs extends StatelessWidget {
         itemCount: songs.length,
         itemBuilder: (context, index) {
           Song song = songs[index];
+
           return Container(
             decoration: BoxDecoration(
                 border: Border(bottom: BorderSide(color: kPrimaryColor))),
@@ -113,16 +99,16 @@ class _buildListSongs extends StatelessWidget {
                           SizedBox(width: 16.0),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
                             children: <Widget>[
                               Text(
                                 song.title,
                                 style: Theme.of(context).textTheme.subtitle1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                               Text(_getSongDuration(song.duration),
                                   style: Theme.of(context).textTheme.subtitle2),
                             ],
-                          )
+                          ),
                         ],
                       ),
                       Padding(
@@ -158,10 +144,10 @@ class _buildListSongs extends StatelessWidget {
     );
   }
 
-  String _getSongDuration(Duration songDuration) {
+  String _getSongDuration(Duration? songDuration) {
     String twoDigits(int n) => n.toString().padLeft(2, "0");
 
-    String twoDigitSeconds = twoDigits(songDuration.inSeconds.remainder(60));
+    String twoDigitSeconds = twoDigits(songDuration!.inSeconds.remainder(60));
     return "${songDuration.inMinutes}:$twoDigitSeconds";
   }
 

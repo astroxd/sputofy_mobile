@@ -11,7 +11,8 @@
    
         android:label="sputofy_2"
         android:icon="@mipmap/ic_launcher"
-        android:usesCleartextTraffic="true"         
+        android:usesCleartextTraffic="true"        
+        android:requestLegacyExternalStorage="true" 
         >
 
         <activity
