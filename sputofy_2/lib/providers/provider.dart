@@ -14,8 +14,8 @@ class DBProvider extends ChangeNotifier {
   List<Playlist> get playlists => _playlists;
   bool isAlphabeticalOrder = false;
 
-  List<Song> _songs = [];
-  List<Song> get songs => _songs;
+  Future<List<Song>>? _songs;
+  Future<List<Song>>? get songs => _songs;
 
   DBProvider() {
     _database = DBHelper();
@@ -75,13 +75,11 @@ class DBProvider extends ChangeNotifier {
   }
 
   Future<void> getSongs() async {
-    _songs = await _database.getSongs();
-    notifyListeners();
+    _songs = _database.getSongs();
   }
 
   Future<void> saveSong(Song song) async {
     _database.saveSong(song);
-    getSongs();
     notifyListeners();
   }
 

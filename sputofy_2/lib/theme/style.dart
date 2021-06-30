@@ -20,5 +20,6 @@ ThemeData appTheme() {
       color: kBackgroundColor,
       textStyle: TextStyle(color: kThirdColor, fontSize: 16.0),
     ),
+    // cardTheme: CardTheme(color: kSecondaryColor),
   );
 }

@@ -1,3 +1,5 @@
+import 'package:audio_service/audio_service.dart';
+
 class Song {
   int? id;
   late String path;
@@ -27,5 +29,18 @@ class Song {
     author = map['author'];
     cover = map['cover'];
     duration = Duration(milliseconds: map['duration']);
+  }
+
+  MediaItem toMediaItem() {
+    MediaItem item = MediaItem(
+      id: path,
+      album: '${-2}',
+      title: title,
+      duration: duration,
+      extras: <String, dynamic>{
+        'id': id,
+      },
+    );
+    return item;
   }
 }

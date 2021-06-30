@@ -49,6 +49,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  int tabIndex = 0;
   @override
   void initState() {
     print("Initi");
@@ -65,8 +66,26 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final TabController _tabController = DefaultTabController.of(context)!;
+
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        switch (_tabController.index) {
+          case 0:
+            setState(() {
+              tabIndex = 0;
+            });
+            break;
+          case 1:
+            setState(() {
+              tabIndex = 1;
+            });
+            break;
+        }
+      }
+    });
     return Scaffold(
-      appBar: appBar(),
+      appBar: appBar(tabIndex),
       body: StreamBuilder<bool>(
           stream: AudioService.runningStream,
           builder: (context, snapshot) {

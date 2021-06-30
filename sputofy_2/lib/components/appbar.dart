@@ -10,26 +10,29 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:sputofy_2/models/song_model.dart';
 import 'package:sputofy_2/services/database.dart';
 
-AppBar appBar() {
+AppBar appBar(int tabIndex) {
   return AppBar(
-    title: Text(
-      "Sputofy",
-    ),
+    title: Text("Sputofy"),
     actions: <Widget>[
       IconButton(onPressed: () => print(""), icon: Icon(Icons.search)),
-      PopupMenuButton<String>(
-        onSelected: _handleClick,
-        itemBuilder: (BuildContext context) {
-          return {'Download Song', 'Load Songs'}.map((String choice) {
-            return PopupMenuItem<String>(
-              value: choice,
-              child: Text(
-                choice,
-              ),
-            );
-          }).toList();
-        },
-      ),
+      tabIndex == 0
+          ? PopupMenuButton<String>(
+              onSelected: _handleClick,
+              itemBuilder: (BuildContext context) {
+                return {'Download Song', 'Load Songs'}.map((String choice) {
+                  return PopupMenuItem<String>(
+                    value: choice,
+                    child: Text(
+                      choice,
+                    ),
+                  );
+                }).toList();
+              },
+            )
+          : IconButton(
+              onPressed: null,
+              icon: Icon(Icons.add),
+            ),
     ],
     bottom: TabBar(
       tabs: [

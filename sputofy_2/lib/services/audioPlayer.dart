@@ -43,23 +43,23 @@ class AudioPlayerTask extends BackgroundAudioTask {
     _broadcasteMediaItemChanges();
   }
 
-  Future<void> _loadMediaItemsIntoQueue(final songs) async {
-    _queue.clear();
+  // Future<void> _loadMediaItemsIntoQueue(final songs) async {
+  //   _queue.clear();
 
-    for (var song in songs) {
-      MediaItem item = MediaItem(
-        id: song['path'],
-        album: '${playlistID}',
-        title: song['title'],
-        duration: Duration(milliseconds: song['duration']),
-        extras: <String, dynamic>{
-          'id': song['id'],
-        },
-      );
-      _queue.add(item);
-    }
-    await _loadQueue();
-  }
+  //   for (var song in songs) {
+  //     MediaItem item = MediaItem(
+  //       id: song['path'],
+  //       album: '${playlistID}',
+  //       title: song['title'],
+  //       duration: Duration(milliseconds: song['duration']),
+  //       extras: <String, dynamic>{
+  //         'id': song['id'],
+  //       },
+  //     );
+  //     _queue.add(item);
+  //   }
+  //   await _loadQueue();
+  // }
 
   Future<void> _setAudioSession() async {
     final session = await AudioSession.instance;
@@ -113,40 +113,40 @@ class AudioPlayerTask extends BackgroundAudioTask {
   }
 
   ///* Crea la lista di AudioSource
-  Future<void> _loadQueue() async {
-    await AudioServiceBackground.setQueue(_queue);
-    _playlist = ConcatenatingAudioSource(
-        useLazyPreparation: true,
-        children: _queue.map((item) {
-          final uri = Uri.parse(item.id);
-          return AudioSource.uri(uri, tag: item.id);
-        }).toList());
-    try {
-      await _audioPlayer.setAudioSource(_playlist);
-    } catch (e) {
-      print('Error: $e');
+  // Future<void> _loadQueue() async {
+  //   await AudioServiceBackground.setQueue(_queue);
+  //   _playlist = ConcatenatingAudioSource(
+  //       useLazyPreparation: true,
+  //       children: _queue.map((item) {
+  //         final uri = Uri.parse(item.id);
+  //         return AudioSource.uri(uri, tag: item.id);
+  //       }).toList());
+  //   try {
+  //     await _audioPlayer.setAudioSource(_playlist);
+  //   } catch (e) {
+  //     print('Error: $e');
 
-      await onStop();
-    }
+  //     await onStop();
+  //   }
 
-    await AudioServiceBackground.setMediaItem(_queue[index!]);
-  }
+  //   await AudioServiceBackground.setMediaItem(_queue[index!]);
+  // }
 
   Future<void> _firstLoad() async {
+    _playlistID = -2;
     final pref = await _prefs;
     DBHelper _database = DBHelper();
     List<Song> songs = await _database.getSongs();
     if (songs.isEmpty) return;
 
-    List<Map> mapSongs = [];
+    List<MediaItem> mediaItems = [];
     for (final song in songs) {
-      mapSongs.add(song.toMap());
+      mediaItems.add(song.toMediaItem());
     }
-
-    await _loadMediaItemsIntoQueue(mapSongs).then((value) async {
+    await onUpdateQueue(mediaItems).then((value) async {
       String? lastPlayedSong = pref.getString('song_path');
       if (lastPlayedSong != null) {
-        AudioService.skipToQueueItem(lastPlayedSong);
+        onSkipToQueueItem(lastPlayedSong);
       }
     });
   }
@@ -194,26 +194,23 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   @override
   Future<void> onUpdateQueue(List<MediaItem> songs) async {
-    //TODO implement
+    _queue = songs;
+    await AudioServiceBackground.setQueue(_queue);
+    _playlist = ConcatenatingAudioSource(
+        useLazyPreparation: true,
+        children: _queue.map((item) {
+          final uri = Uri.parse(item.id);
+          return AudioSource.uri(uri, tag: item.id);
+        }).toList());
+    try {
+      await _audioPlayer.setAudioSource(_playlist);
+    } catch (e) {
+      print('Error: $e');
 
-    // List<MediaItem> newSongs = [];
-    // int previousQueueLength = _queue.length;
+      await onStop();
+    }
 
-    // for (var song in songs) {
-    //   _queue.add(song);
-    //   newSongs.add(song);
-    // }
-    // await AudioServiceBackground.setQueue(_queue);
-
-    // for (var mediaItem in newSongs) {
-    //   await _playlist
-    //       .add(AudioSource.uri(Uri.parse(mediaItem.id), tag: mediaItem.id));
-    // }
-
-    // if (previousQueueLength == 0) {
-    //   await AudioServiceBackground.setMediaItem(_queue[index!]);
-    //   await _audioPlayer.load();
-    // }
+    await AudioServiceBackground.setMediaItem(_queue[index!]);
   }
 
   @override
