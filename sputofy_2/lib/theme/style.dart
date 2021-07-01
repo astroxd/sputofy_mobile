@@ -15,6 +15,7 @@ ThemeData appTheme() {
     textTheme: TextTheme(
       subtitle1: TextStyle(color: kThirdColor, fontSize: 16.0),
       subtitle2: TextStyle(color: kPrimaryColor),
+      headline6: TextStyle(color: kThirdColor),
     ),
     popupMenuTheme: PopupMenuThemeData(
       color: kBackgroundColor,

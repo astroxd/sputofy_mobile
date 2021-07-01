@@ -7,15 +7,15 @@ import 'package:sputofy_2/services/database.dart';
 class DBProvider extends ChangeNotifier {
   late DBHelper _database;
 
-  Future<List<Song>>? _playlistSongs;
-  Future<List<Song>>? get playlistSongs => _playlistSongs;
+  List<Song>? _playlistSongs = [];
+  List<Song>? get playlistSongs => _playlistSongs;
 
   List<Playlist> _playlists = [];
   List<Playlist> get playlists => _playlists;
   bool isAlphabeticalOrder = false;
 
-  Future<List<Song>>? _songs;
-  Future<List<Song>>? get songs => _songs;
+  List<Song> _songs = [];
+  List<Song> get songs => _songs;
 
   DBProvider() {
     _database = DBHelper();
@@ -23,10 +23,9 @@ class DBProvider extends ChangeNotifier {
     getPlaylists();
   }
 
-  Future<List<Song>> getPlaylistSongs(int playlistID) async {
-    _playlistSongs = _database.getPlaylistSongs(playlistID);
-    // notifyListeners();
-    return await _database.getPlaylistSongs(playlistID);
+  Future<void> getPlaylistSongs(int playlistID) async {
+    _playlistSongs = await _database.getPlaylistSongs(playlistID);
+    notifyListeners();
   }
 
   Future<void> savePlaylistSongs(
@@ -75,16 +74,18 @@ class DBProvider extends ChangeNotifier {
   }
 
   Future<void> getSongs() async {
-    _songs = _database.getSongs();
+    _songs = await _database.getSongs();
+    notifyListeners();
   }
 
   Future<void> saveSong(Song song) async {
-    _database.saveSong(song);
+    await _database.saveSong(song);
+
     notifyListeners();
   }
 
   Future<void> deleteSong(int songID) async {
-    _database.deleteSong(songID);
+    await _database.deleteSong(songID);
     getSongs();
     notifyListeners();
   }

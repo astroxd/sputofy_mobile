@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:sputofy_2/theme/palette.dart';
+import 'package:rxdart/rxdart.dart';
+import 'package:provider/provider.dart';
+
 import 'package:audio_service/audio_service.dart';
 import 'package:sputofy_2/models/song_model.dart';
 import 'package:sputofy_2/providers/provider.dart';
-import 'package:provider/provider.dart';
-import 'package:rxdart/rxdart.dart';
+
 import 'components/action_buttons.dart';
 import 'components/list_songs.dart';
 
@@ -22,19 +23,18 @@ class _SongListScreenState extends State<SongListScreen> {
           AudioService.playbackStateStream,
           (playingItem, playbackState) =>
               PlayingMediaItem(playingItem, playbackState));
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: FutureBuilder<List<Song>>(
-        future: Provider.of<DBProvider>(context).songs,
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) return CircularProgressIndicator();
-          List<Song> songs = snapshot.data ?? [];
+      body: Consumer<DBProvider>(
+        builder: (context, database, child) {
+          List<Song> songs = database.songs;
+
           return StreamBuilder<PlayingMediaItem>(
             stream: _playingMediaItemStream,
             builder: (context, snapshot) {
               if (!snapshot.hasData) return CircularProgressIndicator();
+
               PlayingMediaItem? playingMediaItem = snapshot.data;
               MediaItem? playingItem = playingMediaItem?.playingItem;
               PlaybackState playbackState = playingMediaItem!.playbackState;

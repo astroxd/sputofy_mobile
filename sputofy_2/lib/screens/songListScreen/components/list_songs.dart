@@ -43,8 +43,11 @@ class ListSongs extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.max,
                 children: <Widget>[
-                  Text("${index + 1}",
-                      style: Theme.of(context).textTheme.subtitle2),
+                  Text(
+                    // "${index + 1}",
+                    "${song.id}",
+                    style: Theme.of(context).textTheme.subtitle2,
+                  ),
                   SizedBox(width: 16.0),
                   Expanded(
                     child: Column(
