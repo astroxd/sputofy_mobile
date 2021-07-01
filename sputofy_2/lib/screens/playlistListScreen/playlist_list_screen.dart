@@ -36,6 +36,14 @@ class _PlaylistListScreenState extends State<PlaylistListScreen> {
                   style: TextStyle(color: kAccentColor),
                 ),
               ),
+              MaterialButton(
+                onPressed: () => Provider.of<DBProvider>(context, listen: false)
+                    .savePlaylistSongs(
+                  1,
+                  [PlaylistSong(null, 1, 27)],
+                ),
+                child: Text("playlist Song"),
+              ),
               PlaylistList(context, playlists),
             ],
           );
@@ -114,6 +122,15 @@ class PlaylistList extends StatelessWidget {
                         ),
                         //TODO review
 
+                        // FutureBuilder<List<Song>>(
+                        //     future:
+                        //         Provider.of<DBProvider>(context, listen: false)
+                        //             .testGetPlaylistSongs(playlist.id!),
+                        //     builder: (context, snapshot) {
+                        //       if (!snapshot.hasData)
+                        //         return CircularProgressIndicator();
+                        //       return Text(snapshot.data!.length.toString());
+                        //     })
                         // Consumer<DBProvider>(
                         //   builder: (context, database, child) {
                         //     database.getPlaylistSongs(playlist.id!);
