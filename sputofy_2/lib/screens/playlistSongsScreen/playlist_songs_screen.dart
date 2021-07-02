@@ -1,8 +1,12 @@
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:sputofy_2/models/playlist_model.dart';
 import 'package:sputofy_2/models/song_model.dart';
-import 'package:sputofy_2/services/database.dart';
+import 'package:sputofy_2/providers/provider.dart';
+import 'package:sputofy_2/screens/songListScreen/song_list_screen.dart';
 import 'package:sputofy_2/theme/palette.dart';
+import 'package:rxdart/rxdart.dart';
 
 class PlaylistSongsScreen extends StatefulWidget {
   final Playlist playlist;
@@ -13,6 +17,19 @@ class PlaylistSongsScreen extends StatefulWidget {
 }
 
 class _PlaylistSongsScreenState extends State<PlaylistSongsScreen> {
+  Stream<PlayingMediaItem> get _playingMediaItemStream =>
+      Rx.combineLatest2<MediaItem?, PlaybackState, PlayingMediaItem>(
+          AudioService.currentMediaItemStream,
+          AudioService.playbackStateStream,
+          (playingItem, playbackState) =>
+              PlayingMediaItem(playingItem, playbackState));
+  @override
+  void initState() {
+    Provider.of<DBProvider>(context, listen: false)
+        .getPlaylistSongs(widget.playlist.id!);
+    super.initState();
+  }
+
   List<Song> songs = List.generate(
       20,
       (index) =>
@@ -21,11 +38,26 @@ class _PlaylistSongsScreenState extends State<PlaylistSongsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          children: <Widget>[
-            _buildWidgetPlaylistInfo(context, widget.playlist),
-            _buildWidgetPlaylistList(context, songs),
-          ],
+        child: Consumer<DBProvider>(
+          builder: (context, database, child) {
+            List<Song> playlistSongs = database.playlistSongs;
+            print("playlistSongs $playlistSongs");
+            return StreamBuilder<PlayingMediaItem>(
+                stream: _playingMediaItemStream,
+                builder: (context, snapshot) {
+                  PlayingMediaItem? playingMediaItem = snapshot.data;
+                  MediaItem? playingItem = playingMediaItem?.playingItem;
+                  PlaybackState playbackState = playingMediaItem!.playbackState;
+                  return Column(
+                    children: <Widget>[
+                      _buildWidgetPlaylistInfo(
+                          context, widget.playlist, playlistSongs, playingItem),
+                      _buildWidgetPlaylistList(
+                          context, widget.playlist, songs, playingItem),
+                    ],
+                  );
+                });
+          },
         ),
       ),
     );
@@ -35,7 +67,11 @@ class _PlaylistSongsScreenState extends State<PlaylistSongsScreen> {
 class _buildWidgetPlaylistInfo extends StatelessWidget {
   final BuildContext context;
   final Playlist playlist;
-  const _buildWidgetPlaylistInfo(this.context, this.playlist, {Key? key})
+  final List<Song> playlistSongs;
+  final MediaItem? playingItem;
+  const _buildWidgetPlaylistInfo(
+      this.context, this.playlist, this.playlistSongs, this.playingItem,
+      {Key? key})
       : super(key: key);
 
   @override
@@ -44,7 +80,7 @@ class _buildWidgetPlaylistInfo extends StatelessWidget {
       children: <Widget>[
         _buildWidgetTopBar(context),
         SizedBox(height: 16.0),
-        _buildWidgetPlaylistDescription(context, playlist),
+        _buildWidgetPlaylistDescription(context, playlist, playingItem),
         Stack(
           alignment: AlignmentDirectional.centerEnd,
           children: [
@@ -74,7 +110,12 @@ class _buildWidgetPlaylistInfo extends StatelessWidget {
                     padding: const EdgeInsets.all(16.0),
                   ),
                   child: Icon(Icons.shuffle),
-                  onPressed: () => print("object"),
+                  onPressed: () {
+                    if (playingItem?.album != playlist.id) {
+                      loadQueue(playlist, playlistSongs);
+                    }
+                    AudioService.customAction('shufflePlay');
+                  },
                 ),
               ),
             ),
@@ -84,7 +125,7 @@ class _buildWidgetPlaylistInfo extends StatelessWidget {
                 heightFactor: 2.5,
                 alignment: Alignment.bottomLeft,
                 child: Text(
-                  "100 SONGS, 38 MIN",
+                  "${playlistSongs.length} SONGS, ${_getPlaylistLength(playlistSongs)}",
                   style: Theme.of(context).textTheme.subtitle2,
                 ),
               ),
@@ -93,6 +134,17 @@ class _buildWidgetPlaylistInfo extends StatelessWidget {
         )
       ],
     );
+  }
+
+  String _getPlaylistLength(List<Song> playlistSongs) {
+    Duration playlistDuration = Duration.zero;
+    playlistSongs.forEach((element) => playlistDuration += element.duration!);
+    String twoDigits(int n) => n.toString().padLeft(2, "0");
+    String twoDigitMinutes =
+        twoDigits(playlistDuration.inMinutes.remainder(60));
+    String twoDigitSeconds =
+        twoDigits(playlistDuration.inSeconds.remainder(60));
+    return "${twoDigits(playlistDuration.inHours)}:$twoDigitMinutes:$twoDigitSeconds HOURS";
   }
 
   Widget _buildWidgetTopBar(BuildContext context) {
@@ -110,7 +162,7 @@ class _buildWidgetPlaylistInfo extends StatelessWidget {
   }
 
   Widget _buildWidgetPlaylistDescription(
-      BuildContext context, Playlist playlist) {
+      BuildContext context, Playlist playlist, MediaItem? playingItem) {
     return Container(
       padding: const EdgeInsets.only(right: 16.0),
       height: 150,
@@ -158,7 +210,15 @@ class _buildWidgetPlaylistInfo extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                       child: GestureDetector(
-                        onTap: () {},
+                        onTap: () async {
+                          if (playingItem?.album != playlist.id) {
+                            loadQueue(playlist, playlistSongs,
+                                songPath: playlistSongs[0].path);
+                          }
+                          await AudioService.skipToQueueItem(
+                                  playlistSongs[0].path)
+                              .then((value) async => await AudioService.play());
+                        },
                         child: Icon(
                           Icons.play_arrow,
                           size: 24.0,
@@ -194,9 +254,13 @@ class _buildWidgetPlaylistInfo extends StatelessWidget {
 
 class _buildWidgetPlaylistList extends StatelessWidget {
   final BuildContext context;
+  final Playlist playlist;
   final List<Song> songs;
+  final MediaItem? playingItem;
 
-  const _buildWidgetPlaylistList(this.context, this.songs, {Key? key})
+  const _buildWidgetPlaylistList(
+      this.context, this.playlist, this.songs, this.playingItem,
+      {Key? key})
       : super(key: key);
 
   @override
@@ -208,15 +272,14 @@ class _buildWidgetPlaylistList extends StatelessWidget {
         itemBuilder: (context, index) {
           Song song = songs[index];
           return InkWell(
-            onTap: () {},
-            // onTap: () async {
-            //   if (playingItem?.album != '-2') {
-            //     await loadQueue(songs, songPath: song.path);
-            //   } else {
-            //     await AudioService.skipToQueueItem(song.path);
-            //     await AudioService.play();
-            //   }
-            // },
+            onTap: () async {
+              if (playingItem?.album != playlist.id) {
+                await loadQueue(playlist, songs, songPath: song.path);
+              } else {
+                await AudioService.skipToQueueItem(song.path);
+                await AudioService.play();
+              }
+            },
             child: Container(
               decoration: BoxDecoration(
                   border: Border(bottom: BorderSide(color: kPrimaryColor))),
@@ -231,11 +294,11 @@ class _buildWidgetPlaylistList extends StatelessWidget {
                   Expanded(
                     child: Text(
                       song.title,
-                      style: Theme.of(context).textTheme.subtitle1!,
-                      // .copyWith(
-                      //     color: playingItem?.id == song.path
-                      //         ? kAccentColor
-                      //         : null),
+                      style: Theme.of(context).textTheme.subtitle1!.copyWith(
+                            color: playingItem?.id == song.path
+                                ? kAccentColor
+                                : null,
+                          ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -280,8 +343,33 @@ class _buildWidgetPlaylistList extends StatelessWidget {
     //* params = [choice, song]
     switch (params[0]) {
       case 'Delete Song':
-        // _deleteSong(params[1]);
+        if (playingItem?.album == playlist.id) {
+          AudioService.removeQueueItem(params[1].toMediaItem());
+          Provider.of<DBProvider>(context, listen: false)
+              .deletePlaylistSong(playlist.id!, params[1].id!);
+        } else {
+          Provider.of<DBProvider>(context, listen: false)
+              .deletePlaylistSong(playlist.id!, params[1].id!);
+        }
         break;
     }
   }
+}
+
+Future<void> loadQueue(Playlist playlist, List<Song> playlistSongs,
+    {String? songPath}) async {
+  if (playlistSongs.isEmpty) return;
+  List<MediaItem> mediaItems = [];
+  for (Song song in playlistSongs) {
+    mediaItems.add(song.toMediaItem().copyWith(album: '${playlist.id}'));
+  }
+  await AudioService.updateQueue(mediaItems).then(
+    (value) => {
+      if (songPath != null)
+        {
+          AudioService.skipToQueueItem(songPath)
+              .then((value) async => await AudioService.play())
+        }
+    },
+  );
 }

@@ -55,7 +55,7 @@ class _PlaylistListScreenState extends State<PlaylistListScreen> {
 
 class PlaylistList extends StatelessWidget {
   final BuildContext context;
-  final List<Playlist>? playlists;
+  final List<Playlist> playlists;
 
   const PlaylistList(this.context, this.playlists, {Key? key})
       : super(key: key);
@@ -64,11 +64,12 @@ class PlaylistList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: ListView.builder(
-        itemCount: playlists?.length,
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+        itemCount: playlists.length,
         itemBuilder: (context, index) {
-          Playlist playlist = playlists![index];
+          Playlist playlist = playlists[index];
           return Card(
-            margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+            // margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
             elevation: 4.0,
             color: kSecondaryBackgroundColor,
             shape: RoundedRectangleBorder(
@@ -120,26 +121,18 @@ class PlaylistList extends StatelessWidget {
                           style: Theme.of(context).textTheme.subtitle1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        //TODO review
-
-                        // FutureBuilder<List<Song>>(
-                        //     future:
-                        //         Provider.of<DBProvider>(context, listen: false)
-                        //             .testGetPlaylistSongs(playlist.id!),
-                        //     builder: (context, snapshot) {
-                        //       if (!snapshot.hasData)
-                        //         return CircularProgressIndicator();
-                        //       return Text(snapshot.data!.length.toString());
-                        //     })
-                        // Consumer<DBProvider>(
-                        //   builder: (context, database, child) {
-                        //     database.getPlaylistSongs(playlist.id!);
-                        //     List<Song> playlistSongs =
-                        //         database.playlistSongs ?? [];
-                        //     return Text("${playlistSongs.length}",
-                        //         style: Theme.of(context).textTheme.subtitle2);
-                        //   },
-                        // )
+                        FutureBuilder<List<Song>>(
+                            future:
+                                Provider.of<DBProvider>(context, listen: false)
+                                    .testGetPlaylistSongs(playlist.id!),
+                            builder: (context, snapshot) {
+                              if (!snapshot.hasData)
+                                return CircularProgressIndicator();
+                              return Text(
+                                snapshot.data?.length.toString() ?? '0',
+                                style: Theme.of(context).textTheme.subtitle2,
+                              );
+                            })
                       ],
                     ),
                   ),

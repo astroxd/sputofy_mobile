@@ -7,8 +7,8 @@ import 'package:sputofy_2/services/database.dart';
 class DBProvider extends ChangeNotifier {
   late DBHelper _database;
 
-  List<Song>? _playlistSongs = [];
-  List<Song>? get playlistSongs => _playlistSongs;
+  List<Song> _playlistSongs = [];
+  List<Song> get playlistSongs => _playlistSongs;
 
   List<Playlist> _playlists = [];
   List<Playlist> get playlists => _playlists;
@@ -26,6 +26,11 @@ class DBProvider extends ChangeNotifier {
   Future<void> getPlaylistSongs(int playlistID) async {
     _playlistSongs = await _database.getPlaylistSongs(playlistID);
     notifyListeners();
+  }
+
+  //TODO review
+  Future<List<Song>> testGetPlaylistSongs(int playlistID) async {
+    return await _database.getPlaylistSongs(playlistID);
   }
 
   Future<void> savePlaylistSongs(
