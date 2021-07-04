@@ -112,11 +112,13 @@ class _buildWidgetPlaylistInfo extends StatelessWidget {
                   ),
                   child: Icon(Icons.shuffle),
                   onPressed: () {
-                    if (playingItem?.album != playlist.id) {
-                      loadQueue(playlist, playlistSongs);
-                    }
-                    if (playlistSongs.isNotEmpty) {
-                      AudioService.customAction('shufflePlay');
+                    if (playingItem?.album != '${playlist.id}') {
+                      loadQueue(playlist, playlistSongs).then((value) async =>
+                          await AudioService.customAction('shufflePlay'));
+                    } else {
+                      if (playlistSongs.isNotEmpty) {
+                        AudioService.customAction('shufflePlay');
+                      }
                     }
                   },
                 ),
@@ -128,7 +130,7 @@ class _buildWidgetPlaylistInfo extends StatelessWidget {
                 heightFactor: 2.5,
                 alignment: Alignment.bottomLeft,
                 child: Text(
-                  "${playlistSongs.length} SONGS, ${_getPlaylistLength(playlistSongs)}",
+                  "${playlistSongs.length} SONGS ${playlist.id}, ${_getPlaylistLength(playlistSongs)}",
                   style: Theme.of(context).textTheme.subtitle2,
                 ),
               ),

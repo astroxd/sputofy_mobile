@@ -1,6 +1,8 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:sputofy_2/providers/provider.dart';
 import 'package:sputofy_2/screens/SongDetailScreen/song_detail_screen.dart';
 import 'package:sputofy_2/theme/palette.dart';
 
@@ -17,6 +19,46 @@ class MiniPlayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    void _handleClick(List params) async {
+      //* params = [choice, mediaItem]
+      MediaItem mediaItem = params[1];
+      switch (params[0]) {
+        case 'Delete Song':
+          if (mediaItem.album == '-2') {
+            Provider.of<DBProvider>(context, listen: false)
+                .deleteSong(mediaItem.extras?['id']);
+          } else {
+            Provider.of<DBProvider>(context, listen: false).deletePlaylistSong(
+                int.parse(mediaItem.album), mediaItem.extras?['id']);
+            await AudioService.removeQueueItem(mediaItem);
+          }
+          break;
+      }
+    }
+
+    Widget _buildWidgetMenuButton(MediaItem? mediaItem) {
+      return PopupMenuButton<List>(
+        onSelected: _handleClick,
+        icon: Icon(Icons.more_vert),
+        padding: EdgeInsets.zero,
+        itemBuilder: (context) {
+          return {'Delete Song'}.map((String choice) {
+            return PopupMenuItem<List>(
+              value: [choice, mediaItem],
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Icon(Icons.delete),
+                  SizedBox(width: 2.0),
+                  Text(choice),
+                ],
+              ),
+            );
+          }).toList();
+        },
+      );
+    }
+
     return StreamBuilder<CurrentPlayingMediaItem>(
       stream: _playingMediaItemStream,
       builder: (context, snapshot) {
@@ -30,12 +72,7 @@ class MiniPlayer extends StatelessWidget {
 
         return GestureDetector(
           onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => SongDetailScreen(),
-              ),
-            );
+            Navigator.of(context).push(_createRoute());
           },
           child: Container(
             color: kBackgroundColor.withOpacity(0.7),
@@ -94,10 +131,7 @@ class MiniPlayer extends StatelessWidget {
                           ],
                         ),
                       ),
-                      IconButton(
-                        onPressed: () {},
-                        icon: Icon(Icons.more_vert),
-                      ),
+                      _buildWidgetMenuButton(playingItem),
                     ],
                   ),
                 ),
@@ -115,4 +149,22 @@ class CurrentPlayingMediaItem {
   Duration? position;
   PlaybackState? playbackState;
   CurrentPlayingMediaItem(this.playingItem, this.position, this.playbackState);
+}
+
+Route _createRoute() {
+  return PageRouteBuilder(
+    pageBuilder: (context, animation, secondaryAnimation) => SongDetailScreen(),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      var begin = Offset(0.0, 1.0);
+      var end = Offset.zero;
+      var curve = Curves.ease;
+
+      var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+
+      return SlideTransition(
+        position: animation.drive(tween),
+        child: child,
+      );
+    },
+  );
 }
