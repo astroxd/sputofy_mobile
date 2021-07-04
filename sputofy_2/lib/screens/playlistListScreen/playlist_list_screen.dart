@@ -36,14 +36,6 @@ class _PlaylistListScreenState extends State<PlaylistListScreen> {
                   style: TextStyle(color: kAccentColor),
                 ),
               ),
-              MaterialButton(
-                onPressed: () => Provider.of<DBProvider>(context, listen: false)
-                    .savePlaylistSongs(
-                  1,
-                  [PlaylistSong(null, 1, 27)],
-                ),
-                child: Text("playlist Song"),
-              ),
               PlaylistList(context, playlists),
             ],
           );

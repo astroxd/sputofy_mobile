@@ -227,7 +227,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
       await AudioServiceBackground.setQueue(_queue);
     } else {
       await AudioServiceBackground.setQueue(_queue);
-      bool hasNext = index! < _playlist.length - 1;
+      bool hasNext = index! < _playlist.length;
       if (hasNext) {
         await AudioServiceBackground.setMediaItem(_queue[index!]);
       } else {

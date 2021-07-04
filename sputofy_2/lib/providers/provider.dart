@@ -38,6 +38,7 @@ class DBProvider extends ChangeNotifier {
     for (var i = 0; i < songs.length; i++) {
       _database.savePlaylistSong(songs[i]);
     }
+    getPlaylistSongs(playlistID);
     notifyListeners();
   }
 
@@ -85,7 +86,7 @@ class DBProvider extends ChangeNotifier {
 
   Future<void> saveSong(Song song) async {
     await _database.saveSong(song);
-
+    getSongs();
     notifyListeners();
   }
 

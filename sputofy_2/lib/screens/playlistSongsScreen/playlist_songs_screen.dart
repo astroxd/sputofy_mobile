@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:sputofy_2/models/playlist_model.dart';
 import 'package:sputofy_2/models/song_model.dart';
 import 'package:sputofy_2/providers/provider.dart';
+import 'package:sputofy_2/screens/selectSongsScreen/select_songs_screen.dart';
 import 'package:sputofy_2/screens/songListScreen/song_list_screen.dart';
 import 'package:sputofy_2/theme/palette.dart';
 import 'package:rxdart/rxdart.dart';
@@ -30,10 +31,6 @@ class _PlaylistSongsScreenState extends State<PlaylistSongsScreen> {
     super.initState();
   }
 
-  List<Song> songs = List.generate(
-      20,
-      (index) =>
-          Song(index, "path", "title", "author", "cover", Duration.zero));
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -47,13 +44,13 @@ class _PlaylistSongsScreenState extends State<PlaylistSongsScreen> {
                 builder: (context, snapshot) {
                   PlayingMediaItem? playingMediaItem = snapshot.data;
                   MediaItem? playingItem = playingMediaItem?.playingItem;
-                  PlaybackState playbackState = playingMediaItem!.playbackState;
+                  // PlaybackState playbackState = playingMediaItem!.playbackState;
                   return Column(
                     children: <Widget>[
                       _buildWidgetPlaylistInfo(
                           context, widget.playlist, playlistSongs, playingItem),
                       _buildWidgetPlaylistList(
-                          context, widget.playlist, songs, playingItem),
+                          context, widget.playlist, playlistSongs, playingItem),
                     ],
                   );
                 });
@@ -114,7 +111,9 @@ class _buildWidgetPlaylistInfo extends StatelessWidget {
                     if (playingItem?.album != playlist.id) {
                       loadQueue(playlist, playlistSongs);
                     }
-                    AudioService.customAction('shufflePlay');
+                    if (playlistSongs.isNotEmpty) {
+                      AudioService.customAction('shufflePlay');
+                    }
                   },
                 ),
               ),
@@ -148,15 +147,45 @@ class _buildWidgetPlaylistInfo extends StatelessWidget {
   }
 
   Widget _buildWidgetTopBar(BuildContext context) {
+    void _handleClick(List params) {
+      //* params = [choice, song]
+      switch (params[0]) {
+        case 'Delete Playlist':
+          Provider.of<DBProvider>(context, listen: false)
+              .deletePlaylist(playlist.id!);
+          Navigator.pop(context);
+          break;
+      }
+    }
+
+    Widget _buildWidgetMenuButton(Playlist playlist) {
+      return PopupMenuButton<List>(
+        onSelected: _handleClick,
+        icon: Icon(Icons.more_vert),
+        padding: EdgeInsets.zero,
+        itemBuilder: (context) {
+          return {'Delete Playlist'}.map((String choice) {
+            return PopupMenuItem<List>(
+              value: [choice, playlist],
+              child: Text(choice),
+            );
+          }).toList();
+        },
+      );
+    }
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: <Widget>[
         IconButton(
-          onPressed: () => print("ob"),
+          onPressed: () {
+            ScaffoldMessenger.of(context)
+                .showSnackBar(SnackBar(content: Text("Not implemented yet")));
+          },
           icon: Icon(Icons.sort),
           color: kThirdColor,
         ),
-        IconButton(onPressed: () => print("ob"), icon: Icon(Icons.more_vert)),
+        _buildWidgetMenuButton(playlist),
       ],
     );
   }
@@ -233,7 +262,21 @@ class _buildWidgetPlaylistInfo extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                       child: GestureDetector(
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => SelectSongList(
+                                  playlistID: playlist.id!,
+                                  playlistSongs: playlistSongs),
+                            ),
+                          ).then((value) {
+                            if (value.isNotEmpty &&
+                                playingItem?.album == playlist.id) {
+                              AudioService.addQueueItems(value);
+                            }
+                          });
+                        },
                         child: Icon(
                           Icons.add,
                           size: 24.0,
@@ -302,6 +345,7 @@ class _buildWidgetPlaylistList extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
+                  SizedBox(width: 8.0),
                   Text(
                     _getSongDuration(song.duration),
                     style: Theme.of(context).textTheme.subtitle2,
@@ -343,7 +387,7 @@ class _buildWidgetPlaylistList extends StatelessWidget {
     //* params = [choice, song]
     switch (params[0]) {
       case 'Delete Song':
-        if (playingItem?.album == playlist.id) {
+        if (playingItem?.album == '${playlist.id}') {
           AudioService.removeQueueItem(params[1].toMediaItem());
           Provider.of<DBProvider>(context, listen: false)
               .deletePlaylistSong(playlist.id!, params[1].id!);
