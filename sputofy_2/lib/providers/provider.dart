@@ -44,6 +44,7 @@ class DBProvider extends ChangeNotifier {
 
   Future<void> deletePlaylistSong(int playlistID, int songID) async {
     _database.deletePlaylistSong(playlistID, songID);
+    getPlaylistSongs(playlistID);
     notifyListeners();
   }
 

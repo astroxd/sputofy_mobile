@@ -5,6 +5,7 @@ ThemeData appTheme() {
   return ThemeData(
     primaryColor: kAccentColor,
     accentColor: kAccentColor,
+
     hintColor: kThirdColor,
     dividerColor: kPrimaryColor,
     buttonColor: kAccentColor,

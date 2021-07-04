@@ -100,6 +100,7 @@ void _loadFolderItems(String folder_path) async {
     try {
       Duration? songDuration = await _audioPlayer
           .setAudioSource(AudioSource.uri(Uri.parse(file.path)));
+      //TODO basename(file.path) => song.mp3
       newSongs.add(
           Song(null, file.path, basename(file.path), '', '', songDuration));
     } catch (e) {

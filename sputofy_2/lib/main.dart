@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sputofy_2/components/appbar.dart';
 import 'package:sputofy_2/providers/provider.dart';
+import 'package:sputofy_2/screens/MiniPlayerScreen/mini_player.dart';
 import 'package:sputofy_2/screens/playlistListScreen/playlist_list_screen.dart';
 import 'package:sputofy_2/screens/songListScreen/song_list_screen.dart';
 import 'package:sputofy_2/theme/style.dart';
@@ -87,32 +88,34 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: appBar(tabIndex),
       body: StreamBuilder<bool>(
-          stream: AudioService.runningStream,
-          builder: (context, snapshot) {
-            final isRunning = snapshot.data ?? false;
-            if (!isRunning) _start();
-            return TabBarView(
-              children: [
-                if (snapshot.connectionState != ConnectionState.active) ...[
-                  // SizedBox(),
+        stream: AudioService.runningStream,
+        builder: (context, snapshot) {
+          final isRunning = snapshot.data ?? false;
+          if (!isRunning) _start();
+          return TabBarView(
+            children: [
+              if (snapshot.connectionState != ConnectionState.active) ...[
+                // SizedBox(),
+                Container(
+                  color: Colors.red,
+                ),
+                SizedBox()
+              ] else ...[
+                if (!isRunning) ...[
                   Container(
                     color: Colors.red,
                   ),
-                  SizedBox()
+                  Container()
                 ] else ...[
-                  if (!isRunning) ...[
-                    Container(
-                      color: Colors.red,
-                    ),
-                    Container()
-                  ] else ...[
-                    SongListScreen(),
-                    PlaylistListScreen(),
-                  ]
+                  SongListScreen(),
+                  PlaylistListScreen(),
                 ]
-              ],
-            );
-          }),
+              ]
+            ],
+          );
+        },
+      ),
+      bottomSheet: MiniPlayer(),
     );
   }
 }

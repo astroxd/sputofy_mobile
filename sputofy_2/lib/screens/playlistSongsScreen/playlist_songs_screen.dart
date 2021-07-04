@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:sputofy_2/models/playlist_model.dart';
 import 'package:sputofy_2/models/song_model.dart';
 import 'package:sputofy_2/providers/provider.dart';
+import 'package:sputofy_2/screens/MiniPlayerScreen/mini_player.dart';
 import 'package:sputofy_2/screens/selectSongsScreen/select_songs_screen.dart';
 import 'package:sputofy_2/screens/songListScreen/song_list_screen.dart';
 import 'package:sputofy_2/theme/palette.dart';
@@ -40,23 +41,26 @@ class _PlaylistSongsScreenState extends State<PlaylistSongsScreen> {
             List<Song> playlistSongs = database.playlistSongs;
             print("playlistSongs $playlistSongs");
             return StreamBuilder<PlayingMediaItem>(
-                stream: _playingMediaItemStream,
-                builder: (context, snapshot) {
-                  PlayingMediaItem? playingMediaItem = snapshot.data;
-                  MediaItem? playingItem = playingMediaItem?.playingItem;
-                  // PlaybackState playbackState = playingMediaItem!.playbackState;
-                  return Column(
-                    children: <Widget>[
-                      _buildWidgetPlaylistInfo(
-                          context, widget.playlist, playlistSongs, playingItem),
-                      _buildWidgetPlaylistList(
-                          context, widget.playlist, playlistSongs, playingItem),
-                    ],
-                  );
-                });
+              stream: _playingMediaItemStream,
+              builder: (context, snapshot) {
+                PlayingMediaItem? playingMediaItem = snapshot.data;
+                MediaItem? playingItem = playingMediaItem?.playingItem;
+                // PlaybackState playbackState = playingMediaItem!.playbackState;
+                return Column(
+                  children: <Widget>[
+                    _buildWidgetPlaylistInfo(
+                        context, widget.playlist, playlistSongs, playingItem),
+                    SizedBox(height: 16.0),
+                    _buildWidgetPlaylistList(
+                        context, widget.playlist, playlistSongs, playingItem),
+                  ],
+                );
+              },
+            );
           },
         ),
       ),
+      bottomSheet: MiniPlayer(),
     );
   }
 }
@@ -271,7 +275,7 @@ class _buildWidgetPlaylistInfo extends StatelessWidget {
                                   playlistSongs: playlistSongs),
                             ),
                           ).then((value) {
-                            if (value.isNotEmpty &&
+                            if (value != null &&
                                 playingItem?.album == playlist.id) {
                               AudioService.addQueueItems(value);
                             }
