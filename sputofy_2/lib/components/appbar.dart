@@ -7,10 +7,14 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:provider/provider.dart';
+import 'package:sputofy_2/models/playlist_model.dart';
 import 'package:sputofy_2/models/song_model.dart';
+import 'package:sputofy_2/providers/provider.dart';
 import 'package:sputofy_2/services/database.dart';
+import 'package:sputofy_2/theme/palette.dart';
 
-AppBar appBar(int tabIndex) {
+AppBar appBar(int tabIndex, BuildContext context) {
   return AppBar(
     title: Text("Sputofy"),
     actions: <Widget>[
@@ -30,7 +34,7 @@ AppBar appBar(int tabIndex) {
               },
             )
           : IconButton(
-              onPressed: null,
+              onPressed: () => _showNewPlaylistDialog(context),
               icon: Icon(Icons.add),
             ),
     ],
@@ -111,4 +115,104 @@ void _loadFolderItems(String folder_path) async {
   for (Song song in newSongs) {
     _database.saveSong(song);
   }
+}
+
+void _showNewPlaylistDialog(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    builder: (context) {
+      return NewPlaylistDialog();
+    },
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.only(
+        topLeft: Radius.circular(24.0),
+        topRight: Radius.circular(24.0),
+      ),
+    ),
+  );
+}
+
+class NewPlaylistDialog extends StatefulWidget {
+  const NewPlaylistDialog({Key? key}) : super(key: key);
+
+  @override
+  _NewPlaylistDialogState createState() => _NewPlaylistDialogState();
+}
+
+class _NewPlaylistDialogState extends State<NewPlaylistDialog> {
+  var textController = TextEditingController(text: '');
+  bool isValid = true;
+
+  @override
+  void dispose() {
+    textController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    double bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+
+    return Padding(
+      padding: EdgeInsets.only(
+          top: 16.0, left: 16.0, right: 16.0, bottom: bottomPadding),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Text(
+            "Create Playlist",
+            style: Theme.of(context).textTheme.headline6,
+          ),
+          SizedBox(height: 16.0),
+          Padding(
+            padding: EdgeInsets.only(bottom: 0.0),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: 'my beautiful playlist',
+                hintStyle: TextStyle(color: kPrimaryColor),
+                errorText: isValid ? null : 'Playlist name can\'t be empty',
+              ),
+              autofocus: true,
+              controller: textController,
+            ),
+          ),
+          SizedBox(height: 32.0),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              MaterialButton(
+                color: kSecondaryColor,
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: Text("cancel"),
+              ),
+              MaterialButton(
+                onPressed: () {
+                  if (textController.text.isEmpty) {
+                    setState(() {
+                      isValid = false;
+                    });
+                  } else {
+                    setState(() {
+                      isValid = true;
+                    });
+                    _savePlaylist(textController.text, context);
+                  }
+                },
+                child: Text("Save"),
+                color: kAccentColor,
+              ),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+}
+
+_savePlaylist(String playlistName, BuildContext context) {
+  Playlist playlist = Playlist(null, playlistName, '', DateTime.now());
+  Provider.of<DBProvider>(context, listen: false).savePlaylist(playlist);
+  Navigator.pop(context);
 }

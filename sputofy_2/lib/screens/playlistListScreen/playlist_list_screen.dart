@@ -24,18 +24,6 @@ class _PlaylistListScreenState extends State<PlaylistListScreen> {
 
           return Column(
             children: [
-              MaterialButton(
-                onPressed: () => Provider.of<DBProvider>(context, listen: false)
-                    .savePlaylist(Playlist(
-                        null,
-                        "namaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaae",
-                        "cover",
-                        DateTime.now())),
-                child: Text(
-                  "Create Playlist",
-                  style: TextStyle(color: kAccentColor),
-                ),
-              ),
               PlaylistList(context, playlists),
             ],
           );
@@ -56,81 +44,84 @@ class PlaylistList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
         itemCount: playlists.length,
         itemBuilder: (context, index) {
           Playlist playlist = playlists[index];
-          return Card(
-            // margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-            elevation: 4.0,
-            color: kSecondaryBackgroundColor,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(
-                Radius.circular(10.0),
-              ),
-            ),
-            child: InkWell(
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => PlaylistSongsScreen(playlist),
+          return Tooltip(
+            message: playlist.name,
+            padding: const EdgeInsets.all(16.0),
+            child: Card(
+              elevation: 4.0,
+              color: kSecondaryBackgroundColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(
+                  Radius.circular(10.0),
                 ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.max,
-                children: <Widget>[
-                  Stack(
-                    alignment: AlignmentDirectional.center,
-                    children: <Widget>[
-                      ClipRRect(
-                        borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(10.0),
-                            bottomLeft: Radius.circular(10.0)),
-                        child: Image.asset(
-                          'cover.jpeg',
-                          width: 70.0,
-                          height: 70.0,
-                        ),
-                      ),
-                      IconButton(
-                          splashColor: Colors.transparent,
-                          iconSize: 48.0,
-                          onPressed: () => print("bottone"),
-                          icon: Icon(
-                            Icons.play_arrow,
-                            color: Colors.white,
-                            // size: 48.0,
-                          )),
-                    ],
+              child: InkWell(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PlaylistSongsScreen(playlist),
                   ),
-                  SizedBox(width: 16.0),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.max,
+                  children: <Widget>[
+                    Stack(
+                      alignment: AlignmentDirectional.center,
                       children: <Widget>[
-                        Text(
-                          playlist.name,
-                          style: Theme.of(context).textTheme.subtitle1,
-                          overflow: TextOverflow.ellipsis,
+                        ClipRRect(
+                          borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(10.0),
+                              bottomLeft: Radius.circular(10.0)),
+                          child: Image.asset(
+                            'cover.jpeg',
+                            width: 70.0,
+                            height: 70.0,
+                          ),
                         ),
-                        FutureBuilder<List<Song>>(
-                            future:
-                                Provider.of<DBProvider>(context, listen: false)
-                                    .testGetPlaylistSongs(playlist.id!),
-                            builder: (context, snapshot) {
-                              if (!snapshot.hasData)
-                                return CircularProgressIndicator();
-                              return Text(
-                                snapshot.data?.length.toString() ?? '0',
-                                style: Theme.of(context).textTheme.subtitle2,
-                              );
-                            })
+                        IconButton(
+                            splashColor: Colors.transparent,
+                            iconSize: 48.0,
+                            onPressed: () => print("bottone"),
+                            icon: Icon(
+                              Icons.play_arrow,
+                              color: Colors.white,
+                              // size: 48.0,
+                            )),
                       ],
                     ),
-                  ),
-                  // SizedBox(width: 8.0),
-                  _buildWidgetMenuButton(playlist),
-                ],
+                    SizedBox(width: 16.0),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            playlist.name,
+                            style: Theme.of(context).textTheme.subtitle1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          FutureBuilder<List<Song>>(
+                              future: Provider.of<DBProvider>(context,
+                                      listen: false)
+                                  .testGetPlaylistSongs(playlist.id!),
+                              builder: (context, snapshot) {
+                                if (!snapshot.hasData)
+                                  return CircularProgressIndicator();
+                                return Text(
+                                  snapshot.data?.length.toString() ?? '0',
+                                  style: Theme.of(context).textTheme.subtitle2,
+                                );
+                              })
+                        ],
+                      ),
+                    ),
+                    // SizedBox(width: 8.0),
+                    _buildWidgetMenuButton(playlist),
+                  ],
+                ),
               ),
             ),
           );

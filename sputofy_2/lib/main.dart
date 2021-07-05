@@ -86,7 +86,7 @@ class _MyHomePageState extends State<MyHomePage> {
       }
     });
     return Scaffold(
-      appBar: appBar(tabIndex),
+      appBar: appBar(tabIndex, context),
       body: StreamBuilder<bool>(
         stream: AudioService.runningStream,
         builder: (context, snapshot) {
