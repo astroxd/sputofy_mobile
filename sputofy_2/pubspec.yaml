@@ -42,6 +42,9 @@ dependencies:
   audio_service: ^0.17.1
   audio_session: ^0.1.5
 
+  dio: ^4.0.0
+  youtube_explode_dart: ^1.9.9
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

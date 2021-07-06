@@ -6,6 +6,7 @@ import 'package:audio_service/audio_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:sputofy_2/models/playlist_model.dart';
@@ -13,12 +14,21 @@ import 'package:sputofy_2/models/song_model.dart';
 import 'package:sputofy_2/providers/provider.dart';
 import 'package:sputofy_2/services/database.dart';
 import 'package:sputofy_2/theme/palette.dart';
+import 'package:youtube_explode_dart/youtube_explode_dart.dart'
+    as youtubeDonwloader;
 
 AppBar appBar(int tabIndex, BuildContext context) {
   return AppBar(
     title: Text("Sputofy"),
     actions: <Widget>[
-      IconButton(onPressed: () => print(""), icon: Icon(Icons.search)),
+      IconButton(
+        onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Not implemented yet"),
+          ),
+        ),
+        icon: Icon(Icons.search),
+      ),
       tabIndex == 0
           ? PopupMenuButton<String>(
               onSelected: _handleClick,
@@ -54,6 +64,7 @@ AppBar appBar(int tabIndex, BuildContext context) {
 void _handleClick(String choice) {
   switch (choice) {
     case 'Download Song':
+      _downloadSong('https://youtu.be/YXdOUmxG5yI');
       break;
     case 'Load Songs':
       _loadSongs();
@@ -93,20 +104,29 @@ void _loadFolderItems(String folder_path) async {
       contentToRemove.add(file);
     }
 
-    if (currentSongs.where((song) => song.path == file.path) == true) {
+    if (currentSongs.map((song) => song.path).toList().contains(file.path)) {
       contentToRemove.add(file);
     }
   }
 
   folderContent.removeWhere((element) => contentToRemove.contains(element));
+  folderContent.forEach((element) {
+    print("ADD $element");
+  });
+  contentToRemove.forEach((element) {
+    print("DELETE $element");
+  });
 
   for (FileSystemEntity file in folderContent) {
     try {
       Duration? songDuration = await _audioPlayer
           .setAudioSource(AudioSource.uri(Uri.parse(file.path)));
       //TODO basename(file.path) => song.mp3
-      newSongs.add(
-          Song(null, file.path, basename(file.path), '', '', songDuration));
+      String baseFileName = basename(file.path);
+      String fileName =
+          baseFileName.substring(0, baseFileName.lastIndexOf('.'));
+
+      newSongs.add(Song(null, file.path, fileName, '', '', songDuration));
     } catch (e) {
       print("Error on loading Song from folder $e");
     }
@@ -114,6 +134,9 @@ void _loadFolderItems(String folder_path) async {
 
   for (Song song in newSongs) {
     _database.saveSong(song);
+    //TODO review
+
+    // AudioService.addQueueItem(song.toMediaItem());
   }
 }
 
@@ -215,4 +238,30 @@ _savePlaylist(String playlistName, BuildContext context) {
   Playlist playlist = Playlist(null, playlistName, '', DateTime.now());
   Provider.of<DBProvider>(context, listen: false).savePlaylist(playlist);
   Navigator.pop(context);
+}
+
+_downloadSong(String videoURL) async {
+  var yt = youtubeDonwloader.YoutubeExplode();
+  String videoID = videoURL.split('/').last;
+
+  //* Get video metadata
+  var video = await yt.videos.get(videoID);
+
+  //*Get video manifest
+  var manifest = await yt.videos.streamsClient.getManifest(videoID);
+  var streamInfo = manifest.audioOnly.withHighestBitrate();
+  Stream<List<int>> stream = yt.videos.streamsClient.get(streamInfo);
+
+  File file = File('/storage/emulated/0/Music/${video.title}.mp3');
+
+  var output = file.openWrite(mode: FileMode.writeOnlyAppend);
+
+  var count = 0;
+  await for (final data in stream) {
+    count += data.length;
+    output.add(data);
+    print(count);
+  }
+  await output.close();
+  yt.close();
 }

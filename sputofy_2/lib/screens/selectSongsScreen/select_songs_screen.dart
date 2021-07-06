@@ -42,37 +42,28 @@ class _SelectSongListState extends State<SelectSongList> {
               onPressed: toAddSongs.length == 0 ? null : saveSongs,
             ),
             Expanded(
-                child: FutureBuilder<List<Song>>(
-              future: _database.getSongs(),
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  List<Song> songs = snapshot.data ?? [];
-                  return ListView.builder(
-                    itemCount: songs.length,
-                    itemBuilder: (context, index) {
-                      Song song = songs[index];
+              child: FutureBuilder<List<Song>>(
+                future: _database.getSongs(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    List<Song> songs = snapshot.data ?? [];
+                    return ListView.builder(
+                      itemCount: songs.length,
+                      itemBuilder: (context, index) {
+                        Song song = songs[index];
 
-                      return Theme(
-                        data: ThemeData(disabledColor: Colors.red),
-                        child: widget.playlistSongs
+                        return widget.playlistSongs
                                 .any((element) => element.id == song.id)
                             ? _unselectableSong(song)
-                            : _selectableSong(song),
-                      );
-                    },
-                  );
-                } else {
-                  return CircularProgressIndicator();
-                }
-              },
-            )),
-            Expanded(
-                child: ListView.builder(
-              itemCount: toAddSongs.length,
-              itemBuilder: (context, index) {
-                return Text(toAddSongs[index].path);
-              },
-            )),
+                            : _selectableSong(song);
+                      },
+                    );
+                  } else {
+                    return CircularProgressIndicator();
+                  }
+                },
+              ),
+            ),
           ],
         ),
       ),
@@ -80,21 +71,34 @@ class _SelectSongListState extends State<SelectSongList> {
   }
 
   Widget _unselectableSong(Song song) {
-    return CheckboxListTile(
-        title: Text(
-          song.title,
-          style: TextStyle(color: Colors.blue),
-        ),
-        value: true,
-        onChanged: null);
+    return Theme(
+      data: ThemeData(disabledColor: kSecondaryBackgroundColor),
+      child: CheckboxListTile(
+          contentPadding:
+              const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+          title: Text(
+            song.title,
+            style:
+                Theme.of(context).textTheme.subtitle2!.copyWith(fontSize: 16.0),
+          ),
+          value: true,
+          onChanged: null),
+    );
   }
 
   Widget _selectableSong(Song song) {
+    bool isSelected = toAddSongs.any((element) => element.id == song.id);
     return CheckboxListTile(
-      title: Text(song.path),
-      value: toAddSongs.any((element) => element.id == song.id),
+      title: Text(
+        song.title,
+        style: Theme.of(context)
+            .textTheme
+            .subtitle1!
+            .copyWith(color: isSelected ? kAccentColor : null),
+      ),
+      value: isSelected,
       onChanged: (bool? value) {
-        if (toAddSongs.any((element) => element.id == song.id)) {
+        if (isSelected) {
           setState(() {
             toAddSongs.removeWhere((element) => element.id == song.id);
           });
