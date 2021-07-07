@@ -4,7 +4,7 @@ import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:sputofy_2/models/song_model.dart';
+
 import 'package:sputofy_2/providers/provider.dart';
 import 'package:sputofy_2/screens/MiniPlayerScreen/mini_player.dart';
 import 'package:sputofy_2/theme/palette.dart';
@@ -75,203 +75,214 @@ class SongDetailScreen extends StatelessWidget {
           AudioServiceRepeatMode repeatMode =
               playbackState?.repeatMode ?? AudioServiceRepeatMode.none;
 
-          return SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Column(
-                children: <Widget>[
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Container(
-                        padding: const EdgeInsets.all(4.0),
-                        decoration: BoxDecoration(
-                          color: kSecondaryBackgroundColor,
-                          shape: BoxShape.circle,
-                        ),
-                        child: GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: Column(
-                            children: <Widget>[
-                              RotatedBox(
-                                quarterTurns: 3,
-                                child: Icon(
-                                  Icons.arrow_back_ios,
-                                  size: 24.0,
-                                  color: kThirdColor,
+          return GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onHorizontalDragUpdate: (details) {
+              int senstivity = 24;
+              if (details.delta.dx > senstivity) {
+                AudioService.skipToPrevious();
+              } else if (details.delta.dx < -senstivity) {
+                AudioService.skipToNext();
+              }
+            },
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Column(
+                  children: <Widget>[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        Container(
+                          padding: const EdgeInsets.all(4.0),
+                          decoration: BoxDecoration(
+                            color: kSecondaryBackgroundColor,
+                            shape: BoxShape.circle,
+                          ),
+                          child: GestureDetector(
+                            onTap: () => Navigator.pop(context),
+                            child: Column(
+                              children: <Widget>[
+                                RotatedBox(
+                                  quarterTurns: 3,
+                                  child: Icon(
+                                    Icons.arrow_back_ios,
+                                    size: 24.0,
+                                    color: kThirdColor,
+                                  ),
                                 ),
-                              ),
-                              SizedBox(height: 8.0),
-                            ],
-                          ),
-                        ),
-                      ),
-                      _buildWidgetMenuButton(playingItem),
-                    ],
-                  ),
-                  SizedBox(height: 32.0),
-                  Image.asset(
-                    'cover.jpeg',
-                    width: 250,
-                    height: 250,
-                  ),
-                  SizedBox(height: 24.0),
-                  Column(
-                    children: <Widget>[
-                      Text(
-                        playingItem?.title ?? 'Unkwown Title',
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.headline6,
-                        textAlign: TextAlign.center,
-                      ),
-                      SizedBox(height: 8.0),
-                      Text(
-                        playingItem?.artist ?? 'Unknown Artist',
-                        style: Theme.of(context)
-                            .textTheme
-                            .subtitle2!
-                            .copyWith(fontSize: 16.0),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                  Spacer(),
-                  // SizedBox(height: 48.0),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: <Widget>[
-                      IconButton(
-                        color: kThirdColor,
-                        iconSize: 36,
-                        onPressed: () {
-                          AudioService.skipToPrevious();
-                        },
-                        icon: Icon(Icons.fast_rewind),
-                      ),
-                      DecoratedBox(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            colors: [
-                              Color.fromARGB(255, 255, 83, 81),
-                              Color.fromARGB(255, 231, 38, 113)
-                            ],
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: kAccentColor.withOpacity(0.2),
-                              spreadRadius: 8.0,
+                                SizedBox(height: 8.0),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            shape: CircleBorder(),
-                            primary: Colors.transparent,
-                            shadowColor: Colors.transparent,
-                            padding: const EdgeInsets.all(16.0),
-                          ),
-                          child: Icon(
-                            playbackState?.playing ?? false
-                                ? Icons.pause
-                                : Icons.play_arrow,
-                            size: 32.0,
-                          ),
-                          onPressed: () async {
-                            playbackState?.playing ?? false
-                                ? await AudioService.pause()
-                                : await AudioService.play();
+                        _buildWidgetMenuButton(playingItem),
+                      ],
+                    ),
+                    SizedBox(height: 32.0),
+                    Image.asset(
+                      'cover.jpeg',
+                      width: 250,
+                      height: 250,
+                    ),
+                    SizedBox(height: 24.0),
+                    Column(
+                      children: <Widget>[
+                        Text(
+                          playingItem?.title ?? 'Unkwown Title',
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.headline6,
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: 8.0),
+                        Text(
+                          playingItem?.artist ?? 'Unknown Artist',
+                          style: Theme.of(context)
+                              .textTheme
+                              .subtitle2!
+                              .copyWith(fontSize: 16.0),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                    Spacer(),
+                    // SizedBox(height: 48.0),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: <Widget>[
+                        IconButton(
+                          color: kThirdColor,
+                          iconSize: 36,
+                          onPressed: () {
+                            AudioService.skipToPrevious();
                           },
+                          icon: Icon(Icons.fast_rewind),
                         ),
-                      ),
-                      IconButton(
-                        iconSize: 36,
-                        color: kThirdColor,
-                        onPressed: () {
-                          AudioService.skipToNext();
-                        },
-                        icon: Icon(Icons.fast_forward),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 32.0),
-                  SeekBar(
-                    duration: duration,
-                    position: position,
-                    onChangeEnd: (newPosition) {
-                      AudioService.seekTo(newPosition);
-                    },
-                  ),
-                  SizedBox(height: 32.0),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      IconButton(
-                        onPressed: () {
-                          switch (repeatMode) {
-                            case AudioServiceRepeatMode.none:
-                              AudioService.setRepeatMode(
-                                  AudioServiceRepeatMode.one);
-                              break;
-                            case AudioServiceRepeatMode.one:
-                              AudioService.setRepeatMode(
-                                  AudioServiceRepeatMode.all);
-                              break;
-                            case AudioServiceRepeatMode.all:
-                              AudioService.setRepeatMode(
-                                  AudioServiceRepeatMode.none);
-                              break;
-                            case AudioServiceRepeatMode.group:
-                              break;
-                          }
-                        },
-                        icon: _getRepeatIcon(repeatMode),
-                      ),
-                      RichText(
-                        text: TextSpan(children: <TextSpan>[
-                          TextSpan(
-                              text: getStrPosition(position),
-                              style: Theme.of(context).textTheme.subtitle1),
-                          TextSpan(
-                            text: '|',
-                            style: Theme.of(context)
-                                .textTheme
-                                .subtitle2!
-                                .copyWith(fontSize: 16.0),
+                        DecoratedBox(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              colors: [
+                                Color.fromARGB(255, 255, 83, 81),
+                                Color.fromARGB(255, 231, 38, 113)
+                              ],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: kAccentColor.withOpacity(0.2),
+                                spreadRadius: 8.0,
+                              ),
+                            ],
                           ),
-                          TextSpan(
-                            text: getStrPosition(duration),
-                            style: Theme.of(context)
-                                .textTheme
-                                .subtitle2!
-                                .copyWith(fontSize: 16.0),
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              shape: CircleBorder(),
+                              primary: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              padding: const EdgeInsets.all(16.0),
+                            ),
+                            child: Icon(
+                              playbackState?.playing ?? false
+                                  ? Icons.pause
+                                  : Icons.play_arrow,
+                              size: 32.0,
+                            ),
+                            onPressed: () async {
+                              playbackState?.playing ?? false
+                                  ? await AudioService.pause()
+                                  : await AudioService.play();
+                            },
                           ),
-                        ]),
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          shuffleMode == AudioServiceShuffleMode.all
-                              ? AudioService.setShuffleMode(
-                                  AudioServiceShuffleMode.none)
-                              : AudioService.setShuffleMode(
-                                  AudioServiceShuffleMode.all);
-                        },
-                        icon: Icon(
-                          Icons.shuffle,
-                          color: shuffleMode == AudioServiceShuffleMode.all
-                              ? kAccentColor
-                              : null,
-                          size: 32,
                         ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 32.0),
-                ],
+                        IconButton(
+                          iconSize: 36,
+                          color: kThirdColor,
+                          onPressed: () {
+                            AudioService.skipToNext();
+                          },
+                          icon: Icon(Icons.fast_forward),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 32.0),
+                    SeekBar(
+                      duration: duration,
+                      position: position,
+                      onChangeEnd: (newPosition) {
+                        AudioService.seekTo(newPosition);
+                      },
+                    ),
+                    SizedBox(height: 32.0),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        IconButton(
+                          onPressed: () {
+                            switch (repeatMode) {
+                              case AudioServiceRepeatMode.none:
+                                AudioService.setRepeatMode(
+                                    AudioServiceRepeatMode.one);
+                                break;
+                              case AudioServiceRepeatMode.one:
+                                AudioService.setRepeatMode(
+                                    AudioServiceRepeatMode.all);
+                                break;
+                              case AudioServiceRepeatMode.all:
+                                AudioService.setRepeatMode(
+                                    AudioServiceRepeatMode.none);
+                                break;
+                              case AudioServiceRepeatMode.group:
+                                break;
+                            }
+                          },
+                          icon: _getRepeatIcon(repeatMode),
+                        ),
+                        RichText(
+                          text: TextSpan(children: <TextSpan>[
+                            TextSpan(
+                                text: getStrPosition(position),
+                                style: Theme.of(context).textTheme.subtitle1),
+                            TextSpan(
+                              text: '|',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .subtitle2!
+                                  .copyWith(fontSize: 16.0),
+                            ),
+                            TextSpan(
+                              text: getStrPosition(duration),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .subtitle2!
+                                  .copyWith(fontSize: 16.0),
+                            ),
+                          ]),
+                        ),
+                        IconButton(
+                          onPressed: () {
+                            shuffleMode == AudioServiceShuffleMode.all
+                                ? AudioService.setShuffleMode(
+                                    AudioServiceShuffleMode.none)
+                                : AudioService.setShuffleMode(
+                                    AudioServiceShuffleMode.all);
+                          },
+                          icon: Icon(
+                            Icons.shuffle,
+                            color: shuffleMode == AudioServiceShuffleMode.all
+                                ? kAccentColor
+                                : null,
+                            size: 32,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 32.0),
+                  ],
+                ),
               ),
             ),
           );

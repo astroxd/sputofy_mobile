@@ -23,6 +23,7 @@ class _PlaylistListScreenState extends State<PlaylistListScreen> {
           return Column(
             children: <Widget>[
               PlaylistList(context, playlists),
+              SizedBox(height: 32.0),
             ],
           );
         },

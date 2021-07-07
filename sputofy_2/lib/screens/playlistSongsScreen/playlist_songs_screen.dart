@@ -53,6 +53,7 @@ class _PlaylistSongsScreenState extends State<PlaylistSongsScreen> {
                     SizedBox(height: 16.0),
                     buildWidgetPlaylistList(
                         context, widget.playlist, playlistSongs, playingItem),
+                    SizedBox(height: 48.0),
                   ],
                 );
               },

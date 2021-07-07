@@ -21,6 +21,7 @@ class DBProvider extends ChangeNotifier {
     _database = DBHelper();
     getSongs();
     getPlaylists();
+    notifyListeners();
   }
 
   Future<void> getPlaylistSongs(int playlistID) async {

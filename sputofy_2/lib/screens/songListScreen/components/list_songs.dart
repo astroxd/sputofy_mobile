@@ -13,15 +13,12 @@ class ListSongs extends StatelessWidget {
   final MediaItem? playingItem;
   ListSongs(this.context, this.songs, this.playingItem);
 
-  final List<Song> songss = List.generate(
-      10,
-      (index) => Song(index, "path", "titlaaaaaaaaaaaaaaaaaaaaaaaaaaaaeaaa",
-          "author", "cover", Duration(milliseconds: 300000)));
-
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: ListView.builder(
+        padding:
+            EdgeInsets.only(bottom: MediaQuery.of(context).viewPadding.bottom),
         itemCount: songs.length,
         itemBuilder: (context, index) {
           Song song = songs[index];
@@ -31,8 +28,12 @@ class ListSongs extends StatelessWidget {
               if (playingItem?.album != '-2') {
                 await loadQueue(songs, songPath: song.path);
               } else {
+                /*if ((AudioService.queue?.length ?? 0) != songs.length) {
+                  await loadQueue(songs, songPath: song.path);
+                } else {*/
                 await AudioService.skipToQueueItem(song.path);
                 await AudioService.play();
+                //}
               }
             },
             child: Container(

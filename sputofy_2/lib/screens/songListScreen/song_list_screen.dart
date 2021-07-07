@@ -47,6 +47,7 @@ class _SongListScreenState extends State<SongListScreen> {
                     ActionButtons(context, songs, playingItem, playbackState),
                     SizedBox(height: 16.0),
                     ListSongs(context, songs, playingItem),
+                    SizedBox(height: 48.0),
                   ],
                 ),
               );

@@ -2,11 +2,9 @@ import 'dart:async';
 import 'dart:io';
 import 'package:path/path.dart';
 
-import 'package:audio_service/audio_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:sputofy_2/models/playlist_model.dart';
@@ -31,7 +29,7 @@ AppBar appBar(int tabIndex, BuildContext context) {
       ),
       tabIndex == 0
           ? PopupMenuButton<String>(
-              onSelected: _handleClick,
+              onSelected: (String choice) => _handleClick(choice, context),
               itemBuilder: (BuildContext context) {
                 return {'Download Song', 'Load Songs'}.map((String choice) {
                   return PopupMenuItem<String>(
@@ -61,30 +59,30 @@ AppBar appBar(int tabIndex, BuildContext context) {
   );
 }
 
-void _handleClick(String choice) {
+void _handleClick(String choice, BuildContext context) {
   switch (choice) {
     case 'Download Song':
-      _downloadSong('https://youtu.be/YXdOUmxG5yI');
+      _showSongSheet(context);
       break;
     case 'Load Songs':
-      _loadSongs();
+      _loadSongs(context);
       break;
   }
 }
 
-void _loadSongs() async {
+void _loadSongs(BuildContext context) async {
   bool canAccesStorage = await Permission.storage.request().isGranted;
   if (canAccesStorage) {
     FilePicker.platform.getDirectoryPath().then((String? folder) {
       if (folder != null) {
         print(folder);
-        _loadFolderItems(folder);
+        _loadFolderItems(folder, context);
       }
     });
   }
 }
 
-void _loadFolderItems(String folder_path) async {
+void _loadFolderItems(String folder_path, BuildContext context) async {
   DBHelper _database = DBHelper();
   List<Song> newSongs = [];
   List<Song> currentSongs = await _database.getSongs();
@@ -121,7 +119,6 @@ void _loadFolderItems(String folder_path) async {
     try {
       Duration? songDuration = await _audioPlayer
           .setAudioSource(AudioSource.uri(Uri.parse(file.path)));
-      //TODO basename(file.path) => song.mp3
       String baseFileName = basename(file.path);
       String fileName =
           baseFileName.substring(0, baseFileName.lastIndexOf('.'));
@@ -133,10 +130,7 @@ void _loadFolderItems(String folder_path) async {
   }
 
   for (Song song in newSongs) {
-    _database.saveSong(song);
-    //TODO review
-
-    // AudioService.addQueueItem(song.toMediaItem());
+    Provider.of<DBProvider>(context, listen: false).saveSong(song);
   }
 }
 
@@ -240,9 +234,38 @@ _savePlaylist(String playlistName, BuildContext context) {
   Navigator.pop(context);
 }
 
+_showSongSheet(BuildContext context) {
+  TextEditingController _textController = TextEditingController(text: '');
+  showModalBottomSheet(
+    context: context,
+    builder: (context) {
+      return Padding(
+        padding:
+            EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _textController,
+            ),
+            MaterialButton(
+              onPressed: () => _downloadSong(_textController.text),
+              child: Text(
+                "download",
+                style: Theme.of(context).textTheme.subtitle1,
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+
 _downloadSong(String videoURL) async {
   var yt = youtubeDonwloader.YoutubeExplode();
   String videoID = videoURL.split('/').last;
+  // print(videoURL);
 
   //* Get video metadata
   var video = await yt.videos.get(videoID);

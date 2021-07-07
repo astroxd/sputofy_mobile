@@ -69,7 +69,7 @@ class MiniPlayer extends StatelessWidget {
         Duration? position = playingMediaItem?.position ?? Duration(seconds: 1);
         PlaybackState? playbackState = playingMediaItem?.playbackState;
         Duration duration = playingItem?.duration ?? Duration(seconds: 1);
-
+        if (playingItem == null) return Container(height: 0.0);
         return GestureDetector(
           onTap: () {
             Navigator.of(context).push(_createRoute());
@@ -117,7 +117,8 @@ class MiniPlayer extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
                             Text(
-                              playingItem?.title ?? 'Unknown Title',
+                              // playingItem?.title ?? 'Unknown Title',
+                              playingItem.title,
                               style: Theme.of(context)
                                   .textTheme
                                   .subtitle1!
@@ -125,7 +126,8 @@ class MiniPlayer extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
-                              playingItem?.artist ?? 'Unkwon Artist',
+                              // playingItem?.artist ?? 'Unkwon Artist',
+                              playingItem.artist ?? 'Unkwon Artist',
                               style: Theme.of(context).textTheme.subtitle2,
                             ),
                           ],
