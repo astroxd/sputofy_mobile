@@ -27,5 +27,9 @@ ThemeData appTheme() {
     checkboxTheme: CheckboxThemeData(
       fillColor: MaterialStateProperty.resolveWith((states) => kAccentColor),
     ),
+    dialogTheme: DialogTheme(
+      backgroundColor: kSecondaryBackgroundColor,
+      elevation: 0.0,
+    ),
   );
 }

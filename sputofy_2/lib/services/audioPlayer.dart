@@ -144,10 +144,10 @@ class AudioPlayerTask extends BackgroundAudioTask {
       mediaItems.add(song.toMediaItem());
     }
     await onUpdateQueue(mediaItems).then((value) async {
-      String? lastPlayedSong = pref.getString('song_path');
-      if (lastPlayedSong != null) {
-        onSkipToQueueItem(lastPlayedSong);
-      }
+      // String? lastPlayedSong = pref.getString('song_path');
+      // if (lastPlayedSong != null) {
+      //   onSkipToQueueItem(lastPlayedSong);
+      // }
     });
   }
 
@@ -210,7 +210,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
       await onStop();
     }
 
-    await AudioServiceBackground.setMediaItem(_queue[index!]);
+    // await AudioServiceBackground.setMediaItem(_queue[index!]);
   }
 
   @override

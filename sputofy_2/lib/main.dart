@@ -14,7 +14,11 @@ import 'package:sputofy_2/screens/songListScreen/song_list_screen.dart';
 import 'package:sputofy_2/theme/style.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart'
     as youtubeDownloader;
+import 'package:rxdart/rxdart.dart';
 
+import 'components/download_song.dart';
+import 'components/load_song.dart';
+import 'components/playlist_dialog.dart';
 import 'models/playlist_model.dart';
 import 'models/song_model.dart';
 import 'services/audioPlayer.dart';
@@ -51,6 +55,8 @@ _backgroundTaskEntryPoint() {
   print("entrypoint");
   AudioServiceBackground.run(() => AudioPlayerTask());
 }
+
+final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key}) : super(key: key);
@@ -103,6 +109,7 @@ class _MyHomePageState extends State<MyHomePage> {
       }
     });
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
         title: appBarTitle,
         actions: <Widget>[
@@ -140,18 +147,19 @@ class _MyHomePageState extends State<MyHomePage> {
                     },
                   )
                 : IconButton(
-                    onPressed: () => _showNewPlaylistDialog(context),
+                    onPressed: () => showNewPlaylistDialog(context),
                     icon: Icon(Icons.add),
                   ),
           ] else ...[
             GestureDetector(
-                onTap: () {
-                  setState(() {
-                    isSearching = false;
-                    appBarTitle = Text('Sputofy');
-                  });
-                },
-                child: Text("cacca"))
+              onTap: () {
+                setState(() {
+                  isSearching = false;
+                  appBarTitle = Text('Sputofy');
+                });
+              },
+              child: Text("cacca"),
+            )
           ],
         ],
         bottom: TabBar(
@@ -200,14 +208,41 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-void _handleClick(String choice, BuildContext context) {
+void _handleClick(String choice, BuildContext context) async {
   switch (choice) {
     case 'Download Song':
-      // _showSongSheet(context);
-      _showDownloadSongDialog(context);
+      bool isConnected = false;
+      try {
+        final result = await InternetAddress.lookup('example.com');
+        if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+          print('connected');
+          isConnected = true;
+        }
+      } on SocketException catch (_) {
+        print('not connected');
+        isConnected = false;
+      }
+      if (isConnected)
+        showDownloadSongDialog(context, _scaffoldKey);
+      else
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              content: Text('Check your connection before downloading'),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.of(context, rootNavigator: true)
+                        .pop('dialog'),
+                    child: Text('OK'))
+              ],
+            );
+          },
+        );
+      ;
       break;
     case 'Load Songs':
-      _loadSongs(context);
+      loadSongs(context);
       break;
   }
 }
@@ -216,331 +251,406 @@ void _handleClick(String choice, BuildContext context) {
 //*------------------------------------------------------------------------*//
 //*                            LOAD SONGS                                 *//
 //*----------------------------------------------------------------------*//
-void _loadSongs(BuildContext context) async {
-  bool canAccesStorage = await Permission.storage.request().isGranted;
-  if (canAccesStorage) {
-    FilePicker.platform.getDirectoryPath().then((String? folder) {
-      if (folder != null) {
-        print(folder);
-        _loadFolderItems(folder, context);
-      }
-    });
-  }
-}
+// void _loadSongs(BuildContext context) async {
+//   bool canAccesStorage = await Permission.storage.request().isGranted;
+//   if (canAccesStorage) {
+//     FilePicker.platform.getDirectoryPath().then((String? folder) {
+//       if (folder != null) {
+//         print(folder);
+//         _loadFolderItems(folder, context);
+//       }
+//     });
+//   }
+// }
 
-void _loadFolderItems(String folder_path, BuildContext context) async {
-  DBHelper _database = DBHelper();
-  List<Song> newSongs = [];
-  List<Song> currentSongs = await _database.getSongs();
-  AudioPlayer _audioPlayer = AudioPlayer();
-  Directory folder = Directory(folder_path);
+// void _loadFolderItems(String folder_path, BuildContext context) async {
+//   DBHelper _database = DBHelper();
+//   List<Song> newSongs = [];
+//   List<Song> currentSongs = await _database.getSongs();
+//   AudioPlayer _audioPlayer = AudioPlayer();
+//   Directory folder = Directory(folder_path);
 
-  List<FileSystemEntity> folderContent = folder.listSync();
+//   List<FileSystemEntity> folderContent = folder.listSync();
 
-  var contentToRemove = [];
+//   var contentToRemove = [];
 
-  for (FileSystemEntity file in folderContent) {
-    if (file is Directory) {
-      contentToRemove.add(file);
-    }
+//   for (FileSystemEntity file in folderContent) {
+//     if (file is Directory) {
+//       contentToRemove.add(file);
+//     }
 
-    if (!file.path.endsWith('mp3') && !file.path.endsWith('ogg')) {
-      contentToRemove.add(file);
-    }
+//     if (!file.path.endsWith('mp3') && !file.path.endsWith('ogg')) {
+//       contentToRemove.add(file);
+//     }
 
-    if (currentSongs.map((song) => song.path).toList().contains(file.path)) {
-      contentToRemove.add(file);
-    }
-  }
+//     if (currentSongs.map((song) => song.path).toList().contains(file.path)) {
+//       contentToRemove.add(file);
+//     }
+//   }
 
-  folderContent.removeWhere((element) => contentToRemove.contains(element));
-  folderContent.forEach((element) {
-    print("ADD $element");
-  });
-  contentToRemove.forEach((element) {
-    print("DELETE $element");
-  });
+//   folderContent.removeWhere((element) => contentToRemove.contains(element));
+//   folderContent.forEach((element) {
+//     print("ADD $element");
+//   });
+//   contentToRemove.forEach((element) {
+//     print("DELETE $element");
+//   });
 
-  for (FileSystemEntity file in folderContent) {
-    try {
-      Duration? songDuration = await _audioPlayer
-          .setAudioSource(AudioSource.uri(Uri.file(file.path)));
-      String baseFileName = basename(file.path);
-      String fileName =
-          baseFileName.substring(0, baseFileName.lastIndexOf('.'));
+//   for (FileSystemEntity file in folderContent) {
+//     try {
+//       Duration? songDuration = await _audioPlayer
+//           .setAudioSource(AudioSource.uri(Uri.file(file.path)));
+//       String baseFileName = basename(file.path);
+//       String fileName =
+//           baseFileName.substring(0, baseFileName.lastIndexOf('.'));
 
-      newSongs.add(Song(null, file.path, fileName, '', '', songDuration));
-    } catch (e) {
-      print("Error on loading Song from folder $e");
-    }
-  }
+//       newSongs.add(Song(null, file.path, fileName, '', '', songDuration));
+//     } catch (e) {
+//       print("Error on loading Song from folder $e");
+//     }
+//   }
 
-  for (Song song in newSongs) {
-    Provider.of<DBProvider>(context, listen: false).saveSong(song);
-  }
-  AudioService.addQueueItems(newSongs.map((e) => e.toMediaItem()).toList());
-}
+//   for (Song song in newSongs) {
+//     Provider.of<DBProvider>(context, listen: false).saveSong(song);
+//   }
+//   AudioService.addQueueItems(newSongs.map((e) => e.toMediaItem()).toList());
+// }
 
 //*----------------------------------------------------------------------------*//
 //*                            DOWNLOAD SONGS                                 *//
 //*--------------------------------------------------------------------------*//
 
-_showDownloadSongDialog(BuildContext context) {
-  showModalBottomSheet(
-    context: context,
-    builder: (context) {
-      return DownloadSong();
-    },
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.only(
-        topLeft: Radius.circular(24.0),
-        topRight: Radius.circular(24.0),
-      ),
-    ),
-  );
-}
+// _showDownloadSongDialog(BuildContext context) {
+//   showModalBottomSheet(
+//     context: context,
+//     builder: (context) {
+//       return DownloadSong();
+//     },
+//     shape: RoundedRectangleBorder(
+//       borderRadius: BorderRadius.only(
+//         topLeft: Radius.circular(24.0),
+//         topRight: Radius.circular(24.0),
+//       ),
+//     ),
+//   );
+// }
 
-class DownloadSong extends StatefulWidget {
-  const DownloadSong({Key? key}) : super(key: key);
+// class DownloadSong extends StatefulWidget {
+//   const DownloadSong({Key? key}) : super(key: key);
 
-  @override
-  _DownloadSongState createState() => _DownloadSongState();
-}
+//   @override
+//   _DownloadSongState createState() => _DownloadSongState();
+// }
 
-class _DownloadSongState extends State<DownloadSong> {
-  var textController = TextEditingController(text: '');
-  bool isValid = true;
-  @override
-  void dispose() {
-    textController.dispose();
-    super.dispose();
-  }
+// class _DownloadSongState extends State<DownloadSong> {
+//   var textController = TextEditingController(text: '');
+//   bool isValid = true;
+//   @override
+//   void dispose() {
+//     textController.dispose();
+//     super.dispose();
+//   }
 
-  @override
-  Widget build(BuildContext context) {
-    double bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+//   @override
+//   Widget build(BuildContext context) {
+//     double bottomPadding = MediaQuery.of(context).viewInsets.bottom;
 
-    return Padding(
-      padding: EdgeInsets.only(
-          top: 16.0, left: 16.0, right: 16.0, bottom: bottomPadding),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Text(
-            "Donwload Songs",
-            style: Theme.of(context).textTheme.headline6,
-          ),
-          SizedBox(height: 16.0),
-          Padding(
-            padding: EdgeInsets.only(bottom: 0.0),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'https://youtu.be/VEe_yIbW64w',
-                hintStyle: TextStyle(color: kPrimaryColor),
-                errorText: isValid ? null : 'Link can\'t be empty',
-              ),
-              autofocus: true,
-              controller: textController,
-            ),
-          ),
-          SizedBox(height: 24.0),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: <Widget>[
-              MaterialButton(
-                color: kSecondaryColor,
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: Text("Cancel"),
-              ),
-              MaterialButton(
-                onPressed: () {
-                  if (textController.text.isEmpty) {
-                    setState(() {
-                      isValid = false;
-                    });
-                  } else {
-                    setState(() {
-                      isValid = true;
-                    });
-                    // _downloadSong(textController.text);
-                    _downloadPlaylist(textController.text);
-                  }
-                },
-                child: Text("Download"),
-                color: kAccentColor,
-              ),
-            ],
-          )
-        ],
-      ),
-    );
-  }
-}
+//     return Padding(
+//       padding: EdgeInsets.only(
+//           top: 16.0, left: 16.0, right: 16.0, bottom: bottomPadding),
+//       child: Column(
+//         mainAxisSize: MainAxisSize.min,
+//         children: <Widget>[
+//           Text(
+//             "Download Songs",
+//             style: Theme.of(context).textTheme.headline6,
+//           ),
+//           SizedBox(height: 16.0),
+//           Padding(
+//             padding: EdgeInsets.only(bottom: 0.0),
+//             child: TextField(
+//               decoration: InputDecoration(
+//                 hintText: 'https://youtu.be/VEe_yIbW64w',
+//                 hintStyle: TextStyle(color: kPrimaryColor),
+//                 errorText: isValid ? null : 'Link can\'t be empty',
+//               ),
+//               autofocus: true,
+//               controller: textController,
+//             ),
+//           ),
+//           SizedBox(height: 24.0),
+//           Row(
+//             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+//             children: <Widget>[
+//               MaterialButton(
+//                 color: kSecondaryColor,
+//                 onPressed: () {
+//                   Navigator.pop(context);
+//                 },
+//                 child: Text("Cancel"),
+//               ),
+//               MaterialButton(
+//                 onPressed: () async {
+//                   if (textController.text.isEmpty) {
+//                     setState(() {
+//                       isValid = false;
+//                     });
+//                   } else {
+//                     setState(() {
+//                       isValid = true;
+//                     });
 
-List<String> downloadSongs = [];
+//                     _downloadHandler(
+//                         textController.text, _scaffoldKey.currentContext!);
+//                     Navigator.pop(context);
+//                   }
+//                 },
+//                 child: Text("Download"),
+//                 color: kAccentColor,
+//               ),
+//             ],
+//           )
+//         ],
+//       ),
+//     );
+//   }
+// }
 
-_downloadPlaylist(String playlistURL) async {
-  var yt = youtubeDownloader.YoutubeExplode();
-  var playlist = await yt.playlists.get(playlistURL);
-  String title = playlist.title;
-  await for (var video in yt.playlists.getVideos(playlistURL)) {
-    // _downloadSong(video.id.toString());
-    downloadSongs.add(video.id.toString());
-  }
-  yt.close();
-  _downloadSong(downloadSongs.last);
-}
+// List<String> downloadSongs = [];
+// int initiaDownloadSongslLength = 0;
+// final downloadStream = BehaviorSubject<int>();
 
-_downloadSong(String videoURL) async {
-  try {
-    var yt = youtubeDownloader.YoutubeExplode();
-    String videoID = videoURL.split('/').last;
+// _downloadHandler(String URL, BuildContext context) {
+//   if (URL.contains('playlist')) {
+//     _downloadPlaylist(URL, context);
+//   } else {
+//     _downloadSong(URL, context);
+//   }
+// }
 
-    // print(videoURL);
-    //https://youtu.be/VEe_yIbW64w
-    //video.title.replaceAll('/', '\u2215')
-    //* Get video metadata
-    var video = await yt.videos.get(videoID);
-    String videoTitle = video.title
-        .replaceAll(r'\', '')
-        .replaceAll('/', '')
-        .replaceAll('*', '')
-        .replaceAll('?', '')
-        .replaceAll('"', '')
-        .replaceAll('<', '')
-        .replaceAll('>', '')
-        .replaceAll('|', '');
+// _downloadPlaylist(String playlistURL, BuildContext context) async {
+//   var yt = youtubeDownloader.YoutubeExplode();
+//   var playlist = await yt.playlists.get(playlistURL);
+//   String title = playlist.title;
+//   await for (var video in yt.playlists.getVideos(playlistURL)) {
+//     downloadSongs.add(video.id.toString());
+//   }
+//   downloadSongs = downloadSongs.reversed.toList();
+//   initiaDownloadSongslLength = downloadSongs.length;
+//   yt.close();
+//   _downloadSong(downloadSongs.last, context, playlistName: title);
+// }
 
-    //*Get video manifest
-    var manifest = await yt.videos.streamsClient.getManifest(videoID);
-    var streamInfo = manifest.audioOnly.withHighestBitrate();
-    Stream<List<int>> stream = yt.videos.streamsClient.get(streamInfo);
+// _downloadSong(String videoURL, BuildContext context,
+//     {String? playlistName}) async {
+//   try {
+//     var yt = youtubeDownloader.YoutubeExplode();
+//     String videoID = videoURL.split('/').last;
 
-    File file = File('/storage/emulated/0/Music/$videoTitle.mp3');
+//     //* Get video metadata
+//     var video = await yt.videos.get(videoID);
+//     String videoTitle = video.title
+//         .replaceAll(r'\', '')
+//         .replaceAll('/', '')
+//         .replaceAll('*', '')
+//         .replaceAll('?', '')
+//         .replaceAll('"', '')
+//         .replaceAll('<', '')
+//         .replaceAll('>', '')
+//         .replaceAll('|', '');
 
-    var output = file.openWrite(mode: FileMode.writeOnlyAppend);
+//     //*Get video manifest
+//     var manifest = await yt.videos.streamsClient.getManifest(videoID);
+//     var streamInfo = manifest.audioOnly.withHighestBitrate();
+//     Stream<List<int>> stream = yt.videos.streamsClient.get(streamInfo);
 
-    var count = 0;
-    await for (final data in stream) {
-      count += data.length;
-      output.add(data);
-      print(count);
-    }
+//     File file = File('/storage/emulated/0/Music/$videoTitle.mp3');
 
-    await output.close().then((value) {
-      downloadSongs.removeLast();
-      if (downloadSongs.isNotEmpty) _downloadSong(downloadSongs.last);
-    });
-    yt.close();
-  } catch (e) {
-    print("ERROR IN DOWNLOAD $e");
-    downloadSongs.clear();
-  }
-}
+//     // Delete the file if exists.
+//     if (file.existsSync()) {
+//       file.deleteSync();
+//     }
+//     var fileSizeInBytes = streamInfo.size.totalBytes;
+
+//     var output = file.openWrite(mode: FileMode.writeOnlyAppend);
+
+//     var count = 0;
+//     var percentage = 0;
+
+//     showDialog(
+//       context: context,
+//       builder: (context) {
+//         return StreamBuilder(
+//           stream: downloadStream,
+//           initialData: 0,
+//           builder: (context, snapshot) {
+//             var value = snapshot.data ?? 0;
+
+//             return AlertDialog(
+//               title: playlistName != null
+//                   ? Text(
+//                       'Downloading...\n$playlistName ${initiaDownloadSongslLength - (downloadSongs.length - 1)}/$initiaDownloadSongslLength')
+//                   : Text('Downloading...'),
+//               content: value == -1
+//                   ? Text("Download Completed")
+//                   : Text("$videoTitle: $value%"),
+//             );
+//           },
+//         );
+//       },
+//     );
+
+//     await for (final data in stream) {
+//       count += data.length;
+//       output.add(data);
+//       print(count);
+//       percentage = ((count / fileSizeInBytes) * 100).ceil();
+//       downloadStream.add(percentage);
+//     }
+//     Navigator.of(context, rootNavigator: true).pop('dialog');
+//     ScaffoldMessenger.of(context).showSnackBar(
+//       SnackBar(
+//         content: Text("$videoTitle downloaded"),
+//         behavior: SnackBarBehavior.floating,
+//         elevation: 0.0,
+//         action: SnackBarAction(
+//           label: 'HIDE',
+//           onPressed: () => ScaffoldMessenger.of(context).hideCurrentSnackBar(),
+//         ),
+//       ),
+//     );
+//     downloadStream.add(-1);
+//     await output.close().then((value) {
+//       if (downloadSongs.length > 0) {
+//         downloadSongs.removeLast();
+//       }
+//       if (downloadSongs.isNotEmpty) {
+//         _downloadSong(downloadSongs.last, context, playlistName: playlistName);
+//       }
+//     });
+//     yt.close();
+//   } catch (e) {
+//     await showDialog(
+//       context: context,
+//       builder: (context) {
+//         return AlertDialog(
+//           content: Text('Can\'t download song'),
+//           actions: [
+//             TextButton(
+//                 onPressed: () =>
+//                     Navigator.of(context, rootNavigator: true).pop('dialog'),
+//                 child: Text('OK'))
+//           ],
+//         );
+//       },
+//     );
+//     // .then((value) => Navigator.of(context, rootNavigator: true).pop('dialog'));
+//     print("ERROR IN DOWNLOAD $e");
+//     downloadSongs.clear();
+//   }
+// }
 
 //TODO could move into another file
 //*------------------------------------------------------------------------*//
 //*                            PLAYLIST                                   *//
 //*----------------------------------------------------------------------*//
 
-void _showNewPlaylistDialog(BuildContext context) {
-  showModalBottomSheet(
-    context: context,
-    builder: (context) {
-      return NewPlaylistDialog();
-    },
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.only(
-        topLeft: Radius.circular(24.0),
-        topRight: Radius.circular(24.0),
-      ),
-    ),
-  );
-}
+// void _showNewPlaylistDialog(BuildContext context) {
+//   showModalBottomSheet(
+//     context: context,
+//     builder: (context) {
+//       return NewPlaylistDialog();
+//     },
+//     shape: RoundedRectangleBorder(
+//       borderRadius: BorderRadius.only(
+//         topLeft: Radius.circular(24.0),
+//         topRight: Radius.circular(24.0),
+//       ),
+//     ),
+//   );
+// }
 
-class NewPlaylistDialog extends StatefulWidget {
-  const NewPlaylistDialog({Key? key}) : super(key: key);
+// class NewPlaylistDialog extends StatefulWidget {
+//   const NewPlaylistDialog({Key? key}) : super(key: key);
 
-  @override
-  _NewPlaylistDialogState createState() => _NewPlaylistDialogState();
-}
+//   @override
+//   _NewPlaylistDialogState createState() => _NewPlaylistDialogState();
+// }
 
-class _NewPlaylistDialogState extends State<NewPlaylistDialog> {
-  var textController = TextEditingController(text: '');
-  bool isValid = true;
+// class _NewPlaylistDialogState extends State<NewPlaylistDialog> {
+//   var textController = TextEditingController(text: '');
+//   bool isValid = true;
 
-  @override
-  void dispose() {
-    textController.dispose();
-    super.dispose();
-  }
+//   @override
+//   void dispose() {
+//     textController.dispose();
+//     super.dispose();
+//   }
 
-  @override
-  Widget build(BuildContext context) {
-    double bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+//   @override
+//   Widget build(BuildContext context) {
+//     double bottomPadding = MediaQuery.of(context).viewInsets.bottom;
 
-    return Padding(
-      padding: EdgeInsets.only(
-          top: 16.0, left: 16.0, right: 16.0, bottom: bottomPadding),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Text(
-            "Create Playlist",
-            style: Theme.of(context).textTheme.headline6,
-          ),
-          SizedBox(height: 16.0),
-          Padding(
-            padding: EdgeInsets.only(bottom: 0.0),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'my beautiful playlist',
-                hintStyle: TextStyle(color: kPrimaryColor),
-                errorText: isValid ? null : 'Playlist name can\'t be empty',
-              ),
-              autofocus: true,
-              controller: textController,
-            ),
-          ),
-          SizedBox(height: 24.0),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: <Widget>[
-              MaterialButton(
-                color: kSecondaryColor,
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: Text("Cancel"),
-              ),
-              MaterialButton(
-                onPressed: () {
-                  if (textController.text.isEmpty) {
-                    setState(() {
-                      isValid = false;
-                    });
-                  } else {
-                    setState(() {
-                      isValid = true;
-                    });
-                    _savePlaylist(textController.text, context);
-                  }
-                },
-                child: Text("Save"),
-                color: kAccentColor,
-              ),
-            ],
-          )
-        ],
-      ),
-    );
-  }
-}
+//     return Padding(
+//       padding: EdgeInsets.only(
+//           top: 16.0, left: 16.0, right: 16.0, bottom: bottomPadding),
+//       child: Column(
+//         mainAxisSize: MainAxisSize.min,
+//         children: <Widget>[
+//           Text(
+//             "Create Playlist",
+//             style: Theme.of(context).textTheme.headline6,
+//           ),
+//           SizedBox(height: 16.0),
+//           Padding(
+//             padding: EdgeInsets.only(bottom: 0.0),
+//             child: TextField(
+//               decoration: InputDecoration(
+//                 hintText: 'my beautiful playlist',
+//                 hintStyle: TextStyle(color: kPrimaryColor),
+//                 errorText: isValid ? null : 'Playlist name can\'t be empty',
+//               ),
+//               autofocus: true,
+//               controller: textController,
+//             ),
+//           ),
+//           SizedBox(height: 24.0),
+//           Row(
+//             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+//             children: <Widget>[
+//               MaterialButton(
+//                 color: kSecondaryColor,
+//                 onPressed: () {
+//                   Navigator.pop(context);
+//                 },
+//                 child: Text("Cancel"),
+//               ),
+//               MaterialButton(
+//                 onPressed: () {
+//                   if (textController.text.isEmpty) {
+//                     setState(() {
+//                       isValid = false;
+//                     });
+//                   } else {
+//                     setState(() {
+//                       isValid = true;
+//                     });
+//                     _savePlaylist(textController.text, context);
+//                   }
+//                 },
+//                 child: Text("Save"),
+//                 color: kAccentColor,
+//               ),
+//             ],
+//           )
+//         ],
+//       ),
+//     );
+//   }
+// }
 
-_savePlaylist(String playlistName, BuildContext context) {
-  Playlist playlist = Playlist(null, playlistName, '', DateTime.now());
-  Provider.of<DBProvider>(context, listen: false).savePlaylist(playlist);
-  Navigator.pop(context);
-}
+// _savePlaylist(String playlistName, BuildContext context) {
+//   Playlist playlist = Playlist(null, playlistName, '', DateTime.now());
+//   Provider.of<DBProvider>(context, listen: false).savePlaylist(playlist);
+//   Navigator.pop(context);
+// }
