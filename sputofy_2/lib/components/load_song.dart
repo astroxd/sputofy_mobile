@@ -73,5 +73,9 @@ void _loadFolderItems(String folder_path, BuildContext context) async {
   for (Song song in newSongs) {
     Provider.of<DBProvider>(context, listen: false).saveSong(song);
   }
-  AudioService.addQueueItems(newSongs.map((e) => e.toMediaItem()).toList());
+  if (currentSongs.isEmpty) {
+    AudioService.updateQueue(newSongs.map((e) => e.toMediaItem()).toList());
+  } else {
+    AudioService.addQueueItems(newSongs.map((e) => e.toMediaItem()).toList());
+  }
 }

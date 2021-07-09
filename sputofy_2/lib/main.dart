@@ -69,10 +69,12 @@ class _MyHomePageState extends State<MyHomePage> {
   int tabIndex = 0;
   bool isSearching = false;
   Widget appBarTitle = Text('Sputofy');
+  DBHelper _database = DBHelper();
   @override
   void initState() {
     print("Initi");
     Permission.storage.request();
+
     _start();
     super.initState();
   }
@@ -81,12 +83,14 @@ class _MyHomePageState extends State<MyHomePage> {
     AudioService.start(
       backgroundTaskEntrypoint: _backgroundTaskEntryPoint,
       androidEnableQueue: true,
+      androidStopForegroundOnPause: true,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final TabController _tabController = DefaultTabController.of(context)!;
+    Provider.of<DBProvider>(context, listen: false).getSongs();
 
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {

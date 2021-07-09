@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:sputofy_2/models/song_model.dart';
 import 'package:sputofy_2/providers/provider.dart';
 import 'package:sputofy_2/theme/palette.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../song_list_screen.dart';
 
@@ -103,7 +104,7 @@ class ListSongs extends StatelessWidget {
       icon: Icon(Icons.more_horiz),
       padding: EdgeInsets.zero,
       itemBuilder: (context) {
-        return {'Delete Song'}.map((String choice) {
+        return {'Delete Song', 'Share Song'}.map((String choice) {
           return PopupMenuItem<List>(
             value: [choice, song],
             child: Text(choice),
@@ -118,6 +119,9 @@ class ListSongs extends StatelessWidget {
     switch (params[0]) {
       case 'Delete Song':
         _deleteSong(params[1]);
+        break;
+      case 'Share Song':
+        Share.shareFiles([params[1].path]);
         break;
     }
   }

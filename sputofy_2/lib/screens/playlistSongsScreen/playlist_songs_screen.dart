@@ -1,6 +1,7 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:sputofy_2/models/playlist_model.dart';
 import 'package:sputofy_2/models/song_model.dart';
 import 'package:sputofy_2/providers/provider.dart';
@@ -99,7 +100,7 @@ Widget buildWidgetMenuButton(Playlist playlist, Song song,
     icon: Icon(Icons.more_vert),
     padding: EdgeInsets.zero,
     itemBuilder: (context) {
-      return {'Delete Song'}.map((String choice) {
+      return {'Delete Song', 'Share Song'}.map((String choice) {
         return PopupMenuItem<List>(
           value: [choice, song],
           child: Text(choice),
@@ -122,6 +123,9 @@ void handleClick(List params, Playlist playlist, MediaItem? playingItem,
         Provider.of<DBProvider>(context, listen: false)
             .deletePlaylistSong(playlist.id!, params[1].id!);
       }
+      break;
+    case 'Share Song':
+      Share.shareFiles([params[1].path]);
       break;
   }
 }
