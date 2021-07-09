@@ -167,7 +167,7 @@ class _buildWidgetPlaylistDescription extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                               builder: (context) => SelectSongList(
-                                  playlistID: playlist.id!,
+                                  playlist: playlist,
                                   playlistSongs: playlistSongs),
                             ),
                           ).then((value) {

@@ -82,8 +82,11 @@ class _MyHomePageState extends State<MyHomePage> {
   _start() {
     AudioService.start(
       backgroundTaskEntrypoint: _backgroundTaskEntryPoint,
+      androidNotificationChannelName: 'Sputofy',
       androidEnableQueue: true,
+      androidNotificationIcon: 'mipmap/ic_launcher',
       androidStopForegroundOnPause: true,
+      androidNotificationColor: 0x00000000,
     );
   }
 

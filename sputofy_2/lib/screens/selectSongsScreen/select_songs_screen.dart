@@ -1,6 +1,7 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sputofy_2/models/playlist_model.dart';
 import 'package:sputofy_2/models/playlist_song_model.dart';
 import 'package:sputofy_2/models/song_model.dart';
 import 'package:sputofy_2/providers/provider.dart';
@@ -8,11 +9,11 @@ import 'package:sputofy_2/services/database.dart';
 import 'package:sputofy_2/theme/palette.dart';
 
 class SelectSongList extends StatefulWidget {
-  final int playlistID;
+  final Playlist playlist;
   final List<Song> playlistSongs;
 
   const SelectSongList(
-      {Key? key, required this.playlistID, required this.playlistSongs})
+      {Key? key, required this.playlist, required this.playlistSongs})
       : super(key: key);
 
   @override
@@ -21,6 +22,8 @@ class SelectSongList extends StatefulWidget {
 
 class _SelectSongListState extends State<SelectSongList> {
   DBHelper _database = DBHelper();
+  Playlist get playlist => widget.playlist;
+  List<Song> get playlistSongs => widget.playlistSongs;
 
   List<Song> toAddSongs = [];
 
@@ -52,7 +55,7 @@ class _SelectSongListState extends State<SelectSongList> {
                       itemBuilder: (context, index) {
                         Song song = songs[index];
 
-                        return widget.playlistSongs
+                        return playlistSongs
                                 .any((element) => element.id == song.id)
                             ? _unselectableSong(song)
                             : _selectableSong(song);
@@ -117,16 +120,17 @@ class _SelectSongListState extends State<SelectSongList> {
     for (var i = 0; i < toAddSongs.length; i++) {
       playlistSongs.add(PlaylistSong(
         null,
-        widget.playlistID,
+        playlist.id!,
         toAddSongs[i].id!,
       ));
 
+      //TODO review
       songs.add(
-        toAddSongs[i].toMediaItem().copyWith(album: '${widget.playlistID}'),
+        toAddSongs[i].toMediaItem().copyWith(album: '${playlist.id}'),
       );
     }
     Provider.of<DBProvider>(context, listen: false)
-        .savePlaylistSongs(widget.playlistID, playlistSongs);
+        .savePlaylistSongs(playlist.id!, playlistSongs);
     Navigator.pop(context, songs);
   }
 }

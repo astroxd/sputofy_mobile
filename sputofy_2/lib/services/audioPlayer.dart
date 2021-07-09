@@ -19,8 +19,8 @@ class AudioPlayerTask extends BackgroundAudioTask {
   late Future<SharedPreferences> _prefs;
 
   List<MediaItem> _queue = [];
-  int get index => _audioPlayer.currentIndex ?? 0;
-  MediaItem? get mediaItem => _queue[index];
+  int? get index => _audioPlayer.currentIndex;
+  MediaItem? get mediaItem => _queue[index!];
   int? _playlistID;
   int? get playlistID => _playlistID == null ? null : _playlistID;
 
@@ -201,6 +201,12 @@ class AudioPlayerTask extends BackgroundAudioTask {
   }
 
   @override
+  Future<void> onFastForward() {
+    // TODO: implement onFastForward
+    return super.onFastForward();
+  }
+
+  @override
   Future<void> onUpdateQueue(List<MediaItem> songs) async {
     _queue = songs;
     AudioServiceBackground.setQueue(_queue);
@@ -217,6 +223,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
       await onStop();
     }
+    await AudioServiceBackground.setMediaItem(_queue[index!]);
   }
 
   @override
@@ -233,9 +240,9 @@ class AudioPlayerTask extends BackgroundAudioTask {
       await AudioServiceBackground.setQueue(_queue);
     } else {
       await AudioServiceBackground.setQueue(_queue);
-      bool hasNext = index < _playlist.length;
+      bool hasNext = index! < _playlist.length;
       if (hasNext) {
-        await AudioServiceBackground.setMediaItem(_queue[index]);
+        await AudioServiceBackground.setMediaItem(_queue[index!]);
       } else {
         await AudioServiceBackground.setMediaItem(_queue[0]);
       }
@@ -261,7 +268,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
     if (_audioPlayer.loopMode == LoopMode.one) {
       //* If has next
       if (_audioPlayer.effectiveIndices!.reversed.first != index) {
-        _audioPlayer.seek(Duration.zero, index: index + 1);
+        _audioPlayer.seek(Duration.zero, index: index! + 1);
       }
     } else {
       await _audioPlayer.seekToNext();
@@ -274,7 +281,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
     if (_audioPlayer.loopMode == LoopMode.one) {
       //* If has next
       if (_audioPlayer.effectiveIndices!.first != index) {
-        _audioPlayer.seek(Duration.zero, index: index - 1);
+        _audioPlayer.seek(Duration.zero, index: index! - 1);
       }
     } else {
       await _audioPlayer.seekToPrevious();
@@ -282,15 +289,15 @@ class AudioPlayerTask extends BackgroundAudioTask {
     if (!_audioPlayer.playing) await AudioService.play();
   }
 
-  @override
-  Future<void> onSetRating(Rating rating, Map? extras) {
-    // TODO: implement onSetRating
-    // MediaItem item =
-    //     _queue[index].copyWith(rating: Rating.newHeartRating(true));
-    // print(item);
-    print("rating");
-    return super.onSetRating(rating, extras);
-  }
+  // @override
+  // Future<void> onSetRating(Rating rating, Map? extras) {
+  //   // TODO: implement onSetRating
+  //   // MediaItem item =
+  //   //     _queue[index].copyWith(rating: Rating.newHeartRating(true));
+  //   // print(item);
+  //   print("rating");
+  //   return super.onSetRating(rating, extras);
+  // }
 
   @override
   Future<void> onSkipToQueueItem(String mediaId) async {
@@ -298,7 +305,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
     final newIndex = playlistSongs.indexWhere((song) => song.tag == mediaId);
 
     if (newIndex == -1 || index == newIndex) return;
-    _skipState = newIndex > index
+    _skipState = newIndex > index!
         ? AudioProcessingState.skippingToNext
         : AudioProcessingState.skippingToPrevious;
 
@@ -385,13 +392,20 @@ class AudioPlayerTask extends BackgroundAudioTask {
         MediaControl.skipToPrevious,
         _audioPlayer.playing ? MediaControl.pause : MediaControl.play,
         MediaControl.skipToNext,
+        // MediaControl.rewind,
+        // MediaControl.stop,
       ],
       androidCompactActions: [0, 1, 2],
       systemActions: [
         MediaAction.seekTo,
-        MediaAction.setShuffleMode,
-        MediaAction.setRepeatMode,
-        MediaAction.setRating
+        // MediaAction.seekBackward,
+        // MediaAction.seekForward,
+        // MediaAction.setRating,
+        // MediaAction.fastForward,
+
+        // MediaAction.setShuffleMode,
+        // MediaAction.setRepeatMode,
+        // MediaAction.setRating
       ],
       processingState: _getProcessingState(),
       playing: _audioPlayer.playing,

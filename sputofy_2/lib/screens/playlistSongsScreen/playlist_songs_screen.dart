@@ -71,9 +71,14 @@ Future<void> loadQueue(Playlist playlist, List<Song> playlistSongs,
     {String? songPath}) async {
   if (playlistSongs.isEmpty) return;
   List<MediaItem> mediaItems = [];
+  print("playlist ID = ${playlist.id}");
   for (Song song in playlistSongs) {
     mediaItems.add(song.toMediaItem().copyWith(album: '${playlist.id}'));
   }
+
+  mediaItems.forEach((element) {
+    print(element.album);
+  });
   await AudioService.updateQueue(mediaItems).then(
     (value) => {
       if (songPath != null)
