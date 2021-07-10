@@ -251,16 +251,10 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   @override
   Future<void> onAddQueueItem(MediaItem mediaItem) async {
-    // int previousQueueLength = _queue.length;
-
     _queue.add(mediaItem);
     await AudioServiceBackground.setQueue(_queue);
 
     _playlist.add(AudioSource.uri(Uri.parse(mediaItem.id), tag: mediaItem.id));
-
-    // if (previousQueueLength == 0) {
-    //   await AudioServiceBackground.setMediaItem(_queue[index]);
-    // }
   }
 
   @override
@@ -387,15 +381,24 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   ///* Cambia il badge delle notifiche
   Future<void> _broadcastState() async {
+    //TODO
     await AudioServiceBackground.setState(
       controls: [
+        MediaControl(
+            androidIcon: "mipmap/ic_favorite_add",
+            label: "LOOP",
+            action: MediaAction.play),
         MediaControl.skipToPrevious,
         _audioPlayer.playing ? MediaControl.pause : MediaControl.play,
         MediaControl.skipToNext,
         // MediaControl.rewind,
         // MediaControl.stop,
+        MediaControl(
+            androidIcon: "mipmap/ic_favorite_remove",
+            label: "FAVORITE",
+            action: MediaAction.play),
       ],
-      androidCompactActions: [0, 1, 2],
+      androidCompactActions: [1, 2, 3],
       systemActions: [
         MediaAction.seekTo,
         // MediaAction.seekBackward,
