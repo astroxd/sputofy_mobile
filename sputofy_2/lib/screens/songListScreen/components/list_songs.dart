@@ -1,6 +1,7 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sputofy_2/models/playlist_song_model.dart';
 import 'package:sputofy_2/models/song_model.dart';
 import 'package:sputofy_2/providers/provider.dart';
 import 'package:sputofy_2/theme/palette.dart';
@@ -29,17 +30,16 @@ class ListSongs extends StatelessWidget {
               if (playingItem?.album != '-2') {
                 await loadQueue(songs, songPath: song.path);
               } else {
-                /*if ((AudioService.queue?.length ?? 0) != songs.length) {
-                  await loadQueue(songs, songPath: song.path);
-                } else {*/
                 await AudioService.skipToQueueItem(song.path);
                 await AudioService.play();
-                //}
               }
             },
             child: Container(
               decoration: BoxDecoration(
-                  border: Border(bottom: BorderSide(color: kPrimaryColor))),
+                border: Border(
+                  bottom: BorderSide(color: kPrimaryColor),
+                ),
+              ),
               margin: const EdgeInsets.only(left: 16.0),
               padding: const EdgeInsets.only(top: 8.0, bottom: 8.0, right: 8.0),
               child: Row(
@@ -73,13 +73,34 @@ class ListSongs extends StatelessWidget {
                   ),
                   IconButton(
                     onPressed: () {
+                      if (song.isFavorite) {
+                        Provider.of<DBProvider>(context, listen: false)
+                            .deletePlaylistSong(0, song.id!);
+                        Provider.of<DBProvider>(context, listen: false)
+                            .updateSong(song.copyWith(isFavorite: false));
+                      } else {
+                        Provider.of<DBProvider>(context, listen: false)
+                            .savePlaylistSongs(
+                          0,
+                          [PlaylistSong(null, 0, song.id!)],
+                        );
+                        Provider.of<DBProvider>(context, listen: false)
+                            .updateSong(song.copyWith(isFavorite: true));
+                        if (playingItem?.album == '0') {
+                          AudioService.addQueueItem(
+                              song.toMediaItem().copyWith(album: '0'));
+                        }
+                      }
+
                       //TODO
                       //* add isFavorite field to song model
                       //* can't use updateMediaItem because i need to create favorite playlist
 
                       // AudioService.updateMediaItem(song.toMediaItem());
                     },
-                    icon: Icon(Icons.favorite_border),
+                    icon: Icon(song.isFavorite
+                        ? Icons.favorite
+                        : Icons.favorite_border),
                   ),
                   _buildWidgetMenuButton(song),
                 ],

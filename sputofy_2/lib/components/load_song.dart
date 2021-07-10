@@ -64,7 +64,9 @@ void _loadFolderItems(String folder_path, BuildContext context) async {
       String fileName =
           baseFileName.substring(0, baseFileName.lastIndexOf('.'));
 
-      newSongs.add(Song(null, file.path, fileName, '', '', songDuration));
+      newSongs.add(
+        Song(null, file.path, fileName, '', '', songDuration, false),
+      );
     } catch (e) {
       print("Error on loading Song from folder $e");
     }
@@ -75,7 +77,7 @@ void _loadFolderItems(String folder_path, BuildContext context) async {
   }
   if (currentSongs.isEmpty) {
     AudioService.updateQueue(newSongs.map((e) => e.toMediaItem()).toList());
-  } else {
+  } else if (AudioService.currentMediaItem?.album == '-2') {
     AudioService.addQueueItems(newSongs.map((e) => e.toMediaItem()).toList());
   }
 }

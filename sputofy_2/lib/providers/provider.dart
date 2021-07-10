@@ -12,7 +12,7 @@ class DBProvider extends ChangeNotifier {
 
   List<Playlist> _playlists = [];
   List<Playlist> get playlists => _playlists;
-  bool isAlphabeticalOrder = false;
+  // !DEPRECATED bool isAlphabeticalOrder = false;
 
   List<Song> _songs = [];
   List<Song> get songs => _songs;
@@ -28,6 +28,11 @@ class DBProvider extends ChangeNotifier {
   }
 
   Future<void> getPlaylistSongs(int playlistID) async {
+    // if (playlistID == 0) {
+    //   _playlistSongs = await _database.getFavoriteSongs();
+    // } else {
+    //   _playlistSongs = await _database.getPlaylistSongs(playlistID);
+    // }
     _playlistSongs = await _database.getPlaylistSongs(playlistID);
     notifyListeners();
   }
@@ -56,12 +61,11 @@ class DBProvider extends ChangeNotifier {
     List<Playlist> playlists = await _database.getPlaylists();
 
     //*sortDirection
-    if (isAlphabeticalOrder) {
-      playlists.sort((a, b) => a.name.compareTo(b.name));
-    } else {
-      playlists.sort((a, b) => b.name.compareTo(a.name));
-    }
-
+    // if (isAlphabeticalOrder) {
+    //   playlists.sort((a, b) => a.name.compareTo(b.name));
+    // } else {
+    //   playlists.sort((a, b) => b.name.compareTo(a.name));
+    // }
     _playlists = playlists;
     notifyListeners();
   }
@@ -71,10 +75,11 @@ class DBProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void sortPlaylists() {
-    isAlphabeticalOrder = !isAlphabeticalOrder;
-    notifyListeners();
-  }
+  ///!DEPRECATED
+  // void sortPlaylists() {
+  //   isAlphabeticalOrder = !isAlphabeticalOrder;
+  //   notifyListeners();
+  // }
 
   Future<void> savePlaylist(Playlist playlist) async {
     _database.savePlaylist(playlist);
@@ -109,6 +114,12 @@ class DBProvider extends ChangeNotifier {
 
   Future<void> deleteSong(int songID) async {
     await _database.deleteSong(songID);
+    getSongs();
+    notifyListeners();
+  }
+
+  Future<void> updateSong(Song song) async {
+    await _database.updateSong(song);
     getSongs();
     notifyListeners();
   }

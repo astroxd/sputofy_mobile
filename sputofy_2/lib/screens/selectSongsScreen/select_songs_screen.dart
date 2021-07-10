@@ -128,7 +128,12 @@ class _SelectSongListState extends State<SelectSongList> {
       songs.add(
         toAddSongs[i].toMediaItem().copyWith(album: '${playlist.id}'),
       );
+      if (playlist.id! == 0) {
+        Provider.of<DBProvider>(context, listen: false)
+            .updateSong(toAddSongs[i].copyWith(isFavorite: true));
+      }
     }
+
     Provider.of<DBProvider>(context, listen: false)
         .savePlaylistSongs(playlist.id!, playlistSongs);
     Navigator.pop(context, songs);

@@ -208,10 +208,10 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   @override
   Future<void> onUpdateQueue(List<MediaItem> songs) async {
-    _queue = songs
-        .map((e) => e.copyWith(
-            artUri: Uri.file('/storage/emulated/0/download/album.jpg')))
-        .toList();
+    _queue = songs;
+    // .map((e) => e.copyWith(
+    //     artUri: Uri.file('/storage/emulated/0/download/album.jpg')))
+    // .toList();
     AudioServiceBackground.setQueue(_queue);
     _playlist = ConcatenatingAudioSource(
         useLazyPreparation: true,
@@ -284,6 +284,12 @@ class AudioPlayerTask extends BackgroundAudioTask {
       await _audioPlayer.seekToPrevious();
     }
     if (!_audioPlayer.playing) await AudioService.play();
+  }
+
+  @override
+  Future<void> onUpdateMediaItem(MediaItem mediaItem) {
+    // TODO: implement onUpdateMediaItem
+    return super.onUpdateMediaItem(mediaItem);
   }
 
   // @override
@@ -388,7 +394,9 @@ class AudioPlayerTask extends BackgroundAudioTask {
     await AudioServiceBackground.setState(
       controls: [
         MediaControl(
-            androidIcon: "mipmap/ic_favorite_add",
+            androidIcon: mediaItem?.rating?.hasHeart() ?? false
+                ? "mipmap/ic_favorite_remove"
+                : "mipmap/ic_favorite_add",
             label: "LOOP",
             action: MediaAction.play),
         MediaControl.skipToPrevious,
@@ -396,22 +404,15 @@ class AudioPlayerTask extends BackgroundAudioTask {
         MediaControl.skipToNext,
         // MediaControl.rewind,
         // MediaControl.stop,
-        MediaControl(
-            androidIcon: "mipmap/ic_favorite_remove",
-            label: "FAVORITE",
-            action: MediaAction.play),
+        // MediaControl(
+        //     androidIcon: "mipmap/ic_favorite_remove",
+        //     label: "FAVORITE",
+        //     action: MediaAction.play),
       ],
       androidCompactActions: [1, 2, 3],
       systemActions: [
         MediaAction.seekTo,
-        // MediaAction.seekBackward,
-        // MediaAction.seekForward,
-        // MediaAction.setRating,
-        // MediaAction.fastForward,
-
-        // MediaAction.setShuffleMode,
-        // MediaAction.setRepeatMode,
-        // MediaAction.setRating
+        MediaAction.setRating,
       ],
       processingState: _getProcessingState(),
       playing: _audioPlayer.playing,

@@ -128,6 +128,10 @@ void handleClick(List params, Playlist playlist, MediaItem? playingItem,
         Provider.of<DBProvider>(context, listen: false)
             .deletePlaylistSong(playlist.id!, params[1].id!);
       }
+      if (playlist.id! == 0) {
+        Provider.of<DBProvider>(context, listen: false)
+            .updateSong(params[1].copyWith(isFavorite: false));
+      }
       break;
     case 'Share Song':
       Share.shareFiles([params[1].path]);

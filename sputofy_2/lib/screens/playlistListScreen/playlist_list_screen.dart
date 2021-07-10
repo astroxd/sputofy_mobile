@@ -19,7 +19,6 @@ class _PlaylistListScreenState extends State<PlaylistListScreen> {
       body: Consumer<DBProvider>(
         builder: (context, database, child) {
           List<Playlist> playlists = database.playlists;
-
           return Column(
             children: <Widget>[
               PlaylistList(context, playlists),
@@ -58,8 +57,18 @@ void handleClick(List params, BuildContext context) {
   //* params = [choice, playlist]
   switch (params[0]) {
     case 'Delete Playlist':
-      Provider.of<DBProvider>(context, listen: false)
-          .deletePlaylist(params[1].id);
+      if (params[1].id == 0) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text("Favorite playlist can't be deleted"),
+          action: SnackBarAction(
+              label: 'HIDE',
+              onPressed: () =>
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar()),
+        ));
+      } else {
+        Provider.of<DBProvider>(context, listen: false)
+            .deletePlaylist(params[1].id);
+      }
       break;
   }
 }

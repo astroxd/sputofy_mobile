@@ -31,5 +31,6 @@ ThemeData appTheme() {
       backgroundColor: kSecondaryBackgroundColor,
       elevation: 0.0,
     ),
+    snackBarTheme: SnackBarThemeData(behavior: SnackBarBehavior.floating),
   );
 }

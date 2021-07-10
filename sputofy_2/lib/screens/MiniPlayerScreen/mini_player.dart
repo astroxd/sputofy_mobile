@@ -2,6 +2,7 @@ import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:sputofy_2/models/song_model.dart';
 import 'package:sputofy_2/providers/provider.dart';
 import 'package:sputofy_2/screens/SongDetailScreen/song_detail_screen.dart';
 import 'package:sputofy_2/theme/palette.dart';
@@ -31,6 +32,8 @@ class MiniPlayer extends StatelessWidget {
             Provider.of<DBProvider>(context, listen: false).deletePlaylistSong(
                 int.parse(mediaItem.album), mediaItem.extras?['id']);
             await AudioService.removeQueueItem(mediaItem);
+            Provider.of<DBProvider>(context, listen: false).updateSong(
+                Song.fromMediaItem(mediaItem).copyWith(isFavorite: false));
           }
           break;
       }

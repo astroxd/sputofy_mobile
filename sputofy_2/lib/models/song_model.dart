@@ -7,8 +7,17 @@ class Song {
   String? author;
   String? cover;
   Duration? duration;
+  bool isFavorite = false;
 
-  Song(this.id, this.path, this.title, this.author, this.cover, this.duration);
+  Song(
+    this.id,
+    this.path,
+    this.title,
+    this.author,
+    this.cover,
+    this.duration,
+    this.isFavorite,
+  );
 
   Map<String, dynamic> toMap() {
     var map = <String, dynamic>{
@@ -18,6 +27,7 @@ class Song {
       'author': author ?? '',
       'cover': cover ?? '',
       'duration': duration?.inMilliseconds ?? 0,
+      'is_favorite': isFavorite ? 1 : 0,
     };
     return map;
   }
@@ -29,6 +39,7 @@ class Song {
     author = map['author'];
     cover = map['cover'];
     duration = Duration(milliseconds: map['duration']);
+    isFavorite = map['is_favorite'] == 1 ? true : false;
   }
 
   MediaItem toMediaItem() {
@@ -37,10 +48,40 @@ class Song {
       album: '${-2}',
       title: title,
       duration: duration,
+      rating: Rating.newHeartRating(isFavorite),
       extras: <String, dynamic>{
         'id': id,
       },
     );
     return item;
   }
+
+  Song.fromMediaItem(MediaItem mediaItem) {
+    id = mediaItem.extras!['id'];
+    path = mediaItem.id;
+    title = mediaItem.title;
+    author = mediaItem.artist;
+    cover = mediaItem.artUri.toString();
+    duration = mediaItem.duration;
+    isFavorite = mediaItem.rating?.hasHeart() ?? false;
+  }
+
+  copyWith({
+    int? id,
+    String? path,
+    String? title,
+    String? author,
+    String? cover,
+    Duration? duration,
+    bool? isFavorite,
+  }) =>
+      Song(
+        id ?? this.id,
+        path ?? this.path,
+        title ?? this.title,
+        author ?? this.author,
+        cover ?? this.cover,
+        duration ?? this.duration,
+        isFavorite ?? this.isFavorite,
+      );
 }

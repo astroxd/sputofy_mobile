@@ -40,12 +40,22 @@ class _buildWidgetTopBar extends StatelessWidget {
   const _buildWidgetTopBar(this.playlist, {Key? key}) : super(key: key);
 
   void _handleClick(List params, BuildContext context) {
-    //* params = [choice, song]
+    //* params = [choice, playlist]
     switch (params[0]) {
       case 'Delete Playlist':
-        Provider.of<DBProvider>(context, listen: false)
-            .deletePlaylist(params[1].id);
-        Navigator.pop(context);
+        if (params[1].id == 0) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text("Favorite playlist can't be deleted"),
+            action: SnackBarAction(
+                label: 'HIDE',
+                onPressed: () =>
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar()),
+          ));
+        } else {
+          Provider.of<DBProvider>(context, listen: false)
+              .deletePlaylist(params[1].id);
+          Navigator.pop(context);
+        }
         break;
       case 'Change Cover':
         //TODO

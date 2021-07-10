@@ -11,7 +11,7 @@ import 'package:sputofy_2/models/song_model.dart';
 
 class DBHelper {
   static Database? _db;
-  static const String DB_NAME = 'TTTestDDBSputofy.db';
+  static const String DB_NAME = 'TTtTGTTTTTTestDDBSputofy.db';
   //* SONG TABLE
   static const String SONG_TABLE = 'song';
   static const String SONG_ID = 'id';
@@ -20,6 +20,7 @@ class DBHelper {
   static const String SONG_AUTHOR = 'author';
   static const String SONG_COVER = 'cover';
   static const String SONG_DURATION = 'duration';
+  static const String SONG_FAVORITE = 'is_favorite';
   //* SONG TABLE
 
   //* PLAYLIST TABLE
@@ -64,7 +65,8 @@ class DBHelper {
         $SONG_TITLE TEXT NOT NULL,
         $SONG_AUTHOR TEXT,
         $SONG_COVER TEXT,
-        $SONG_DURATION INTEGER
+        $SONG_DURATION INTEGER,
+        $SONG_FAVORITE INTEGER
       )
       ''');
     await db.execute('''
@@ -84,6 +86,9 @@ class DBHelper {
         $PLAYLISTSONG_SONG_ID INTEGER NOT NULL
       )
      ''');
+
+    await db.insert(
+        PLAYLIST_TABLE, Playlist(0, 'Favorites', null, DateTime.now()).toMap());
   }
 
   Future<Song> saveSong(Song song) async {
@@ -108,15 +113,16 @@ class DBHelper {
 
   Future<List<Song>> getSongs() async {
     var dbClient = await db;
-    List<Map<String, dynamic>> maps = await dbClient.query(SONG_TABLE,
-        columns: [
-          SONG_ID,
-          SONG_PATH,
-          SONG_TITLE,
-          SONG_AUTHOR,
-          SONG_COVER,
-          SONG_DURATION
-        ]);
+    List<Map<String, dynamic>> maps =
+        await dbClient.query(SONG_TABLE, columns: [
+      SONG_ID,
+      SONG_PATH,
+      SONG_TITLE,
+      SONG_AUTHOR,
+      SONG_COVER,
+      SONG_DURATION,
+      SONG_FAVORITE,
+    ]);
     List<Song> songs = [];
     if (maps.length > 0) {
       for (int i = 0; i < maps.length; i++) {
@@ -126,21 +132,47 @@ class DBHelper {
     return songs;
   }
 
-  Future<Song?> getSong(int songID) async {
-    var dbClient = await db;
-    List<Map<String, dynamic>> maps = await dbClient.query(SONG_TABLE,
-        columns: [
-          SONG_ID,
-          SONG_PATH,
-          SONG_TITLE,
-          SONG_AUTHOR,
-          SONG_COVER,
-          SONG_DURATION
-        ]);
-    Song? song;
-    song = (Song.fromMap(maps[0]));
-    return song;
-  }
+  // Future<List<Song>> getFavoriteSongs() async {
+  //   var dbClient = await db;
+  //   List<Map<String, dynamic>> maps = await dbClient.query(
+  //     SONG_TABLE,
+  //     columns: [
+  //       SONG_ID,
+  //       SONG_PATH,
+  //       SONG_TITLE,
+  //       SONG_AUTHOR,
+  //       SONG_COVER,
+  //       SONG_DURATION,
+  //       SONG_FAVORITE,
+  //     ],
+  //     where: '$SONG_FAVORITE = 1',
+  //   );
+  //   List<Song> songs = [];
+  //   if (maps.length > 0) {
+  //     for (int i = 0; i < maps.length; i++) {
+  //       songs.add(Song.fromMap(maps[i]));
+  //     }
+  //   }
+  //   return songs;
+  // }
+
+  //!DEPRECATED
+  // Future<Song?> getSong(int songID) async {
+  //   var dbClient = await db;
+  //   List<Map<String, dynamic>> maps =
+  //       await dbClient.query(SONG_TABLE, columns: [
+  //     SONG_ID,
+  //     SONG_PATH,
+  //     SONG_TITLE,
+  //     SONG_AUTHOR,
+  //     SONG_COVER,
+  //     SONG_DURATION,
+  //     SONG_FAVORITE,
+  //   ]);
+  //   Song? song;
+  //   song = (Song.fromMap(maps[0]));
+  //   return song;
+  // }
 
   Future<Playlist> savePlaylist(Playlist playlist) async {
     var dbClient = await db;
@@ -175,14 +207,17 @@ class DBHelper {
 
   Future<List<Playlist>> getPlaylists() async {
     var dbClient = await db;
-    List<Map<String, dynamic>> maps =
-        await dbClient.query(PLAYLIST_TABLE, columns: [
-      PLAYLIST_ID,
-      PLAYLIST_NAME,
-      PLAYLIST_COVER,
-      PLAYLIST_CREATION_DATE,
-      PLAYLIST_DURATION
-    ]);
+    List<Map<String, dynamic>> maps = await dbClient.query(
+      PLAYLIST_TABLE,
+      columns: [
+        PLAYLIST_ID,
+        PLAYLIST_NAME,
+        PLAYLIST_COVER,
+        PLAYLIST_CREATION_DATE,
+        PLAYLIST_DURATION
+      ],
+    );
+
     List<Playlist> playlists = [];
     if (maps.length > 0) {
       for (int i = 0; i < maps.length; i++) {
