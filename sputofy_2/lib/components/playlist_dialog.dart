@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sputofy_2/models/playlist_model.dart';
@@ -99,7 +101,11 @@ class _NewPlaylistDialogState extends State<NewPlaylistDialog> {
 }
 
 _savePlaylist(String playlistName, BuildContext context) {
-  Playlist playlist = Playlist(null, playlistName, '', DateTime.now());
+  Playlist playlist = Playlist(
+      null,
+      playlistName,
+      File('/storage/emulated/0/download/album.jpg').readAsBytesSync(),
+      DateTime.now());
   Provider.of<DBProvider>(context, listen: false).savePlaylist(playlist);
   Navigator.pop(context);
 }

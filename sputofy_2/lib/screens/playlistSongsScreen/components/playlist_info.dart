@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -25,7 +28,7 @@ class buildWidgetPlaylistInfo extends StatelessWidget {
       children: <Widget>[
         _buildWidgetTopBar(playlist),
         SizedBox(height: 16.0),
-        _buildWidgetPlaylistDescription(playlist, playingItem, playlistSongs),
+        _buildWidgetPlaylistDescription(playingItem, playlistSongs),
         _buildWidgetShuffleButton(playlist, playingItem, playlistSongs),
       ],
     );
@@ -44,6 +47,12 @@ class _buildWidgetTopBar extends StatelessWidget {
             .deletePlaylist(params[1].id);
         Navigator.pop(context);
         break;
+      case 'Change Cover':
+        //TODO
+        // Provider.of<DBProvider>(context, listen: false)
+        //     .updatePlaylist(playlist.copyWith(name: "cacca"));
+
+        break;
     }
   }
 
@@ -53,7 +62,7 @@ class _buildWidgetTopBar extends StatelessWidget {
       icon: Icon(Icons.more_vert),
       padding: EdgeInsets.zero,
       itemBuilder: (context) {
-        return {'Delete Playlist'}.map((String choice) {
+        return {'Delete Playlist', 'Edit Playlist[WIP]'}.map((String choice) {
           return PopupMenuItem<List>(
             value: [choice, playlist],
             child: Text(choice),
@@ -83,114 +92,123 @@ class _buildWidgetTopBar extends StatelessWidget {
 }
 
 class _buildWidgetPlaylistDescription extends StatelessWidget {
-  final Playlist playlist;
   final MediaItem? playingItem;
   final List<Song> playlistSongs;
-  const _buildWidgetPlaylistDescription(
-      this.playlist, this.playingItem, this.playlistSongs,
+  const _buildWidgetPlaylistDescription(this.playingItem, this.playlistSongs,
       {Key? key})
       : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.only(right: 16.0),
-      height: 150,
-      child: Row(
-        children: <Widget>[
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: Icon(Icons.arrow_back_ios),
-          ),
-          Image.asset(
-            'cover.jpeg',
-            width: 150,
-            height: 150,
-          ),
-          SizedBox(width: 16.0),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      playlist.name,
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 2,
-                      style: Theme.of(context).textTheme.headline6,
-                    ),
-                    SizedBox(height: 8.0),
-                    Text(
-                      "${playlist.creationDate.year.toString()}-${playlist.creationDate.month.toString().padLeft(2, '0')}-${playlist.creationDate.day.toString().padLeft(2, '0')}",
-                      style: Theme.of(context).textTheme.subtitle2,
-                    ),
-                  ],
-                ),
-                Spacer(),
-                Row(
-                  children: <Widget>[
-                    Container(
-                      margin: const EdgeInsets.only(right: 16.0),
-                      padding: const EdgeInsets.all(4.0),
-                      decoration: BoxDecoration(
-                        color: kSecondaryBackgroundColor,
-                        shape: BoxShape.circle,
-                      ),
-                      child: GestureDetector(
-                        onTap: () async {
-                          if (playingItem?.album != playlist.id) {
-                            loadQueue(playlist, playlistSongs,
-                                songPath: playlistSongs[0].path);
-                          }
-                          await AudioService.skipToQueueItem(
-                                  playlistSongs[0].path)
-                              .then((value) async => await AudioService.play());
-                        },
-                        child: Icon(
-                          Icons.play_arrow,
-                          size: 24.0,
-                          color: kThirdColor,
-                        ),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(4.0),
-                      decoration: BoxDecoration(
-                        color: kSecondaryBackgroundColor,
-                        shape: BoxShape.circle,
-                      ),
-                      child: GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => SelectSongList(
-                                  playlist: playlist,
-                                  playlistSongs: playlistSongs),
-                            ),
-                          ).then((value) {
-                            if (value != null &&
-                                playingItem?.album == playlist.id) {
-                              AudioService.addQueueItems(value);
-                            }
-                          });
-                        },
-                        child: Icon(
-                          Icons.add,
-                          size: 24.0,
-                          color: kThirdColor,
-                        ),
-                      ),
-                    ),
-                  ],
+    return Consumer<DBProvider>(
+      builder: (context, database, child) {
+        Playlist playlist = database.watchingPlaylist!;
+        Uint8List? playlistCover = playlist.cover;
+        return Container(
+          padding: const EdgeInsets.only(right: 16.0),
+          height: 150,
+          child: Row(
+            children: <Widget>[
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: Icon(Icons.arrow_back_ios),
+              ),
+              if (playlistCover != null) ...[
+                Image.memory(playlistCover),
+              ] else ...[
+                Image.asset(
+                  'cover.jpeg',
+                  width: 150,
+                  height: 150,
                 ),
               ],
-            ),
+              SizedBox(width: 16.0),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          playlist.name,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
+                          style: Theme.of(context).textTheme.headline6,
+                        ),
+                        SizedBox(height: 8.0),
+                        Text(
+                          "${playlist.creationDate.year.toString()}-${playlist.creationDate.month.toString().padLeft(2, '0')}-${playlist.creationDate.day.toString().padLeft(2, '0')}",
+                          style: Theme.of(context).textTheme.subtitle2,
+                        ),
+                      ],
+                    ),
+                    Spacer(),
+                    Row(
+                      children: <Widget>[
+                        Container(
+                          margin: const EdgeInsets.only(right: 16.0),
+                          padding: const EdgeInsets.all(4.0),
+                          decoration: BoxDecoration(
+                            color: kSecondaryBackgroundColor,
+                            shape: BoxShape.circle,
+                          ),
+                          child: GestureDetector(
+                            onTap: () async {
+                              if (playingItem?.album != playlist.id) {
+                                loadQueue(playlist, playlistSongs,
+                                    songPath: playlistSongs[0].path);
+                              }
+                              await AudioService.skipToQueueItem(
+                                      playlistSongs[0].path)
+                                  .then((value) async =>
+                                      await AudioService.play());
+                            },
+                            child: Icon(
+                              Icons.play_arrow,
+                              size: 24.0,
+                              color: kThirdColor,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.all(4.0),
+                          decoration: BoxDecoration(
+                            color: kSecondaryBackgroundColor,
+                            shape: BoxShape.circle,
+                          ),
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => SelectSongList(
+                                      playlist: playlist,
+                                      playlistSongs: playlistSongs),
+                                ),
+                              ).then((value) {
+                                if (value != null &&
+                                    playingItem?.album == playlist.id) {
+                                  AudioService.addQueueItems(value);
+                                }
+                              });
+                            },
+                            child: Icon(
+                              Icons.add,
+                              size: 24.0,
+                              color: kThirdColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

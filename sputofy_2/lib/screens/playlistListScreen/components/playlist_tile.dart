@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -16,6 +18,7 @@ class PlaylistTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Uint8List? playlistCover = playlist.cover;
     return Tooltip(
       message: playlist.name,
       padding: const EdgeInsets.all(16.0),
@@ -28,12 +31,16 @@ class PlaylistTile extends StatelessWidget {
           ),
         ),
         child: InkWell(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => PlaylistSongsScreen(playlist),
-            ),
-          ),
+          onTap: () {
+            Provider.of<DBProvider>(context, listen: false)
+                .getPlaylist(playlist.id!);
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PlaylistSongsScreen(playlist),
+              ),
+            );
+          },
           child: Row(
             mainAxisSize: MainAxisSize.max,
             children: <Widget>[
@@ -42,13 +49,20 @@ class PlaylistTile extends StatelessWidget {
                 children: <Widget>[
                   ClipRRect(
                     borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(10.0),
-                        bottomLeft: Radius.circular(10.0)),
-                    child: Image.asset(
-                      'cover.jpeg',
-                      width: 70.0,
-                      height: 70.0,
+                      topLeft: Radius.circular(10.0),
+                      bottomLeft: Radius.circular(10.0),
                     ),
+                    child: playlistCover != null
+                        ? Image.memory(
+                            playlistCover,
+                            width: 70.0,
+                            height: 70.0,
+                          )
+                        : Image.asset(
+                            'cover.jpeg',
+                            width: 70.0,
+                            height: 70.0,
+                          ),
                   ),
                   // TODO add
                   // IconButton(

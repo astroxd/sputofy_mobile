@@ -1,7 +1,9 @@
+import 'dart:typed_data';
+
 class Playlist {
   int? id;
   late String name;
-  String? cover;
+  Uint8List? cover;
   late DateTime creationDate;
   // Duration duration;
 
@@ -26,4 +28,17 @@ class Playlist {
     creationDate = DateTime.fromMillisecondsSinceEpoch(map['creation_date']);
     // duration = Duration(milliseconds: map['duration']);
   }
+
+  Playlist copyWith({
+    int? id,
+    String? name,
+    Uint8List? cover,
+    DateTime? creationDate,
+  }) =>
+      Playlist(
+        id ?? this.id,
+        name ?? this.name,
+        cover ?? this.cover,
+        creationDate ?? this.creationDate,
+      );
 }

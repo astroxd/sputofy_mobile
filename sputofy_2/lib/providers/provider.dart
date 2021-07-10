@@ -17,6 +17,9 @@ class DBProvider extends ChangeNotifier {
   List<Song> _songs = [];
   List<Song> get songs => _songs;
 
+  Playlist? _watchingPlaylist;
+  Playlist? get watchingPlaylist => _watchingPlaylist;
+
   DBProvider() {
     _database = DBHelper();
     getSongs();
@@ -63,6 +66,11 @@ class DBProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> getPlaylist(int playlistID) async {
+    _watchingPlaylist = await _database.getPlaylist(playlistID);
+    notifyListeners();
+  }
+
   void sortPlaylists() {
     isAlphabeticalOrder = !isAlphabeticalOrder;
     notifyListeners();
@@ -78,6 +86,13 @@ class DBProvider extends ChangeNotifier {
     _database.deleteAllPlaylistSongs(playlistID);
     _database.deletePlaylist(playlistID);
     getPlaylists();
+    notifyListeners();
+  }
+
+  Future<void> updatePlaylist(Playlist playlist) async {
+    print(await _database.updatePlaylist(playlist));
+    getPlaylists();
+    getPlaylist(playlist.id!);
     notifyListeners();
   }
 

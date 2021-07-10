@@ -11,7 +11,7 @@ import 'package:sputofy_2/models/song_model.dart';
 
 class DBHelper {
   static Database? _db;
-  static const String DB_NAME = 'TTestDDBSputofy.db';
+  static const String DB_NAME = 'TTTestDDBSputofy.db';
   //* SONG TABLE
   static const String SONG_TABLE = 'song';
   static const String SONG_ID = 'id';
@@ -71,7 +71,7 @@ class DBHelper {
       CREATE TABLE $PLAYLIST_TABLE (
         $PLAYLIST_ID INTEGER PRIMARY KEY,
         $PLAYLIST_NAME TEXT NOT NULL,
-        $PLAYLIST_COVER TEXT,
+        $PLAYLIST_COVER BLOB,
         $PLAYLIST_CREATION_DATE INTEGER NOT NULL,
         $PLAYLIST_DURATION INTEGER
       )
@@ -155,19 +155,22 @@ class DBHelper {
         where: '$PLAYLIST_ID = ?', whereArgs: [playlistID]);
   }
 
-  Future<int> updatePlaylist(Duration playlistDuration, int playlistID) async {
+  Future<int> updatePlaylist(Playlist playlist) async {
+    print("update");
+    print(playlist.name);
     var dbClient = await db;
-    // return await dbClient.update(PLAYLIST_TABLE, playlist.toMap(),
-    //     where: '$PLAYLIST_ID = ?', whereArgs: [playlist.id]);
-    return await dbClient.rawUpdate(
-      '''
-    UPDATE $PLAYLIST_TABLE
-    SET $PLAYLIST_DURATION = ?
-    WHERE $PLAYLIST_ID = ?
-     ''',
-      [playlistDuration.inMilliseconds, playlistID],
-    );
-    //TODO maybe implement
+    return await dbClient.update(PLAYLIST_TABLE, playlist.toMap(),
+        where: '$PLAYLIST_ID = ?', whereArgs: [playlist.id]);
+
+    //!USE THIS FOR UPDATE JUST ONE FIELD
+    // return await dbClient.rawUpdate(
+    //   '''
+    // UPDATE $PLAYLIST_TABLE
+    // SET $PLAYLIST_DURATION = ?
+    // WHERE $PLAYLIST_ID = ?
+    //  ''',
+    //   [playlistDuration.inMilliseconds, playlistID],
+    // );
   }
 
   Future<List<Playlist>> getPlaylists() async {
@@ -187,6 +190,27 @@ class DBHelper {
       }
     }
     return playlists;
+  }
+
+  Future<Playlist> getPlaylist(int playlistID) async {
+    var dbClient = await db;
+    List<Map<String, dynamic>> map = await dbClient.query(
+      PLAYLIST_TABLE,
+      columns: [
+        PLAYLIST_ID,
+        PLAYLIST_NAME,
+        PLAYLIST_COVER,
+        PLAYLIST_CREATION_DATE,
+        PLAYLIST_DURATION
+      ],
+      where: '$PLAYLIST_ID = ?',
+      whereArgs: [playlistID],
+    );
+
+    //!For calling this function you have to be inside a playlist, so playlist exist
+    // if (map.isNotEmpty) {
+    return Playlist.fromMap(map[0]);
+    // }
   }
 
   Future<PlaylistSong> savePlaylistSong(PlaylistSong playlistSong) async {

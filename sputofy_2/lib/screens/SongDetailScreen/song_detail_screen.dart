@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:audio_service/audio_service.dart';
@@ -75,6 +76,9 @@ class SongDetailScreen extends StatelessWidget {
           AudioServiceRepeatMode repeatMode =
               playbackState?.repeatMode ?? AudioServiceRepeatMode.none;
 
+          String cover = playingItem?.artUri?.toFilePath() ?? '';
+          print("COVER: $cover");
+
           return GestureDetector(
             behavior: HitTestBehavior.translucent,
             onHorizontalDragUpdate: (details) {
@@ -120,11 +124,20 @@ class SongDetailScreen extends StatelessWidget {
                       ],
                     ),
                     SizedBox(height: 32.0),
-                    Image.asset(
-                      'cover.jpeg',
-                      width: 250,
-                      height: 250,
-                    ),
+                    if (cover.isNotEmpty) ...[
+                      Image.file(
+                        File(cover),
+                        width: 250,
+                        height: 250,
+                      ),
+                    ] else ...[
+                      Image.asset(
+                        'cover.jpeg',
+                        width: 250,
+                        height: 250,
+                      ),
+                    ],
+
                     SizedBox(height: 24.0),
                     Column(
                       children: <Widget>[

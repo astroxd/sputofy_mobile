@@ -208,7 +208,10 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   @override
   Future<void> onUpdateQueue(List<MediaItem> songs) async {
-    _queue = songs;
+    _queue = songs
+        .map((e) => e.copyWith(
+            artUri: Uri.file('/storage/emulated/0/download/album.jpg')))
+        .toList();
     AudioServiceBackground.setQueue(_queue);
     _playlist = ConcatenatingAudioSource(
         useLazyPreparation: true,
