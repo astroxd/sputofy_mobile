@@ -20,7 +20,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   List<MediaItem> _queue = [];
   int? get index => _audioPlayer.currentIndex;
-  MediaItem? get mediaItem => _queue[index!];
+  MediaItem? get mediaItem => index == null ? null : _queue[index!];
   int? _playlistID;
   int? get playlistID => _playlistID == null ? null : _playlistID;
 
@@ -89,11 +89,15 @@ class AudioPlayerTask extends BackgroundAudioTask {
   ///* Legge quale evento sta facendo e fa aggiornare il badge delle notifiche
   void _propogateEventsFromAudioPlayerToAudioServiceClients() {
     _eventSubscription = _audioPlayer.playbackEventStream.listen((event) async {
-      await _broadcastState();
+      if (_audioPlayer.sequence != null) {
+        await _broadcastState();
+      }
     });
     _sequenceStateSubscription =
         _audioPlayer.sequenceStateStream.listen((event) async {
-      await _broadcastState();
+      if (_audioPlayer.sequence != null) {
+        await _broadcastState();
+      }
     });
   }
 
@@ -201,17 +205,9 @@ class AudioPlayerTask extends BackgroundAudioTask {
   }
 
   @override
-  Future<void> onFastForward() {
-    // TODO: implement onFastForward
-    return super.onFastForward();
-  }
-
-  @override
   Future<void> onUpdateQueue(List<MediaItem> songs) async {
     _queue = songs;
-    // .map((e) => e.copyWith(
-    //     artUri: Uri.file('/storage/emulated/0/download/album.jpg')))
-    // .toList();
+
     AudioServiceBackground.setQueue(_queue);
     _playlist = ConcatenatingAudioSource(
         useLazyPreparation: true,
@@ -232,14 +228,18 @@ class AudioPlayerTask extends BackgroundAudioTask {
   @override
   Future<void> onRemoveQueueItem(MediaItem song) async {
     final playlistSongs = _playlist.sequence;
+    if (playlistSongs.length == 1) {
+      _audioPlayer.stop();
+    }
 
     int indexToRemove =
         playlistSongs.indexWhere((element) => element.tag == song.id);
     await _playlist.removeAt(indexToRemove);
+    print(index);
     _queue.removeWhere((element) => element.id == song.id);
 
     if (_playlist.length == 0) {
-      _audioPlayer.pause();
+      await _audioPlayer.pause();
       await AudioServiceBackground.setQueue(_queue);
     } else {
       await AudioServiceBackground.setQueue(_queue);
@@ -287,20 +287,26 @@ class AudioPlayerTask extends BackgroundAudioTask {
   }
 
   @override
-  Future<void> onUpdateMediaItem(MediaItem mediaItem) {
-    // TODO: implement onUpdateMediaItem
-    return super.onUpdateMediaItem(mediaItem);
+  Future<void> onUpdateMediaItem(MediaItem mediaItem) async {
+    int _index = _queue.indexWhere((element) => element.id == mediaItem.id);
+
+    if (_index == -1) return;
+
+    _queue[_index] = mediaItem;
+
+    await AudioServiceBackground.setQueue(_queue);
+    _broadcastState();
   }
 
-  // @override
-  // Future<void> onSetRating(Rating rating, Map? extras) {
-  //   // TODO: implement onSetRating
-  //   // MediaItem item =
-  //   //     _queue[index].copyWith(rating: Rating.newHeartRating(true));
-  //   // print(item);
-  //   print("rating");
-  //   return super.onSetRating(rating, extras);
-  // }
+  @override
+  Future<void> onSetRating(Rating rating, Map? extras) async {
+    print('Rate');
+    // int index = _queue.indexWhere((element) => element.id == mediaItem.id);
+    // _queue[index] == mediaItem;
+    // AudioServiceBackground.setQueue(_queue);
+
+    return super.onSetRating(rating, extras);
+  }
 
   @override
   Future<void> onSkipToQueueItem(String mediaId) async {
@@ -398,7 +404,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
                 ? "mipmap/ic_favorite_remove"
                 : "mipmap/ic_favorite_add",
             label: "LOOP",
-            action: MediaAction.play),
+            action: MediaAction.setRating),
         MediaControl.skipToPrevious,
         _audioPlayer.playing ? MediaControl.pause : MediaControl.play,
         MediaControl.skipToNext,

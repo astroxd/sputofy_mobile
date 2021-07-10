@@ -32,8 +32,6 @@ class MiniPlayer extends StatelessWidget {
             Provider.of<DBProvider>(context, listen: false).deletePlaylistSong(
                 int.parse(mediaItem.album), mediaItem.extras?['id']);
             await AudioService.removeQueueItem(mediaItem);
-            Provider.of<DBProvider>(context, listen: false).updateSong(
-                Song.fromMediaItem(mediaItem).copyWith(isFavorite: false));
           }
           break;
       }

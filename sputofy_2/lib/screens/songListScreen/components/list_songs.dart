@@ -75,20 +75,28 @@ class ListSongs extends StatelessWidget {
                     onPressed: () {
                       if (song.isFavorite) {
                         Provider.of<DBProvider>(context, listen: false)
-                            .deletePlaylistSong(0, song.id!);
-                        Provider.of<DBProvider>(context, listen: false)
                             .updateSong(song.copyWith(isFavorite: false));
+                        Provider.of<DBProvider>(context, listen: false)
+                            .deletePlaylistSong(0, song.id!);
+                        if (playingItem?.album == '-2') {
+                          AudioService.updateMediaItem(
+                              song.copyWith(isFavorite: false).toMediaItem());
+                        }
                       } else {
+                        Provider.of<DBProvider>(context, listen: false)
+                            .updateSong(song.copyWith(isFavorite: true));
                         Provider.of<DBProvider>(context, listen: false)
                             .savePlaylistSongs(
                           0,
                           [PlaylistSong(null, 0, song.id!)],
                         );
-                        Provider.of<DBProvider>(context, listen: false)
-                            .updateSong(song.copyWith(isFavorite: true));
                         if (playingItem?.album == '0') {
                           AudioService.addQueueItem(
                               song.toMediaItem().copyWith(album: '0'));
+                        }
+                        if (playingItem?.album == '-2') {
+                          AudioService.updateMediaItem(
+                              song.copyWith(isFavorite: true).toMediaItem());
                         }
                       }
 

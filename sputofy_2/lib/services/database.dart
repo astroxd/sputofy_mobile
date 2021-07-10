@@ -11,7 +11,7 @@ import 'package:sputofy_2/models/song_model.dart';
 
 class DBHelper {
   static Database? _db;
-  static const String DB_NAME = 'TTtTGTTTTTTestDDBSputofy.db';
+  static const String DB_NAME = 'TTtTGTTTTTTTestDDBSputofy.db';
   //* SONG TABLE
   static const String SONG_TABLE = 'song';
   static const String SONG_ID = 'id';
@@ -306,7 +306,8 @@ class DBHelper {
           SONG_TITLE,
           SONG_AUTHOR,
           SONG_COVER,
-          SONG_DURATION
+          SONG_DURATION,
+          SONG_FAVORITE,
         ],
         where: '$SONG_ID = ?',
         whereArgs: [playlistSongs[i].songID],

@@ -73,12 +73,11 @@ Future<void> loadQueue(Playlist playlist, List<Song> playlistSongs,
   List<MediaItem> mediaItems = [];
   print("playlist ID = ${playlist.id}");
   for (Song song in playlistSongs) {
+    print(song.isFavorite);
     mediaItems.add(song.toMediaItem().copyWith(album: '${playlist.id}'));
+    // print(song.toMediaItem().copyWith(album: '${playlist.id}').toString());
   }
 
-  mediaItems.forEach((element) {
-    print(element.album);
-  });
   await AudioService.updateQueue(mediaItems).then(
     (value) => {
       if (songPath != null)
@@ -131,6 +130,8 @@ void handleClick(List params, Playlist playlist, MediaItem? playingItem,
       if (playlist.id! == 0) {
         Provider.of<DBProvider>(context, listen: false)
             .updateSong(params[1].copyWith(isFavorite: false));
+        AudioService.updateMediaItem(
+            params[1].copyWith(isFavorite: false).toMediaItem());
       }
       break;
     case 'Share Song':

@@ -7,7 +7,7 @@ class Song {
   String? author;
   String? cover;
   Duration? duration;
-  bool isFavorite = false;
+  bool isFavorite = true;
 
   Song(
     this.id,
