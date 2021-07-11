@@ -228,14 +228,10 @@ class AudioPlayerTask extends BackgroundAudioTask {
   @override
   Future<void> onRemoveQueueItem(MediaItem song) async {
     final playlistSongs = _playlist.sequence;
-    if (playlistSongs.length == 1) {
-      _audioPlayer.stop();
-    }
 
     int indexToRemove =
         playlistSongs.indexWhere((element) => element.tag == song.id);
     await _playlist.removeAt(indexToRemove);
-    print(index);
     _queue.removeWhere((element) => element.id == song.id);
 
     if (_playlist.length == 0) {
@@ -287,14 +283,16 @@ class AudioPlayerTask extends BackgroundAudioTask {
   }
 
   @override
-  Future<void> onUpdateMediaItem(MediaItem mediaItem) async {
-    int _index = _queue.indexWhere((element) => element.id == mediaItem.id);
+  Future<void> onUpdateMediaItem(MediaItem _mediaItem) async {
+    print(_mediaItem.toString());
+    int _index = _queue.indexWhere((element) => element.id == _mediaItem.id);
 
     if (_index == -1) return;
 
-    _queue[_index] = mediaItem;
+    _queue[_index] = _mediaItem;
 
     await AudioServiceBackground.setQueue(_queue);
+    await AudioServiceBackground.setMediaItem(mediaItem!);
     _broadcastState();
   }
 

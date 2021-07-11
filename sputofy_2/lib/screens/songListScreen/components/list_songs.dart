@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:sputofy_2/models/playlist_song_model.dart';
 import 'package:sputofy_2/models/song_model.dart';
 import 'package:sputofy_2/providers/provider.dart';
+import 'package:sputofy_2/screens/EditSongScreen/edit_song_screen.dart';
 import 'package:sputofy_2/theme/palette.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -78,6 +79,7 @@ class ListSongs extends StatelessWidget {
                             .updateSong(song.copyWith(isFavorite: false));
                         Provider.of<DBProvider>(context, listen: false)
                             .deletePlaylistSong(0, song.id!);
+                        //TODO review not need to check playlist
                         if (playingItem?.album == '-2') {
                           AudioService.updateMediaItem(
                               song.copyWith(isFavorite: false).toMediaItem());
@@ -110,7 +112,7 @@ class ListSongs extends StatelessWidget {
                         ? Icons.favorite
                         : Icons.favorite_border),
                   ),
-                  _buildWidgetMenuButton(song),
+                  _buildWidgetMenuButton(song, context),
                 ],
               ),
             ),
@@ -127,13 +129,13 @@ class ListSongs extends StatelessWidget {
     return "${songDuration.inMinutes}:$twoDigitSeconds";
   }
 
-  Widget _buildWidgetMenuButton(Song song) {
+  Widget _buildWidgetMenuButton(Song song, BuildContext context) {
     return PopupMenuButton<List>(
-      onSelected: _handleClick,
+      onSelected: (List params) => _handleClick(params, context),
       icon: Icon(Icons.more_horiz),
       padding: EdgeInsets.zero,
       itemBuilder: (context) {
-        return {'Delete Song', 'Share Song'}.map((String choice) {
+        return {'Delete Song', 'Edit Song', 'Share Song'}.map((String choice) {
           return PopupMenuItem<List>(
             value: [choice, song],
             child: Text(choice),
@@ -143,11 +145,19 @@ class ListSongs extends StatelessWidget {
     );
   }
 
-  void _handleClick(List params) {
+  void _handleClick(List params, BuildContext context) {
     //* params = [choice, song]
     switch (params[0]) {
       case 'Delete Song':
         _deleteSong(params[1]);
+        break;
+      case 'Edit Song':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => EditSongScreen(params[1]),
+          ),
+        );
         break;
       case 'Share Song':
         Share.shareFiles([params[1].path]);

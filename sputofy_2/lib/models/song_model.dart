@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:audio_service/audio_service.dart';
 
 class Song {
@@ -5,7 +8,7 @@ class Song {
   late String path;
   late String title;
   String? author;
-  String? cover;
+  Uint8List? cover;
   Duration? duration;
   bool isFavorite = true;
 
@@ -25,7 +28,7 @@ class Song {
       'path': path,
       'title': title,
       'author': author ?? '',
-      'cover': cover ?? '',
+      'cover': cover,
       'duration': duration?.inMilliseconds ?? 0,
       'is_favorite': isFavorite ? 1 : 0,
     };
@@ -48,6 +51,9 @@ class Song {
       album: '${-2}',
       title: title,
       duration: duration,
+      artUri: cover != null
+          ? Uri.file('/storage/emulated/0/Download/album.jpg')
+          : null,
       rating: Rating.newHeartRating(isFavorite),
       extras: <String, dynamic>{
         'id': id,
@@ -61,7 +67,10 @@ class Song {
     path = mediaItem.id;
     title = mediaItem.title;
     author = mediaItem.artist;
-    cover = mediaItem.artUri.toString();
+
+    cover = mediaItem.artUri != null
+        ? File.fromUri(mediaItem.artUri!).readAsBytesSync()
+        : null;
     duration = mediaItem.duration;
     isFavorite = mediaItem.rating?.hasHeart() ?? false;
   }
@@ -71,7 +80,7 @@ class Song {
     String? path,
     String? title,
     String? author,
-    String? cover,
+    Uint8List? cover,
     Duration? duration,
     bool? isFavorite,
   }) =>

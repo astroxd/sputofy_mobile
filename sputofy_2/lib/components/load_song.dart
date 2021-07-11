@@ -65,7 +65,7 @@ void _loadFolderItems(String folder_path, BuildContext context) async {
           baseFileName.substring(0, baseFileName.lastIndexOf('.'));
 
       newSongs.add(
-        Song(null, file.path, fileName, '', '', songDuration, false),
+        Song(null, file.path, fileName, '', null, songDuration, false),
       );
     } catch (e) {
       print("Error on loading Song from folder $e");

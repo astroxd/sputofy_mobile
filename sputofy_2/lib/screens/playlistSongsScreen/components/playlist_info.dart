@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:audio_service/audio_service.dart';
@@ -7,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:sputofy_2/models/playlist_model.dart';
 import 'package:sputofy_2/models/song_model.dart';
 import 'package:sputofy_2/providers/provider.dart';
+import 'package:sputofy_2/screens/EditPlaylistScreen/edit_playlist_screen.dart';
 import 'package:sputofy_2/screens/selectSongsScreen/select_songs_screen.dart';
 import 'package:sputofy_2/theme/palette.dart';
 
@@ -57,11 +57,13 @@ class _buildWidgetTopBar extends StatelessWidget {
           Navigator.pop(context);
         }
         break;
-      case 'Change Cover':
-        //TODO
-        // Provider.of<DBProvider>(context, listen: false)
-        //     .updatePlaylist(playlist.copyWith(name: "cacca"));
-
+      case 'Edit Playlist':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => EditPlaylistScreen(),
+          ),
+        );
         break;
     }
   }
@@ -72,7 +74,7 @@ class _buildWidgetTopBar extends StatelessWidget {
       icon: Icon(Icons.more_vert),
       padding: EdgeInsets.zero,
       itemBuilder: (context) {
-        return {'Delete Playlist', 'Edit Playlist[WIP]'}.map((String choice) {
+        return {'Delete Playlist', 'Edit Playlist'}.map((String choice) {
           return PopupMenuItem<List>(
             value: [choice, playlist],
             child: Text(choice),

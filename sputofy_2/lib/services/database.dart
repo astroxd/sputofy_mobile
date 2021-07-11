@@ -11,7 +11,7 @@ import 'package:sputofy_2/models/song_model.dart';
 
 class DBHelper {
   static Database? _db;
-  static const String DB_NAME = 'TTtTGTTTTTTTestDDBSputofy.db';
+  static const String DB_NAME = 'DDDFuckDBSputofy.db';
   //* SONG TABLE
   static const String SONG_TABLE = 'song';
   static const String SONG_ID = 'id';
@@ -64,7 +64,7 @@ class DBHelper {
         $SONG_PATH TEXT UNIQUE,
         $SONG_TITLE TEXT NOT NULL,
         $SONG_AUTHOR TEXT,
-        $SONG_COVER TEXT,
+        $SONG_COVER BLOB,
         $SONG_DURATION INTEGER,
         $SONG_FAVORITE INTEGER
       )

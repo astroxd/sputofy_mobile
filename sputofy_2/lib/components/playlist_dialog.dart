@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -104,7 +105,8 @@ _savePlaylist(String playlistName, BuildContext context) {
   Playlist playlist = Playlist(
       null,
       playlistName,
-      File('/storage/emulated/0/download/album.jpg').readAsBytesSync(),
+      null,
+      // File('/storage/emulated/0/download/album.jpg').readAsBytesSync(),
       DateTime.now());
   Provider.of<DBProvider>(context, listen: false).savePlaylist(playlist);
   Navigator.pop(context);
