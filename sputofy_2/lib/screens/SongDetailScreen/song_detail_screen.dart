@@ -76,8 +76,7 @@ class SongDetailScreen extends StatelessWidget {
           AudioServiceRepeatMode repeatMode =
               playbackState?.repeatMode ?? AudioServiceRepeatMode.none;
 
-          String cover = playingItem?.artUri?.toFilePath() ?? '';
-          print("COVER: $cover");
+          Uri? cover = playingItem?.artUri;
 
           return GestureDetector(
             behavior: HitTestBehavior.translucent,
@@ -124,9 +123,9 @@ class SongDetailScreen extends StatelessWidget {
                       ],
                     ),
                     SizedBox(height: 32.0),
-                    if (cover.isNotEmpty) ...[
-                      Image.file(
-                        File(cover),
+                    if (cover != null) ...[
+                      Image.network(
+                        cover.toString(),
                         width: 250,
                         height: 250,
                       ),

@@ -51,9 +51,11 @@ class Song {
       album: '${-2}',
       title: title,
       duration: duration,
-      artUri: cover != null
-          ? Uri.file('/storage/emulated/0/Download/album.jpg')
-          : null,
+      // artUri: cover != null
+      //     ? Uri.file('/storage/emulated/0/Download/album.jpg')
+      //     : null,
+      // File.fromRawPath(cover!).uri
+      // artUri: cover != null ? Uri(path: File.fromRawPath(cover!).path) : null,
       rating: Rating.newHeartRating(isFavorite),
       extras: <String, dynamic>{
         'id': id,

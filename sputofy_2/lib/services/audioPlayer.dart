@@ -366,6 +366,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   @override
   Future<void> onSetRepeatMode(AudioServiceRepeatMode repeatMode) async {
+    print('reepeate');
     switch (repeatMode) {
       case AudioServiceRepeatMode.none:
         await _audioPlayer.setLoopMode(LoopMode.off);
@@ -397,23 +398,17 @@ class AudioPlayerTask extends BackgroundAudioTask {
     //TODO
     await AudioServiceBackground.setState(
       controls: [
+        MediaControl.skipToPrevious,
+        _audioPlayer.playing ? MediaControl.pause : MediaControl.play,
+        MediaControl.skipToNext,
         MediaControl(
             androidIcon: mediaItem?.rating?.hasHeart() ?? false
                 ? "mipmap/ic_favorite_remove"
                 : "mipmap/ic_favorite_add",
-            label: "LOOP",
+            label: "Rating",
             action: MediaAction.setRating),
-        MediaControl.skipToPrevious,
-        _audioPlayer.playing ? MediaControl.pause : MediaControl.play,
-        MediaControl.skipToNext,
-        // MediaControl.rewind,
-        // MediaControl.stop,
-        // MediaControl(
-        //     androidIcon: "mipmap/ic_favorite_remove",
-        //     label: "FAVORITE",
-        //     action: MediaAction.play),
       ],
-      androidCompactActions: [1, 2, 3],
+      androidCompactActions: [0, 1, 2],
       systemActions: [
         MediaAction.seekTo,
         MediaAction.setRating,

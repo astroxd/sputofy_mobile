@@ -75,17 +75,26 @@ class _EditSongScreenState extends State<EditSongScreen> {
           if (songImage != null) ...[
             GestureDetector(
               onTap: () async {
-                FilePickerResult? result = await FilePicker.platform.pickFiles(
-                  withData: true,
-                  type: FileType.custom,
-                  allowedExtensions: ['jpg', 'jpeg', 'png'],
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("Not implemented yet"),
+                    action: SnackBarAction(
+                        label: 'HIDE',
+                        onPressed: () => ScaffoldMessenger.of(context)
+                            .hideCurrentSnackBar()),
+                  ),
                 );
-                if (result != null) {
-                  Uint8List? imageBytes = result.files.single.bytes;
-                  setState(() {
-                    selectedImage = imageBytes;
-                  });
-                }
+                // FilePickerResult? result = await FilePicker.platform.pickFiles(
+                //   withData: true,
+                //   type: FileType.custom,
+                //   allowedExtensions: ['jpg', 'jpeg', 'png'],
+                // );
+                // if (result != null) {
+                //   Uint8List? imageBytes = result.files.single.bytes;
+                //   setState(() {
+                //     selectedImage = imageBytes;
+                //   });
+                // }
               },
               child: Image.memory(
                 songImage,
@@ -96,17 +105,26 @@ class _EditSongScreenState extends State<EditSongScreen> {
           ] else ...[
             GestureDetector(
               onTap: () async {
-                FilePickerResult? result = await FilePicker.platform.pickFiles(
-                  withData: true,
-                  type: FileType.custom,
-                  allowedExtensions: ['jpg', 'jpeg', 'png'],
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("Not implemented yet"),
+                    action: SnackBarAction(
+                        label: 'HIDE',
+                        onPressed: () => ScaffoldMessenger.of(context)
+                            .hideCurrentSnackBar()),
+                  ),
                 );
-                if (result != null) {
-                  Uint8List? imageBytes = result.files.single.bytes;
-                  setState(() {
-                    selectedImage = imageBytes;
-                  });
-                }
+                // FilePickerResult? result = await FilePicker.platform.pickFiles(
+                //   withData: true,
+                //   type: FileType.custom,
+                //   allowedExtensions: ['jpg', 'jpeg', 'png'],
+                // );
+                // if (result != null) {
+                //   Uint8List? imageBytes = result.files.single.bytes;
+                //   setState(() {
+                //     selectedImage = imageBytes;
+                //   });
+                // }
               },
               child: Image.asset(
                 'cover.jpeg',

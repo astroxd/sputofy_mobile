@@ -230,9 +230,15 @@ void _handleClick(String choice, BuildContext context) async {
         print('not connected');
         isConnected = false;
       }
-      if (isConnected)
-        showDownloadSongDialog(context, _scaffoldKey);
-      else
+      if (isConnected) {
+        if (downloadStream.valueOrNull == -1 ||
+            downloadStream.valueOrNull == -2 ||
+            downloadStream.valueOrNull == null) {
+          showDownloadSongDialog(context, _scaffoldKey);
+        } else {
+          showDownloadDialog(context);
+        }
+      } else
         showDialog(
           context: context,
           builder: (context) {
