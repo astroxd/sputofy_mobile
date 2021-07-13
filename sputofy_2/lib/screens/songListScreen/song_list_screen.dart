@@ -66,21 +66,22 @@ class PlayingMediaItem {
   PlayingMediaItem(this.playingItem, this.playbackState);
 }
 
-Future<void> loadQueue(List<Song> songs, {String? songPath}) async {
-  if (songs.isEmpty) return;
-  List<MediaItem> mediaItems = [];
-  for (Song song in songs) {
-    mediaItems.add(song.toMediaItem());
-    // mediaItems.add(song.toMediaItem().copyWith(album: '${-2}'));
-  }
-  await AudioService.customAction('setPlaylistID', -2); //TODO maybe useless
-  await AudioService.updateQueue(mediaItems).then(
-    (value) => {
-      if (songPath != null)
-        {
-          AudioService.skipToQueueItem(songPath)
-              .then((value) async => await AudioService.play())
-        }
-    },
-  );
-}
+// Future<void> loadQueue(List<Song> songs, {String? songPath}) async {
+//   if (songs.isEmpty) return;
+//   List<MediaItem> mediaItems = [];
+//   for (Song song in songs) {
+//     mediaItems.add(song.toMediaItem());
+//     // mediaItems.add(song.toMediaItem().copyWith(album: '${-2}'));
+//   }
+//   await AudioService.customAction('setPlaylistID', -2); //TODO maybe useless
+//   await AudioService.updateQueue(mediaItems).then(
+//     (value) => {
+//       if (songPath != null)
+//         {
+//           AudioService.skipToQueueItem(songPath)
+//               .then((value) async => await AudioService.play())
+//         }
+//     },
+//   );
+// }
+

@@ -67,27 +67,26 @@ class _PlaylistSongsScreenState extends State<PlaylistSongsScreen> {
   }
 }
 
-Future<void> loadQueue(Playlist playlist, List<Song> playlistSongs,
-    {String? songPath}) async {
-  if (playlistSongs.isEmpty) return;
-  List<MediaItem> mediaItems = [];
-  print("playlist ID = ${playlist.id}");
-  for (Song song in playlistSongs) {
-    print(song.isFavorite);
-    mediaItems.add(song.toMediaItem().copyWith(album: '${playlist.id}'));
-    // print(song.toMediaItem().copyWith(album: '${playlist.id}').toString());
-  }
+// Future<void> loadQueue(Playlist playlist, List<Song> playlistSongs,
+//     {String? songPath}) async {
+//   if (playlistSongs.isEmpty) return;
+//   List<MediaItem> mediaItems = [];
+//   print("playlist ID = ${playlist.id}");
+//   for (Song song in playlistSongs) {
+//     print(song.isFavorite);
+//     mediaItems.add(song.toMediaItem().copyWith(album: '${playlist.id}'));
+//   }
 
-  await AudioService.updateQueue(mediaItems).then(
-    (value) => {
-      if (songPath != null)
-        {
-          AudioService.skipToQueueItem(songPath)
-              .then((value) async => await AudioService.play())
-        }
-    },
-  );
-}
+//   await AudioService.updateQueue(mediaItems).then(
+//     (value) => {
+//       if (songPath != null)
+//         {
+//           AudioService.skipToQueueItem(songPath)
+//               .then((value) async => await AudioService.play())
+//         }
+//     },
+//   );
+// }
 
 String getSongDuration(Duration? songDuration) {
   String twoDigits(int n) => n.toString().padLeft(2, "0");

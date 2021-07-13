@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:sputofy_2/models/song_model.dart';
 import 'package:sputofy_2/theme/palette.dart';
 
+import '../../../main.dart';
 import '../song_list_screen.dart';
 
 class ActionButtons extends StatelessWidget {
@@ -22,7 +23,7 @@ class ActionButtons extends StatelessWidget {
           IconButton(
             onPressed: () async {
               if (playingItem?.album != "-2") {
-                loadQueue(songs);
+                loadQueue(-2, songs);
               }
               AudioService.customAction('shufflePlay');
             },
@@ -36,8 +37,9 @@ class ActionButtons extends StatelessWidget {
                 ? kAccentColor
                 : null,
             onPressed: () async {
+              if (songs.isEmpty) return;
               if (playingItem?.album != "-2") {
-                loadQueue(songs, songPath: songs[0].path);
+                loadQueue(-2, songs, songPath: songs[0].path);
               }
               if (playbackState.repeatMode == AudioServiceRepeatMode.none) {
                 AudioService.setRepeatMode(AudioServiceRepeatMode.all);

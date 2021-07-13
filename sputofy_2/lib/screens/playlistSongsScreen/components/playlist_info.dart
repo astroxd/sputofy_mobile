@@ -169,18 +169,17 @@ class _buildWidgetPlaylistDescription extends StatelessWidget {
                           ),
                           child: GestureDetector(
                             onTap: () async {
-                              if (playlistSongs.isEmpty)
-                                return;
-                              else {
-                                if (playingItem?.album != '${playlist.id}') {
-                                  loadQueue(playlist, playlistSongs,
-                                      songPath: playlistSongs[0].path);
-                                }
-                                await AudioService.skipToQueueItem(
-                                        playlistSongs[0].path)
-                                    .then((value) async =>
-                                        await AudioService.play());
+                              if (playlistSongs.isEmpty) return;
+
+                              if (playingItem?.album != '${playlist.id}') {
+                                loadQueue(playlist.id!, playlistSongs,
+                                    songPath: playlistSongs[0].path,
+                                    playlistTitle: playlist.name);
                               }
+                              await AudioService.skipToQueueItem(
+                                      playlistSongs[0].path)
+                                  .then((value) async =>
+                                      await AudioService.play());
                             },
                             child: Icon(
                               Icons.play_arrow,
@@ -273,8 +272,10 @@ class _buildWidgetShuffleButton extends StatelessWidget {
               child: Icon(Icons.shuffle),
               onPressed: () {
                 if (playingItem?.album != '${playlist.id}') {
-                  loadQueue(playlist, playlistSongs).then((value) async =>
-                      await AudioService.customAction('shufflePlay'));
+                  loadQueue(playlist.id!, playlistSongs,
+                          playlistTitle: playlist.name)
+                      .then((value) async =>
+                          await AudioService.customAction('shufflePlay'));
                 } else {
                   if (playlistSongs.isNotEmpty) {
                     AudioService.customAction('shufflePlay');

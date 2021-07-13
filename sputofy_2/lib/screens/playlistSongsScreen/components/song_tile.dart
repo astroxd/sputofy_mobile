@@ -24,7 +24,8 @@ class SongTile extends StatelessWidget {
     return InkWell(
       onTap: () async {
         if (playingItem?.album != '${playlist.id}') {
-          await loadQueue(playlist, songs, songPath: song.path);
+          await loadQueue(playlist.id!, songs,
+              songPath: song.path, playlistTitle: playlist.name);
         } else {
           await AudioService.skipToQueueItem(song.path);
           await AudioService.play();

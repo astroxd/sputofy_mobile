@@ -30,7 +30,7 @@ class ListSongs extends StatelessWidget {
           return InkWell(
             onTap: () async {
               if (playingItem?.album != '-2') {
-                await loadQueue(songs, songPath: song.path);
+                await loadQueue(-2, songs, songPath: song.path);
               } else {
                 await AudioService.skipToQueueItem(song.path);
                 await AudioService.play();
@@ -94,8 +94,9 @@ class ListSongs extends StatelessWidget {
                           [PlaylistSong(null, 0, song.id!)],
                         );
                         if (playingItem?.album == '0') {
-                          AudioService.addQueueItem(
-                              song.toMediaItem().copyWith(album: '0'));
+                          AudioService.addQueueItem(song
+                              .toMediaItem(playlistTitle: 'Favorites')
+                              .copyWith(album: '0'));
                         }
                         if (playingItem?.album == '-2') {
                           AudioService.updateMediaItem(

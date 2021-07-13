@@ -45,7 +45,7 @@ class Song {
     isFavorite = map['is_favorite'] == 1 ? true : false;
   }
 
-  MediaItem toMediaItem() {
+  MediaItem toMediaItem({String? playlistTitle}) {
     MediaItem item = MediaItem(
       id: path,
       album: '${-2}',
@@ -57,6 +57,10 @@ class Song {
       // File.fromRawPath(cover!).uri
       // artUri: cover != null ? Uri(path: File.fromRawPath(cover!).path) : null,
       rating: Rating.newHeartRating(isFavorite),
+
+      displayDescription: playlistTitle != null ? playlistTitle : null,
+      displaySubtitle: 'Unknown Author',
+      displayTitle: title,
       extras: <String, dynamic>{
         'id': id,
       },
