@@ -89,7 +89,7 @@ class _MyHomePageState extends State<MyHomePage> {
       androidNotificationIcon: 'mipmap/ic_launcher',
       androidStopForegroundOnPause: true,
       // androidNotificationColor: 0x00000000,
-      androidNotificationColor: 0x0000ff,
+      // androidNotificationColor: 0x0000ff,
     );
   }
 

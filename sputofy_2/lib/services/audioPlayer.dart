@@ -410,18 +410,22 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   ///* Cambia il badge delle notifiche
   Future<void> _broadcastState() async {
-    //TODO
+    bool isFavorite = false;
+    _queue.isEmpty
+        ? isFavorite = false
+        : isFavorite = mediaItem?.rating?.hasHeart() ?? false;
     await AudioServiceBackground.setState(
       controls: [
         MediaControl.skipToPrevious,
         _audioPlayer.playing ? MediaControl.pause : MediaControl.play,
         MediaControl.skipToNext,
-        // MediaControl(
-        //     androidIcon: mediaItem?.rating?.hasHeart() ?? false
-        //         ? "mipmap/ic_favorite_remove"
-        //         : "mipmap/ic_favorite_add",
-        //     label: "Rating",
-        //     action: MediaAction.setRating),
+        MediaControl(
+          androidIcon: isFavorite
+              ? "mipmap/ic_favorite_remove"
+              : "mipmap/ic_favorite_add",
+          label: "Rating",
+          action: MediaAction.setRating,
+        ),
       ],
       androidCompactActions: [0, 1, 2],
       systemActions: [
