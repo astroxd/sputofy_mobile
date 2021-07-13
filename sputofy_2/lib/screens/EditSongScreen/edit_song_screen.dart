@@ -4,12 +4,14 @@ import 'package:audio_service/audio_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sputofy_2/models/playlist_model.dart';
 import 'package:sputofy_2/models/song_model.dart';
 import 'package:sputofy_2/providers/provider.dart';
 
 class EditSongScreen extends StatefulWidget {
   final Song song;
-  const EditSongScreen(this.song, {Key? key}) : super(key: key);
+  final Playlist? playlist;
+  const EditSongScreen(this.song, {Key? key, this.playlist}) : super(key: key);
 
   @override
   _EditSongScreenState createState() => _EditSongScreenState();
@@ -19,6 +21,7 @@ class _EditSongScreenState extends State<EditSongScreen> {
   TextEditingController controller = TextEditingController();
   Uint8List? selectedImage;
   Song get song => widget.song;
+  Playlist? get playlist => widget.playlist == null ? null : widget.playlist;
   @override
   void dispose() {
     controller.dispose();
@@ -62,8 +65,10 @@ class _EditSongScreenState extends State<EditSongScreen> {
                     cover: selectedImage,
                     title: controller.text,
                   );
-                  Provider.of<DBProvider>(context, listen: false)
-                      .updateSong(updatedSong);
+                  Provider.of<DBProvider>(context, listen: false).updateSong(
+                    updatedSong,
+                    playlist: playlist,
+                  );
                   AudioService.updateMediaItem(updatedSong.toMediaItem());
                   Navigator.of(context).pop();
                 },

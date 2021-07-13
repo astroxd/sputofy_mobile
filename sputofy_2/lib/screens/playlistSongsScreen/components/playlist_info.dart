@@ -10,6 +10,7 @@ import 'package:sputofy_2/screens/EditPlaylistScreen/edit_playlist_screen.dart';
 import 'package:sputofy_2/screens/selectSongsScreen/select_songs_screen.dart';
 import 'package:sputofy_2/theme/palette.dart';
 
+import '../../../main.dart';
 import '../playlist_songs_screen.dart';
 
 class buildWidgetPlaylistInfo extends StatelessWidget {
@@ -39,50 +40,50 @@ class _buildWidgetTopBar extends StatelessWidget {
   final Playlist playlist;
   const _buildWidgetTopBar(this.playlist, {Key? key}) : super(key: key);
 
-  void _handleClick(List params, BuildContext context) {
-    //* params = [choice, playlist]
-    switch (params[0]) {
-      case 'Delete Playlist':
-        if (params[1].id == 0) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text("Favorite playlist can't be deleted"),
-            action: SnackBarAction(
-                label: 'HIDE',
-                onPressed: () =>
-                    ScaffoldMessenger.of(context).hideCurrentSnackBar()),
-          ));
-        } else {
-          Provider.of<DBProvider>(context, listen: false)
-              .deletePlaylist(params[1].id);
-          Navigator.pop(context);
-        }
-        break;
-      case 'Edit Playlist':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => EditPlaylistScreen(),
-          ),
-        );
-        break;
-    }
-  }
+  // void _handleClick(List params, BuildContext context) {
+  //   //* params = [choice, playlist]
+  //   switch (params[0]) {
+  //     case 'Delete Playlist':
+  //       if (params[1].id == 0) {
+  //         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+  //           content: Text("Favorite playlist can't be deleted"),
+  //           action: SnackBarAction(
+  //               label: 'HIDE',
+  //               onPressed: () =>
+  //                   ScaffoldMessenger.of(context).hideCurrentSnackBar()),
+  //         ));
+  //       } else {
+  //         Provider.of<DBProvider>(context, listen: false)
+  //             .deletePlaylist(params[1].id);
+  //         Navigator.pop(context);
+  //       }
+  //       break;
+  //     case 'Edit Playlist':
+  //       Navigator.push(
+  //         context,
+  //         MaterialPageRoute(
+  //           builder: (context) => EditPlaylistScreen(),
+  //         ),
+  //       );
+  //       break;
+  //   }
+  // }
 
-  Widget _buildWidgetMenuButton(Playlist playlist, BuildContext context) {
-    return PopupMenuButton<List>(
-      onSelected: (List params) => _handleClick(params, context),
-      icon: Icon(Icons.more_vert),
-      padding: EdgeInsets.zero,
-      itemBuilder: (context) {
-        return {'Delete Playlist', 'Edit Playlist'}.map((String choice) {
-          return PopupMenuItem<List>(
-            value: [choice, playlist],
-            child: Text(choice),
-          );
-        }).toList();
-      },
-    );
-  }
+  // Widget _buildWidgetMenuButton(Playlist playlist, BuildContext context) {
+  //   return PopupMenuButton<List>(
+  //     onSelected: (List params) => _handleClick(params, context),
+  //     icon: Icon(Icons.more_vert),
+  //     padding: EdgeInsets.zero,
+  //     itemBuilder: (context) {
+  //       return {'Delete Playlist', 'Edit Playlist'}.map((String choice) {
+  //         return PopupMenuItem<List>(
+  //           value: [choice, playlist],
+  //           child: Text(choice),
+  //         );
+  //       }).toList();
+  //     },
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -97,7 +98,8 @@ class _buildWidgetTopBar extends StatelessWidget {
           icon: Icon(Icons.sort),
           color: kThirdColor,
         ),
-        _buildWidgetMenuButton(playlist, context),
+        // _buildWidgetMenuButton(playlist, context),
+        playlistMenuButton(playlist, context, true),
       ],
     );
   }
@@ -167,14 +169,18 @@ class _buildWidgetPlaylistDescription extends StatelessWidget {
                           ),
                           child: GestureDetector(
                             onTap: () async {
-                              if (playingItem?.album != playlist.id) {
-                                loadQueue(playlist, playlistSongs,
-                                    songPath: playlistSongs[0].path);
+                              if (playlistSongs.isEmpty)
+                                return;
+                              else {
+                                if (playingItem?.album != '${playlist.id}') {
+                                  loadQueue(playlist, playlistSongs,
+                                      songPath: playlistSongs[0].path);
+                                }
+                                await AudioService.skipToQueueItem(
+                                        playlistSongs[0].path)
+                                    .then((value) async =>
+                                        await AudioService.play());
                               }
-                              await AudioService.skipToQueueItem(
-                                      playlistSongs[0].path)
-                                  .then((value) async =>
-                                      await AudioService.play());
                             },
                             child: Icon(
                               Icons.play_arrow,
@@ -200,7 +206,7 @@ class _buildWidgetPlaylistDescription extends StatelessWidget {
                                 ),
                               ).then((value) {
                                 if (value != null &&
-                                    playingItem?.album == playlist.id) {
+                                    playingItem?.album == '${playlist.id}') {
                                   AudioService.addQueueItems(value);
                                 }
                               });

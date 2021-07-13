@@ -70,6 +70,7 @@ void _loadFolderItems(String folder_path, BuildContext context) async {
     } catch (e) {
       print("Error on loading Song from folder $e");
     }
+    //TODO load in DB here?
   }
 
   for (Song song in newSongs) {

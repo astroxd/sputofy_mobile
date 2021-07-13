@@ -1,6 +1,7 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sputofy_2/main.dart';
 import 'package:sputofy_2/models/playlist_song_model.dart';
 import 'package:sputofy_2/models/song_model.dart';
 import 'package:sputofy_2/providers/provider.dart';
@@ -112,7 +113,8 @@ class ListSongs extends StatelessWidget {
                         ? Icons.favorite
                         : Icons.favorite_border),
                   ),
-                  _buildWidgetMenuButton(song, context),
+                  // _buildWidgetMenuButton(song, context),
+                  songMenuButton(song, context),
                 ],
               ),
             ),
@@ -129,48 +131,48 @@ class ListSongs extends StatelessWidget {
     return "${songDuration.inMinutes}:$twoDigitSeconds";
   }
 
-  Widget _buildWidgetMenuButton(Song song, BuildContext context) {
-    return PopupMenuButton<List>(
-      onSelected: (List params) => _handleClick(params, context),
-      icon: Icon(Icons.more_horiz),
-      padding: EdgeInsets.zero,
-      itemBuilder: (context) {
-        return {'Delete Song', 'Edit Song', 'Share Song'}.map((String choice) {
-          return PopupMenuItem<List>(
-            value: [choice, song],
-            child: Text(choice),
-          );
-        }).toList();
-      },
-    );
-  }
+  // Widget _buildWidgetMenuButton(Song song, BuildContext context) {
+  //   return PopupMenuButton<List>(
+  //     onSelected: (List params) => _handleClick(params, context),
+  //     icon: Icon(Icons.more_horiz),
+  //     padding: EdgeInsets.zero,
+  //     itemBuilder: (context) {
+  //       return {'Delete Song', 'Edit Song', 'Share Song'}.map((String choice) {
+  //         return PopupMenuItem<List>(
+  //           value: [choice, song],
+  //           child: Text(choice),
+  //         );
+  //       }).toList();
+  //     },
+  //   );
+  // }
 
-  void _handleClick(List params, BuildContext context) {
-    //* params = [choice, song]
-    switch (params[0]) {
-      case 'Delete Song':
-        _deleteSong(params[1]);
-        break;
-      case 'Edit Song':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => EditSongScreen(params[1]),
-          ),
-        );
-        break;
-      case 'Share Song':
-        Share.shareFiles([params[1].path]);
-        break;
-    }
-  }
+  // void _handleClick(List params, BuildContext context) {
+  //   //* params = [choice, song]
+  //   switch (params[0]) {
+  //     case 'Delete Song':
+  //       _deleteSong(params[1]);
+  //       break;
+  //     case 'Edit Song':
+  //       Navigator.push(
+  //         context,
+  //         MaterialPageRoute(
+  //           builder: (context) => EditSongScreen(params[1]),
+  //         ),
+  //       );
+  //       break;
+  //     case 'Share Song':
+  //       Share.shareFiles([params[1].path]);
+  //       break;
+  //   }
+  // }
 
-  void _deleteSong(Song song) {
-    if (playingItem?.album == '-2') {
-      AudioService.removeQueueItem(song.toMediaItem());
-      Provider.of<DBProvider>(context, listen: false).deleteSong(song.id!);
-    } else {
-      Provider.of<DBProvider>(context, listen: false).deleteSong(song.id!);
-    }
-  }
+  // void _deleteSong(Song song) {
+  //   if (playingItem?.album == '-2') {
+  //     AudioService.removeQueueItem(song.toMediaItem());
+  //     Provider.of<DBProvider>(context, listen: false).deleteSong(song.id!);
+  //   } else {
+  //     Provider.of<DBProvider>(context, listen: false).deleteSong(song.id!);
+  //   }
+  // }
 }

@@ -7,7 +7,8 @@ import 'package:sputofy_2/models/playlist_model.dart';
 import 'package:sputofy_2/providers/provider.dart';
 
 class EditPlaylistScreen extends StatefulWidget {
-  const EditPlaylistScreen({Key? key}) : super(key: key);
+  final Playlist playlist;
+  const EditPlaylistScreen(this.playlist, {Key? key}) : super(key: key);
 
   @override
   _EditPlaylistScreenState createState() => _EditPlaylistScreenState();
@@ -16,6 +17,7 @@ class EditPlaylistScreen extends StatefulWidget {
 class _EditPlaylistScreenState extends State<EditPlaylistScreen> {
   TextEditingController controller = TextEditingController();
   Uint8List? selectedImage;
+  Playlist get playlist => widget.playlist;
   @override
   void dispose() {
     controller.dispose();
@@ -26,12 +28,13 @@ class _EditPlaylistScreenState extends State<EditPlaylistScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Consumer<DBProvider>(
-          builder: (context, database, child) {
-            Playlist playlist = database.watchingPlaylist!;
-            return widgetEdit(playlist);
-          },
-        ),
+        child: widgetEdit(playlist),
+        // child: Consumer<DBProvider>(
+        //   builder: (context, database, child) {
+        //     Playlist playlist = database.watchingPlaylist!;
+        //     return widgetEdit(playlist);
+        //   },
+        // ),
       ),
     );
   }

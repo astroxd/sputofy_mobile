@@ -96,46 +96,46 @@ String getSongDuration(Duration? songDuration) {
   return "${songDuration.inMinutes}:$twoDigitSeconds";
 }
 
-Widget buildWidgetMenuButton(Playlist playlist, Song song,
-    MediaItem? playingItem, BuildContext context) {
-  return PopupMenuButton<List>(
-    onSelected: (List params) =>
-        handleClick(params, playlist, playingItem, context),
-    icon: Icon(Icons.more_vert),
-    padding: EdgeInsets.zero,
-    itemBuilder: (context) {
-      return {'Delete Song', 'Share Song'}.map((String choice) {
-        return PopupMenuItem<List>(
-          value: [choice, song],
-          child: Text(choice),
-        );
-      }).toList();
-    },
-  );
-}
+// Widget buildWidgetMenuButton(Playlist playlist, Song song,
+//     MediaItem? playingItem, BuildContext context) {
+//   return PopupMenuButton<List>(
+//     onSelected: (List params) =>
+//         handleClick(params, playlist, playingItem, context),
+//     icon: Icon(Icons.more_vert),
+//     padding: EdgeInsets.zero,
+//     itemBuilder: (context) {
+//       return {'Delete Song', 'Share Song'}.map((String choice) {
+//         return PopupMenuItem<List>(
+//           value: [choice, song],
+//           child: Text(choice),
+//         );
+//       }).toList();
+//     },
+//   );
+// }
 
-void handleClick(List params, Playlist playlist, MediaItem? playingItem,
-    BuildContext context) {
-  //* params = [choice, song]
-  switch (params[0]) {
-    case 'Delete Song':
-      if (playingItem?.album == '${playlist.id}') {
-        AudioService.removeQueueItem(params[1].toMediaItem());
-        Provider.of<DBProvider>(context, listen: false)
-            .deletePlaylistSong(playlist.id!, params[1].id!);
-      } else {
-        Provider.of<DBProvider>(context, listen: false)
-            .deletePlaylistSong(playlist.id!, params[1].id!);
-      }
-      if (playlist.id! == 0) {
-        Provider.of<DBProvider>(context, listen: false)
-            .updateSong(params[1].copyWith(isFavorite: false));
-        AudioService.updateMediaItem(
-            params[1].copyWith(isFavorite: false).toMediaItem());
-      }
-      break;
-    case 'Share Song':
-      Share.shareFiles([params[1].path]);
-      break;
-  }
-}
+// void handleClick(List params, Playlist playlist, MediaItem? playingItem,
+//     BuildContext context) {
+//   //* params = [choice, song]
+//   switch (params[0]) {
+//     case 'Delete Song':
+//       if (playingItem?.album == '${playlist.id}') {
+//         AudioService.removeQueueItem(params[1].toMediaItem());
+//         Provider.of<DBProvider>(context, listen: false)
+//             .deletePlaylistSong(playlist.id!, params[1].id!);
+//       } else {
+//         Provider.of<DBProvider>(context, listen: false)
+//             .deletePlaylistSong(playlist.id!, params[1].id!);
+//       }
+//       if (playlist.id! == 0) {
+//         Provider.of<DBProvider>(context, listen: false)
+//             .updateSong(params[1].copyWith(isFavorite: false));
+//         AudioService.updateMediaItem(
+//             params[1].copyWith(isFavorite: false).toMediaItem());
+//       }
+//       break;
+//     case 'Share Song':
+//       Share.shareFiles([params[1].path]);
+//       break;
+//   }
+// }

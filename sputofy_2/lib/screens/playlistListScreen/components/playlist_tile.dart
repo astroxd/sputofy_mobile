@@ -10,6 +10,7 @@ import 'package:sputofy_2/providers/provider.dart';
 import 'package:sputofy_2/screens/playlistSongsScreen/playlist_songs_screen.dart';
 import 'package:sputofy_2/theme/palette.dart';
 
+import '../../../main.dart';
 import '../playlist_list_screen.dart';
 
 class PlaylistTile extends StatelessWidget {
@@ -98,7 +99,7 @@ class PlaylistTile extends StatelessWidget {
                   ],
                 ),
               ),
-              PlaylistbuildWidgetMenuButton(playlist, context),
+              playlistMenuButton(playlist, context, false),
             ],
           ),
         ),

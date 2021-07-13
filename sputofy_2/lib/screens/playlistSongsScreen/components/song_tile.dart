@@ -4,6 +4,7 @@ import 'package:sputofy_2/models/playlist_model.dart';
 import 'package:sputofy_2/models/song_model.dart';
 import 'package:sputofy_2/theme/palette.dart';
 
+import '../../../main.dart';
 import '../playlist_songs_screen.dart';
 
 class SongTile extends StatelessWidget {
@@ -54,7 +55,12 @@ class SongTile extends StatelessWidget {
               getSongDuration(song.duration),
               style: Theme.of(context).textTheme.subtitle2,
             ),
-            buildWidgetMenuButton(playlist, song, playingItem, context),
+            songMenuButton(
+              song,
+              context,
+              playlist: playlist,
+              icon: Icons.more_vert,
+            ),
           ],
         ),
       ),

@@ -79,9 +79,23 @@ class AudioPlayerTask extends BackgroundAudioTask {
     final pref = await _prefs;
     _audioPlayer.currentIndexStream.listen((index) async {
       if (index != null) {
-        await AudioServiceBackground.setMediaItem(_queue[index]);
+        if (!File(_queue[index].id).existsSync()) {
+          print("object");
+          if (_audioPlayer.hasNext) {
+            //* [prev,curr,next]
+            onSkipToNext();
+          } else if (_audioPlayer.hasPrevious) {
+            //* [prev,curr]
+            _audioPlayer.seek(Duration.zero, index: 0);
+          } else {
+            //* [curr] pause because there are no songs
+            onPause();
+          }
+        } else {
+          await AudioServiceBackground.setMediaItem(_queue[index]);
 
-        pref.setString('song_path', _queue[index].id);
+          pref.setString('song_path', _queue[index].id);
+        }
       }
     });
   }
@@ -231,6 +245,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
     int indexToRemove =
         playlistSongs.indexWhere((element) => element.tag == song.id);
+    if (indexToRemove == -1) return;
     await _playlist.removeAt(indexToRemove);
     _queue.removeWhere((element) => element.id == song.id);
 
@@ -401,12 +416,12 @@ class AudioPlayerTask extends BackgroundAudioTask {
         MediaControl.skipToPrevious,
         _audioPlayer.playing ? MediaControl.pause : MediaControl.play,
         MediaControl.skipToNext,
-        MediaControl(
-            androidIcon: mediaItem?.rating?.hasHeart() ?? false
-                ? "mipmap/ic_favorite_remove"
-                : "mipmap/ic_favorite_add",
-            label: "Rating",
-            action: MediaAction.setRating),
+        // MediaControl(
+        //     androidIcon: mediaItem?.rating?.hasHeart() ?? false
+        //         ? "mipmap/ic_favorite_remove"
+        //         : "mipmap/ic_favorite_add",
+        //     label: "Rating",
+        //     action: MediaAction.setRating),
       ],
       androidCompactActions: [0, 1, 2],
       systemActions: [

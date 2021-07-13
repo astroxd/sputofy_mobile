@@ -53,38 +53,38 @@ class PlaylistList extends StatelessWidget {
   }
 }
 
-void handleClick(List params, BuildContext context) {
-  //* params = [choice, playlist]
-  switch (params[0]) {
-    case 'Delete Playlist':
-      if (params[1].id == 0) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text("Favorite playlist can't be deleted"),
-          action: SnackBarAction(
-              label: 'HIDE',
-              onPressed: () =>
-                  ScaffoldMessenger.of(context).hideCurrentSnackBar()),
-        ));
-      } else {
-        Provider.of<DBProvider>(context, listen: false)
-            .deletePlaylist(params[1].id);
-      }
-      break;
-  }
-}
+// void handleClick(List params, BuildContext context) {
+//   //* params = [choice, playlist]
+//   switch (params[0]) {
+//     case 'Delete Playlist':
+//       if (params[1].id == 0) {
+//         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+//           content: Text("Favorite playlist can't be deleted"),
+//           action: SnackBarAction(
+//               label: 'HIDE',
+//               onPressed: () =>
+//                   ScaffoldMessenger.of(context).hideCurrentSnackBar()),
+//         ));
+//       } else {
+//         Provider.of<DBProvider>(context, listen: false)
+//             .deletePlaylist(params[1].id);
+//       }
+//       break;
+//   }
+// }
 
-Widget PlaylistbuildWidgetMenuButton(Playlist playlist, BuildContext context) {
-  return PopupMenuButton<List>(
-    onSelected: (List params) => handleClick(params, context),
-    icon: Icon(Icons.more_vert),
-    padding: EdgeInsets.zero,
-    itemBuilder: (context) {
-      return {'Delete Playlist'}.map((String choice) {
-        return PopupMenuItem<List>(
-          value: [choice, playlist],
-          child: Text(choice),
-        );
-      }).toList();
-    },
-  );
-}
+// Widget PlaylistbuildWidgetMenuButton(Playlist playlist, BuildContext context) {
+//   return PopupMenuButton<List>(
+//     onSelected: (List params) => handleClick(params, context),
+//     icon: Icon(Icons.more_vert),
+//     padding: EdgeInsets.zero,
+//     itemBuilder: (context) {
+//       return {'Delete Playlist'}.map((String choice) {
+//         return PopupMenuItem<List>(
+//           value: [choice, playlist],
+//           child: Text(choice),
+//         );
+//       }).toList();
+//     },
+//   );
+// }
