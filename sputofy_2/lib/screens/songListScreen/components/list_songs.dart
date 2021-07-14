@@ -48,8 +48,7 @@ class ListSongs extends StatelessWidget {
                 mainAxisSize: MainAxisSize.max,
                 children: <Widget>[
                   Text(
-                    // "${index + 1}",
-                    "${song.id}",
+                    "${index + 1}",
                     style: Theme.of(context).textTheme.subtitle2,
                   ),
                   SizedBox(width: 16.0),
@@ -78,9 +77,11 @@ class ListSongs extends StatelessWidget {
                       if (song.isFavorite) {
                         Provider.of<DBProvider>(context, listen: false)
                             .updateSong(song.copyWith(isFavorite: false));
+
+                        //* Favorite playlist has id:0
                         Provider.of<DBProvider>(context, listen: false)
                             .deletePlaylistSong(0, song.id!);
-                        //TODO review not need to check playlist
+
                         if (playingItem?.album == '-2') {
                           AudioService.updateMediaItem(
                               song.copyWith(isFavorite: false).toMediaItem());
@@ -94,21 +95,18 @@ class ListSongs extends StatelessWidget {
                           [PlaylistSong(null, 0, song.id!)],
                         );
                         if (playingItem?.album == '0') {
-                          AudioService.addQueueItem(song
-                              .toMediaItem(playlistTitle: 'Favorites')
-                              .copyWith(album: '0'));
+                          AudioService.addQueueItem(
+                            song
+                                .toMediaItem(playlistTitle: 'Favorites')
+                                .copyWith(album: '0'),
+                          );
                         }
                         if (playingItem?.album == '-2') {
                           AudioService.updateMediaItem(
-                              song.copyWith(isFavorite: true).toMediaItem());
+                            song.copyWith(isFavorite: true).toMediaItem(),
+                          );
                         }
                       }
-
-                      //TODO
-                      //* add isFavorite field to song model
-                      //* can't use updateMediaItem because i need to create favorite playlist
-
-                      // AudioService.updateMediaItem(song.toMediaItem());
                     },
                     icon: Icon(song.isFavorite
                         ? Icons.favorite
@@ -131,49 +129,4 @@ class ListSongs extends StatelessWidget {
     String twoDigitSeconds = twoDigits(songDuration!.inSeconds.remainder(60));
     return "${songDuration.inMinutes}:$twoDigitSeconds";
   }
-
-  // Widget _buildWidgetMenuButton(Song song, BuildContext context) {
-  //   return PopupMenuButton<List>(
-  //     onSelected: (List params) => _handleClick(params, context),
-  //     icon: Icon(Icons.more_horiz),
-  //     padding: EdgeInsets.zero,
-  //     itemBuilder: (context) {
-  //       return {'Delete Song', 'Edit Song', 'Share Song'}.map((String choice) {
-  //         return PopupMenuItem<List>(
-  //           value: [choice, song],
-  //           child: Text(choice),
-  //         );
-  //       }).toList();
-  //     },
-  //   );
-  // }
-
-  // void _handleClick(List params, BuildContext context) {
-  //   //* params = [choice, song]
-  //   switch (params[0]) {
-  //     case 'Delete Song':
-  //       _deleteSong(params[1]);
-  //       break;
-  //     case 'Edit Song':
-  //       Navigator.push(
-  //         context,
-  //         MaterialPageRoute(
-  //           builder: (context) => EditSongScreen(params[1]),
-  //         ),
-  //       );
-  //       break;
-  //     case 'Share Song':
-  //       Share.shareFiles([params[1].path]);
-  //       break;
-  //   }
-  // }
-
-  // void _deleteSong(Song song) {
-  //   if (playingItem?.album == '-2') {
-  //     AudioService.removeQueueItem(song.toMediaItem());
-  //     Provider.of<DBProvider>(context, listen: false).deleteSong(song.id!);
-  //   } else {
-  //     Provider.of<DBProvider>(context, listen: false).deleteSong(song.id!);
-  //   }
-  // }
 }

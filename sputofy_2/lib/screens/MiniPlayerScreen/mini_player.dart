@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:sputofy_2/main.dart';
+import 'package:sputofy_2/models/playlist_model.dart';
 import 'package:sputofy_2/models/song_model.dart';
 import 'package:sputofy_2/providers/provider.dart';
 import 'package:sputofy_2/screens/SongDetailScreen/song_detail_screen.dart';
@@ -21,46 +22,6 @@ class MiniPlayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // void _handleClick(List params) async {
-    //   //* params = [choice, mediaItem]
-    //   MediaItem mediaItem = params[1];
-    //   switch (params[0]) {
-    //     case 'Delete Song':
-    //       if (mediaItem.album == '-2') {
-    //         Provider.of<DBProvider>(context, listen: false)
-    //             .deleteSong(mediaItem.extras?['id']);
-    //       } else {
-    //         Provider.of<DBProvider>(context, listen: false).deletePlaylistSong(
-    //             int.parse(mediaItem.album), mediaItem.extras?['id']);
-    //         await AudioService.removeQueueItem(mediaItem);
-    //       }
-    //       break;
-    //   }
-    // }
-
-    // Widget _buildWidgetMenuButton(MediaItem? mediaItem) {
-    //   return PopupMenuButton<List>(
-    //     onSelected: _handleClick,
-    //     icon: Icon(Icons.more_vert),
-    //     padding: EdgeInsets.zero,
-    //     itemBuilder: (context) {
-    //       return {'Delete Song'}.map((String choice) {
-    //         return PopupMenuItem<List>(
-    //           value: [choice, mediaItem],
-    //           child: Row(
-    //             mainAxisSize: MainAxisSize.min,
-    //             children: <Widget>[
-    //               Icon(Icons.delete),
-    //               SizedBox(width: 2.0),
-    //               Text(choice),
-    //             ],
-    //           ),
-    //         );
-    //       }).toList();
-    //     },
-    //   );
-    // }
-
     return StreamBuilder<CurrentPlayingMediaItem>(
       stream: _playingMediaItemStream,
       builder: (context, snapshot) {
@@ -135,10 +96,16 @@ class MiniPlayer extends StatelessWidget {
                           ],
                         ),
                       ),
-                      // _buildWidgetMenuButton(playingItem),
                       songMenuButton(
                         Song.fromMediaItem(playingItem),
                         context,
+                        //* pass fake playlist because function accept playlist and not only playlist ID
+                        playlist: Playlist(
+                          int.parse(playingItem.album),
+                          '',
+                          null,
+                          DateTime.now(),
+                        ),
                         icon: Icons.more_vert,
                       )
                     ],
@@ -153,6 +120,7 @@ class MiniPlayer extends StatelessWidget {
   }
 }
 
+//TODO move to audioPlayer
 class CurrentPlayingMediaItem {
   MediaItem? playingItem;
   Duration? position;

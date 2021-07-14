@@ -106,10 +106,11 @@ class DBProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> saveSong(Song song) async {
-    await _database.saveSong(song);
+  Future<Song> saveSong(Song song) async {
+    Song songWithID = await _database.saveSong(song);
     getSongs();
     notifyListeners();
+    return songWithID;
   }
 
   Future<void> deleteSong(int songID) async {

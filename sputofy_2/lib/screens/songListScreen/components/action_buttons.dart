@@ -1,10 +1,10 @@
-import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:audio_service/audio_service.dart';
+
 import 'package:sputofy_2/models/song_model.dart';
 import 'package:sputofy_2/theme/palette.dart';
 
 import '../../../main.dart';
-import '../song_list_screen.dart';
 
 class ActionButtons extends StatelessWidget {
   final BuildContext context;
@@ -43,11 +43,10 @@ class ActionButtons extends StatelessWidget {
               }
               if (playbackState.repeatMode == AudioServiceRepeatMode.none) {
                 AudioService.setRepeatMode(AudioServiceRepeatMode.all);
-                if (!playbackState.playing) await AudioService.play();
               } else {
                 AudioService.setRepeatMode(AudioServiceRepeatMode.none);
-                if (!playbackState.playing) await AudioService.play();
               }
+              if (!playbackState.playing) await AudioService.play();
             },
             icon: Icon(
               Icons.repeat,

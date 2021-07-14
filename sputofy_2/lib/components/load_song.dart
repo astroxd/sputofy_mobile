@@ -73,8 +73,9 @@ void _loadFolderItems(String folder_path, BuildContext context) async {
     //TODO load in DB here?
   }
 
-  for (Song song in newSongs) {
-    Provider.of<DBProvider>(context, listen: false).saveSong(song);
+  for (int i = 0; i < newSongs.length; i++) {
+    newSongs[i] = await Provider.of<DBProvider>(context, listen: false)
+        .saveSong(newSongs[i]);
   }
   if (currentSongs.isEmpty) {
     AudioService.updateQueue(newSongs.map((e) => e.toMediaItem()).toList());

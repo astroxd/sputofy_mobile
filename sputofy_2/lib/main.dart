@@ -88,6 +88,7 @@ class _MyHomePageState extends State<MyHomePage> {
       androidEnableQueue: true,
       androidNotificationIcon: 'mipmap/ic_launcher',
       androidStopForegroundOnPause: true,
+
       // androidNotificationColor: 0x00000000,
       // androidNotificationColor: 0x0000ff,
     );
@@ -233,7 +234,7 @@ void _handleClick(String choice, BuildContext context) async {
         isConnected = false;
       }
       if (isConnected) {
-        //* Before first download stream is null
+        //* Before first download, stream is null
         if (downloadStream.valueOrNull == -1 ||
             downloadStream.valueOrNull == -2 ||
             downloadStream.valueOrNull == null) {
@@ -249,9 +250,10 @@ void _handleClick(String choice, BuildContext context) async {
               content: Text('Check your connection before downloading'),
               actions: [
                 TextButton(
-                    onPressed: () => Navigator.of(context, rootNavigator: true)
-                        .pop('dialog'),
-                    child: Text('OK'))
+                  onPressed: () =>
+                      Navigator.of(context, rootNavigator: true).pop('dialog'),
+                  child: Text('OK'),
+                )
               ],
             );
           },
@@ -264,11 +266,12 @@ void _handleClick(String choice, BuildContext context) async {
   }
 }
 
+//TODO move to components
 Widget songMenuButton(Song song, BuildContext context,
-    {Playlist? playlist, IconData? icon}) {
+    {Playlist? playlist, IconData? icon, bool? shouldPop}) {
   return PopupMenuButton<List>(
-    onSelected: (List params) =>
-        songMenuHandleClick(params, context, playlist: playlist),
+    onSelected: (List params) => songMenuHandleClick(params, context,
+        playlist: playlist, shouldPop: shouldPop),
     icon: icon == null ? Icon(Icons.more_horiz) : Icon(icon),
     padding: EdgeInsets.zero,
     itemBuilder: (context) {
@@ -282,14 +285,15 @@ Widget songMenuButton(Song song, BuildContext context,
   );
 }
 
-songMenuHandleClick(List params, BuildContext context, {Playlist? playlist}) {
+songMenuHandleClick(List params, BuildContext context,
+    {Playlist? playlist, bool? shouldPop}) {
   //* params = [choice, song]
   String choice = params[0];
   Song song = params[1];
 
   switch (choice) {
     case 'Delete Song':
-      _deleteSong(song, context, playlist: playlist);
+      _deleteSong(song, context, playlist: playlist, shouldPop: shouldPop);
       break;
     case 'Edit Song':
       Navigator.push(
@@ -305,25 +309,29 @@ songMenuHandleClick(List params, BuildContext context, {Playlist? playlist}) {
   }
 }
 
-void _deleteSong(Song song, BuildContext context, {Playlist? playlist}) {
-  if (AudioService.currentMediaItem?.album == '-2') {
-    AudioService.removeQueueItem(song.toMediaItem());
-    Provider.of<DBProvider>(context, listen: false).deleteSong(song.id!);
-  } else if (playlist != null) {
+void _deleteSong(Song song, BuildContext context,
+    {Playlist? playlist, bool? shouldPop}) {
+  if (playlist != null) {
     if (playlist.id == 0) {
-      Provider.of<DBProvider>(context, listen: false)
-          .updateSong(song.copyWith(isFavorite: false));
       AudioService.updateMediaItem(
           song.copyWith(isFavorite: false).toMediaItem());
+      Provider.of<DBProvider>(context, listen: false)
+          .updateSong(song.copyWith(isFavorite: false));
     } else {
       if (AudioService.currentMediaItem?.album == '${playlist.id}') {
         AudioService.removeQueueItem(song.toMediaItem());
       }
-      Provider.of<DBProvider>(context, listen: false)
-          .deletePlaylistSong(playlist.id!, song.id!);
     }
+    Provider.of<DBProvider>(context, listen: false)
+        .deletePlaylistSong(playlist.id!, song.id!);
   } else {
+    if (AudioService.currentMediaItem?.album == '-2') {
+      AudioService.removeQueueItem(song.toMediaItem());
+    }
     Provider.of<DBProvider>(context, listen: false).deleteSong(song.id!);
+  }
+  if (shouldPop != null && shouldPop) {
+    Navigator.pop(context);
   }
 }
 

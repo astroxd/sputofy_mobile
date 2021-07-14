@@ -42,7 +42,6 @@ class _SongListScreenState extends State<SongListScreen> {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
                 child: Column(
-                  mainAxisSize: MainAxisSize.max,
                   children: <Widget>[
                     ActionButtons(context, songs, playingItem, playbackState),
                     SizedBox(height: 16.0),
@@ -59,29 +58,10 @@ class _SongListScreenState extends State<SongListScreen> {
   }
 }
 
+//TODO move to audioPlayer class
 class PlayingMediaItem {
   MediaItem? playingItem;
   PlaybackState playbackState;
 
   PlayingMediaItem(this.playingItem, this.playbackState);
 }
-
-// Future<void> loadQueue(List<Song> songs, {String? songPath}) async {
-//   if (songs.isEmpty) return;
-//   List<MediaItem> mediaItems = [];
-//   for (Song song in songs) {
-//     mediaItems.add(song.toMediaItem());
-//     // mediaItems.add(song.toMediaItem().copyWith(album: '${-2}'));
-//   }
-//   await AudioService.customAction('setPlaylistID', -2); //TODO maybe useless
-//   await AudioService.updateQueue(mediaItems).then(
-//     (value) => {
-//       if (songPath != null)
-//         {
-//           AudioService.skipToQueueItem(songPath)
-//               .then((value) async => await AudioService.play())
-//         }
-//     },
-//   );
-// }
-
