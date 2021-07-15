@@ -5,9 +5,7 @@ class Playlist {
   late String name;
   Uint8List? cover;
   late DateTime creationDate;
-  // Duration duration;
 
-  // Playlist(this.id, this.name, this.cover, this.creationDate, this.duration);
   Playlist(this.id, this.name, this.cover, this.creationDate);
 
   Map<String, dynamic> toMap() {
@@ -16,7 +14,6 @@ class Playlist {
       'name': name,
       'cover': cover,
       'creation_date': creationDate.millisecondsSinceEpoch,
-      // 'duration': duration!.inMilliseconds,
     };
     return map;
   }
@@ -26,7 +23,6 @@ class Playlist {
     name = map['name'];
     cover = map['cover'];
     creationDate = DateTime.fromMillisecondsSinceEpoch(map['creation_date']);
-    // duration = Duration(milliseconds: map['duration']);
   }
 
   Playlist copyWith({

@@ -28,17 +28,11 @@ class DBProvider extends ChangeNotifier {
   }
 
   Future<void> getPlaylistSongs(int playlistID) async {
-    // if (playlistID == 0) {
-    //   _playlistSongs = await _database.getFavoriteSongs();
-    // } else {
-    //   _playlistSongs = await _database.getPlaylistSongs(playlistID);
-    // }
     _playlistSongs = await _database.getPlaylistSongs(playlistID);
     notifyListeners();
   }
 
-  //TODO review
-  Future<List<Song>> testGetPlaylistSongs(int playlistID) async {
+  Future<List<Song>> retrievePlaylistSongs(int playlistID) async {
     return await _database.getPlaylistSongs(playlistID);
   }
 
@@ -122,6 +116,7 @@ class DBProvider extends ChangeNotifier {
   Future<void> updateSong(Song song, {Playlist? playlist}) async {
     await _database.updateSong(song);
     getSongs();
+    //* Used for update song in playlist songs list
     if (playlist != null) {
       getPlaylistSongs(playlist.id!);
     }

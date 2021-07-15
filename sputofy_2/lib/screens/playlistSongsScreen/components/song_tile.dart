@@ -1,11 +1,11 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+
 import 'package:sputofy_2/models/playlist_model.dart';
 import 'package:sputofy_2/models/song_model.dart';
 import 'package:sputofy_2/theme/palette.dart';
 
 import '../../../main.dart';
-import '../playlist_songs_screen.dart';
 
 class SongTile extends StatelessWidget {
   final Song song;
@@ -33,12 +33,15 @@ class SongTile extends StatelessWidget {
       },
       child: Container(
         decoration: BoxDecoration(
-            border: Border(bottom: BorderSide(color: kPrimaryColor))),
+          border: Border(
+            bottom: BorderSide(color: kPrimaryColor),
+          ),
+        ),
         padding: const EdgeInsets.only(top: 8.0, bottom: 8.0, right: 8.0),
         child: Row(
           children: <Widget>[
             Text(
-              "${index + 1}",
+              '${index + 1}',
               style: Theme.of(context).textTheme.subtitle2,
             ),
             SizedBox(width: 16.0),
@@ -67,4 +70,11 @@ class SongTile extends StatelessWidget {
       ),
     );
   }
+}
+
+String getSongDuration(Duration? songDuration) {
+  String twoDigits(int n) => n.toString().padLeft(2, "0");
+
+  String twoDigitSeconds = twoDigits(songDuration!.inSeconds.remainder(60));
+  return "${songDuration.inMinutes}:$twoDigitSeconds";
 }

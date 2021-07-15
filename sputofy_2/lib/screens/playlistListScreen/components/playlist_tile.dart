@@ -11,7 +11,6 @@ import 'package:sputofy_2/screens/playlistSongsScreen/playlist_songs_screen.dart
 import 'package:sputofy_2/theme/palette.dart';
 
 import '../../../main.dart';
-import '../playlist_list_screen.dart';
 
 class PlaylistTile extends StatelessWidget {
   final Playlist playlist;
@@ -65,7 +64,7 @@ class PlaylistTile extends StatelessWidget {
                             height: 70.0,
                           ),
                   ),
-                  // TODO add
+                  //* if you want to start playing from the beginning playlist
                   // IconButton(
                   //     splashColor: Colors.transparent,
                   //     iconSize: 48.0,
@@ -89,7 +88,7 @@ class PlaylistTile extends StatelessWidget {
                     ),
                     FutureBuilder<List<Song>>(
                         future: Provider.of<DBProvider>(context, listen: false)
-                            .testGetPlaylistSongs(playlist.id!),
+                            .retrievePlaylistSongs(playlist.id!),
                         builder: (context, snapshot) {
                           return Text(
                             snapshot.data?.length.toString() ?? '0',

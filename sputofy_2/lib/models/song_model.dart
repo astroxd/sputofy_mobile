@@ -51,6 +51,8 @@ class Song {
       album: '${-2}',
       title: title,
       duration: duration,
+      //TODO fix bug Uint8List to Uri
+
       // artUri: cover != null
       //     ? Uri.file('/storage/emulated/0/Download/album.jpg')
       //     : null,

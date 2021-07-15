@@ -1,32 +1,30 @@
 import 'dart:io';
-import 'package:path/path.dart';
 
-import 'package:audio_service/audio_service.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:just_audio/just_audio.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:audio_service/audio_service.dart';
+import 'services/audioPlayer.dart';
+
 import 'package:provider/provider.dart';
+import 'providers/provider.dart';
+
+import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:sputofy_2/providers/provider.dart';
-import 'package:sputofy_2/screens/MiniPlayerScreen/mini_player.dart';
-import 'package:sputofy_2/screens/playlistListScreen/playlist_list_screen.dart';
-import 'package:sputofy_2/screens/songListScreen/song_list_screen.dart';
-import 'package:sputofy_2/theme/style.dart';
-import 'package:youtube_explode_dart/youtube_explode_dart.dart'
-    as youtubeDownloader;
-import 'package:rxdart/rxdart.dart';
+
+import 'screens/MiniPlayerScreen/mini_player.dart';
+import 'screens/playlistListScreen/playlist_list_screen.dart';
+import 'screens/songListScreen/song_list_screen.dart';
+
+import 'theme/style.dart';
 
 import 'components/download_song.dart';
 import 'components/load_song.dart';
 import 'components/playlist_dialog.dart';
+
 import 'models/playlist_model.dart';
 import 'models/song_model.dart';
+
 import 'screens/EditPlaylistScreen/edit_playlist_screen.dart';
 import 'screens/EditSongScreen/edit_song_screen.dart';
-import 'services/audioPlayer.dart';
-import 'services/database.dart';
-import 'theme/palette.dart';
 
 void main() {
   runApp(MyApp());
@@ -193,6 +191,7 @@ class _MyHomePageState extends State<MyHomePage> {
             children: [
               SongListScreen(),
               PlaylistListScreen(),
+              //* Uncomment if you want to display something while is loading AudioService Isolate
               // if (snapshot.connectionState != ConnectionState.active) ...[
               //   // SizedBox(),
               //   Container(

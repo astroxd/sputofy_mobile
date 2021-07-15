@@ -23,7 +23,13 @@ class buildWidgetPlaylistList extends StatelessWidget {
         itemCount: songs.length,
         itemBuilder: (context, index) {
           Song song = songs[index];
-          return SongTile(song, songs, playlist, playingItem, index);
+          return SongTile(
+            song,
+            songs,
+            playlist,
+            playingItem,
+            index,
+          );
         },
       ),
     );

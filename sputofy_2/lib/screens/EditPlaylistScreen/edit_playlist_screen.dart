@@ -29,12 +29,6 @@ class _EditPlaylistScreenState extends State<EditPlaylistScreen> {
     return Scaffold(
       body: SafeArea(
         child: widgetEdit(playlist),
-        // child: Consumer<DBProvider>(
-        //   builder: (context, database, child) {
-        //     Playlist playlist = database.watchingPlaylist!;
-        //     return widgetEdit(playlist);
-        //   },
-        // ),
       ),
     );
   }
@@ -49,7 +43,6 @@ class _EditPlaylistScreenState extends State<EditPlaylistScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Column(
-        // mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -106,9 +99,14 @@ class _EditPlaylistScreenState extends State<EditPlaylistScreen> {
             ),
           ],
           SizedBox(height: 16.0),
-          TextField(
-            controller: controller..text = playlist.name,
-          )
+          //TODO test if in a real device tooltip is showed when playlist.id != 0
+          Tooltip(
+            message: 'Favorite playlist title can\'t be changed',
+            child: TextField(
+              enabled: playlist.id == 0 ? false : true,
+              controller: controller..text = playlist.name,
+            ),
+          ),
         ],
       ),
     );

@@ -31,43 +31,56 @@ class _SelectSongListState extends State<SelectSongList> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            MaterialButton(
-              child: Text(
-                "ADD SONGS",
-                style: TextStyle(
-                    color: toAddSongs.length == 0
-                        ? kSecondaryColor
-                        : kAccentColor),
-              ),
-              onPressed: toAddSongs.length == 0 ? null : saveSongs,
-            ),
-            Expanded(
-              child: FutureBuilder<List<Song>>(
-                future: _database.getSongs(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    List<Song> songs = snapshot.data ?? [];
-                    return ListView.builder(
-                      itemCount: songs.length,
-                      itemBuilder: (context, index) {
-                        Song song = songs[index];
-
-                        return playlistSongs
-                                .any((element) => element.id == song.id)
-                            ? _unselectableSong(song)
-                            : _selectableSong(song);
+        child: FutureBuilder<List<Song>>(
+          future: _database.getSongs(),
+          initialData: [],
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) return CircularProgressIndicator();
+            List<Song> songs = snapshot.data ?? [];
+            return Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: <Widget>[
+                    MaterialButton(
+                      onPressed: () {
+                        //TODO add all songs
+                        setState(() {});
                       },
-                    );
-                  } else {
-                    return CircularProgressIndicator();
-                  }
-                },
-              ),
-            ),
-          ],
+                      child: Text(
+                        "ADD ALL",
+                        style: Theme.of(context)
+                            .textTheme
+                            .subtitle2!
+                            .copyWith(color: kAccentColor),
+                      ),
+                    ),
+                    MaterialButton(
+                      child: Text(
+                        "ADD SONGS",
+                        style: Theme.of(context).textTheme.subtitle2!.copyWith(
+                            color: toAddSongs.length > 0 ? kAccentColor : null),
+                      ),
+                      onPressed: toAddSongs.length == 0 ? null : saveSongs,
+                    ),
+                  ],
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: songs.length,
+                    itemBuilder: (context, index) {
+                      Song song = songs[index];
+
+                      return playlistSongs
+                              .any((element) => element.id == song.id)
+                          ? _unselectableSong(song)
+                          : _selectableSong(song);
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -118,13 +131,14 @@ class _SelectSongListState extends State<SelectSongList> {
     List<PlaylistSong> playlistSongs = [];
     List<MediaItem> songs = [];
     for (var i = 0; i < toAddSongs.length; i++) {
-      playlistSongs.add(PlaylistSong(
-        null,
-        playlist.id!,
-        toAddSongs[i].id!,
-      ));
+      playlistSongs.add(
+        PlaylistSong(
+          null,
+          playlist.id!,
+          toAddSongs[i].id!,
+        ),
+      );
 
-      //TODO review
       songs.add(
         toAddSongs[i].toMediaItem().copyWith(album: '${playlist.id}'),
       );

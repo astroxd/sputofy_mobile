@@ -39,9 +39,6 @@ class DBHelper {
   static const String PLAYLISTSONG_SONG_ID = 'song_id';
   //* PLAYLIST SONG TABLE
 
-  // final StreamController<List<Song>> _controller =
-  //     StreamController<List<Song>>();
-
   Future<Database> get db async {
     if (_db != null) {
       return _db!;
@@ -91,6 +88,10 @@ class DBHelper {
         PLAYLIST_TABLE, Playlist(0, 'Favorites', null, DateTime.now()).toMap());
   }
 
+//*##########################################################################*//
+//*                                   SONG                                   *//
+//*##########################################################################*//
+
   Future<Song> saveSong(Song song) async {
     var dbClient = await db;
     song.id = await dbClient.insert(SONG_TABLE, song.toMap());
@@ -99,6 +100,7 @@ class DBHelper {
 
   Future<int> deleteSong(int songID) async {
     var dbClient = await db;
+    //*If song is deleted we have to delete it from all the playlists
     await dbClient.delete(PLAYLISTSONG_TABLE,
         where: '$PLAYLISTSONG_SONG_ID = ?', whereArgs: [songID]);
     return await dbClient
@@ -132,47 +134,9 @@ class DBHelper {
     return songs;
   }
 
-  // Future<List<Song>> getFavoriteSongs() async {
-  //   var dbClient = await db;
-  //   List<Map<String, dynamic>> maps = await dbClient.query(
-  //     SONG_TABLE,
-  //     columns: [
-  //       SONG_ID,
-  //       SONG_PATH,
-  //       SONG_TITLE,
-  //       SONG_AUTHOR,
-  //       SONG_COVER,
-  //       SONG_DURATION,
-  //       SONG_FAVORITE,
-  //     ],
-  //     where: '$SONG_FAVORITE = 1',
-  //   );
-  //   List<Song> songs = [];
-  //   if (maps.length > 0) {
-  //     for (int i = 0; i < maps.length; i++) {
-  //       songs.add(Song.fromMap(maps[i]));
-  //     }
-  //   }
-  //   return songs;
-  // }
-
-  //!DEPRECATED
-  // Future<Song?> getSong(int songID) async {
-  //   var dbClient = await db;
-  //   List<Map<String, dynamic>> maps =
-  //       await dbClient.query(SONG_TABLE, columns: [
-  //     SONG_ID,
-  //     SONG_PATH,
-  //     SONG_TITLE,
-  //     SONG_AUTHOR,
-  //     SONG_COVER,
-  //     SONG_DURATION,
-  //     SONG_FAVORITE,
-  //   ]);
-  //   Song? song;
-  //   song = (Song.fromMap(maps[0]));
-  //   return song;
-  // }
+//*##########################################################################*//
+//*                               PLAYLIST                                   *//
+//*##########################################################################*//
 
   Future<Playlist> savePlaylist(Playlist playlist) async {
     var dbClient = await db;
@@ -188,8 +152,6 @@ class DBHelper {
   }
 
   Future<int> updatePlaylist(Playlist playlist) async {
-    print("update");
-    print(playlist.name);
     var dbClient = await db;
     return await dbClient.update(PLAYLIST_TABLE, playlist.toMap(),
         where: '$PLAYLIST_ID = ?', whereArgs: [playlist.id]);
@@ -243,10 +205,12 @@ class DBHelper {
     );
 
     //!For calling this function you have to be inside a playlist, so playlist exist
-    // if (map.isNotEmpty) {
     return Playlist.fromMap(map[0]);
-    // }
   }
+
+//*##########################################################################*//
+//*                              PLAYLISTSONG                                *//
+//*##########################################################################*//
 
   Future<PlaylistSong> savePlaylistSong(PlaylistSong playlistSong) async {
     var dbClient = await db;
@@ -268,10 +232,7 @@ class DBHelper {
         where: '$PLAYLISTSONG_PLAYLIST_ID = ?', whereArgs: [playlistID]);
   }
 
-  //* updatePlaylistSong();
-
-  //! maybe useless
-  Future<List<PlaylistSong>> testGetPlaylistSongs(int playlistID) async {
+  Future<List<PlaylistSong>> retrievePlaylistSongs(int playlistID) async {
     var dbClient = await db;
     List<Map<String, dynamic>> maps = await dbClient.query(
       PLAYLISTSONG_TABLE,
@@ -294,7 +255,7 @@ class DBHelper {
 
   Future<List<Song>> getPlaylistSongs(int playlistID) async {
     var dbClient = await db;
-    List<PlaylistSong> playlistSongs = await testGetPlaylistSongs(playlistID);
+    List<PlaylistSong> playlistSongs = await retrievePlaylistSongs(playlistID);
     List<Song> returnedSongs = [];
     List<Map<String, dynamic>> maps = [];
     for (int i = 0; i < playlistSongs.length; i++) {
@@ -314,12 +275,8 @@ class DBHelper {
       );
       returnedSongs.add(Song.fromMap(maps[0]));
     }
-    // _controller.add(returnedSongs);
     return returnedSongs;
   }
-
-  // Stream<List<Song>> get playlistSongs =>
-  //     _controller.stream.asBroadcastStream();
 
   Future close() async {
     var dbClient = await (db);

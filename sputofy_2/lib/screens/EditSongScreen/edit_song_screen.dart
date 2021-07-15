@@ -21,7 +21,9 @@ class _EditSongScreenState extends State<EditSongScreen> {
   TextEditingController controller = TextEditingController();
   Uint8List? selectedImage;
   Song get song => widget.song;
-  Playlist? get playlist => widget.playlist == null ? null : widget.playlist;
+  Playlist? get playlist => widget.playlist == null
+      ? null
+      : widget.playlist; //* Used for update song in playlist songs list
   @override
   void dispose() {
     controller.dispose();

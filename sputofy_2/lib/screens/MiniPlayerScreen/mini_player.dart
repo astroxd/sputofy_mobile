@@ -1,11 +1,9 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:sputofy_2/main.dart';
 import 'package:sputofy_2/models/playlist_model.dart';
 import 'package:sputofy_2/models/song_model.dart';
-import 'package:sputofy_2/providers/provider.dart';
 import 'package:sputofy_2/screens/SongDetailScreen/song_detail_screen.dart';
 import 'package:sputofy_2/theme/palette.dart';
 
@@ -35,7 +33,12 @@ class MiniPlayer extends StatelessWidget {
         if (playingItem == null) return Container(height: 0.0);
         return GestureDetector(
           onTap: () {
-            Navigator.of(context).push(_createRoute());
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SongDetailScreen(),
+              ),
+            );
           },
           child: Container(
             color: kBackgroundColor.withOpacity(0.7),
@@ -80,7 +83,6 @@ class MiniPlayer extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
                             Text(
-                              // playingItem?.title ?? 'Unknown Title',
                               playingItem.title,
                               style: Theme.of(context)
                                   .textTheme
@@ -126,22 +128,4 @@ class CurrentPlayingMediaItem {
   Duration? position;
   PlaybackState? playbackState;
   CurrentPlayingMediaItem(this.playingItem, this.position, this.playbackState);
-}
-
-Route _createRoute() {
-  return PageRouteBuilder(
-    pageBuilder: (context, animation, secondaryAnimation) => SongDetailScreen(),
-    transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      var begin = Offset(0.0, 1.0);
-      var end = Offset.zero;
-      var curve = Curves.ease;
-
-      var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-
-      return SlideTransition(
-        position: animation.drive(tween),
-        child: child,
-      );
-    },
-  );
 }
