@@ -56,25 +56,43 @@ void _loadFolderItems(String folder_path, BuildContext context) async {
 
   //* Remove all unwanted files/directorys
   folderContent.removeWhere((element) => contentToRemove.contains(element));
+  //* first load all songs then update list song screen
+  // for (FileSystemEntity file in folderContent) {
+  //   try {
+  //     Duration? songDuration = await _audioPlayer
+  //         .setAudioSource(AudioSource.uri(Uri.parse(file.path)));
+  //     String baseFileName = basename(file.path);
+  //     String fileName =
+  //         baseFileName.substring(0, baseFileName.lastIndexOf('.'));
 
-  for (FileSystemEntity file in folderContent) {
+  //     newSongs.add(
+  //       Song(null, file.path, fileName, '', null, songDuration, false),
+  //     );
+  //   } catch (e) {
+  //     // print("Error on loading Song from folder $e");
+  //   }
+  // }
+
+  // for (int i = 0; i < newSongs.length; i++) {
+  //   newSongs[i] = await Provider.of<DBProvider>(context, listen: false)
+  //       .saveSong(newSongs[i]);
+  // }
+  //* list song page update dynamically while loading songs
+  for (int i = 0; i < folderContent.length; i++) {
     try {
       Duration? songDuration = await _audioPlayer
-          .setAudioSource(AudioSource.uri(Uri.parse(file.path)));
-      String baseFileName = basename(file.path);
+          .setAudioSource(AudioSource.uri(Uri.parse(folderContent[i].path)));
+      String baseFileName = basename(folderContent[i].path);
       String fileName =
           baseFileName.substring(0, baseFileName.lastIndexOf('.'));
 
       newSongs.add(
-        Song(null, file.path, fileName, '', null, songDuration, false),
+        Song(null, folderContent[i].path, fileName, '', null, songDuration,
+            false),
       );
     } catch (e) {
       // print("Error on loading Song from folder $e");
     }
-    //TODO load in DB here?
-  }
-
-  for (int i = 0; i < newSongs.length; i++) {
     newSongs[i] = await Provider.of<DBProvider>(context, listen: false)
         .saveSong(newSongs[i]);
   }

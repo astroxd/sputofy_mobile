@@ -84,7 +84,11 @@ class _buildWidgetPlaylistDescription extends StatelessWidget {
                 icon: Icon(Icons.arrow_back_ios),
               ),
               if (playlistCover != null) ...[
-                Image.memory(playlistCover),
+                Image.memory(
+                  playlistCover,
+                  width: 150,
+                  height: 150,
+                ),
               ] else ...[
                 Image.asset(
                   'cover.jpeg',

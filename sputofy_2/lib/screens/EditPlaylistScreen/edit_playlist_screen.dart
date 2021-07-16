@@ -71,10 +71,25 @@ class _EditPlaylistScreenState extends State<EditPlaylistScreen> {
           ),
           SizedBox(height: 16.0),
           if (playlistImage != null) ...[
-            Image.memory(
-              playlistImage,
-              width: 230.0,
-              height: 230.0,
+            GestureDetector(
+              onTap: () async {
+                FilePickerResult? result = await FilePicker.platform.pickFiles(
+                  withData: true,
+                  type: FileType.custom,
+                  allowedExtensions: ['jpg', 'jpeg', 'png'],
+                );
+                if (result != null) {
+                  Uint8List? imageBytes = result.files.single.bytes;
+                  setState(() {
+                    selectedImage = imageBytes;
+                  });
+                }
+              },
+              child: Image.memory(
+                playlistImage,
+                width: 230.0,
+                height: 230.0,
+              ),
             )
           ] else ...[
             GestureDetector(
@@ -99,7 +114,6 @@ class _EditPlaylistScreenState extends State<EditPlaylistScreen> {
             ),
           ],
           SizedBox(height: 16.0),
-          //TODO test if in a real device tooltip is showed when playlist.id != 0
           Tooltip(
             message: 'Favorite playlist title can\'t be changed',
             child: TextField(
