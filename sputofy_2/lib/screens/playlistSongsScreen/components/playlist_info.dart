@@ -5,12 +5,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sputofy_2/providers/provider.dart';
 
+import 'package:sputofy_2/components/load_queue.dart';
+import 'package:sputofy_2/components/playlist_menu_button.dart';
+
 import 'package:sputofy_2/models/playlist_model.dart';
 import 'package:sputofy_2/models/song_model.dart';
-import 'package:sputofy_2/screens/selectSongsScreen/select_songs_screen.dart';
-import 'package:sputofy_2/theme/palette.dart';
 
-import '../../../main.dart';
+import 'package:sputofy_2/screens/selectSongsScreen/select_songs_screen.dart';
+
+import 'package:sputofy_2/theme/palette.dart';
 
 class buildWidgetPlaylistInfo extends StatelessWidget {
   final BuildContext context;

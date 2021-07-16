@@ -1,26 +1,31 @@
-import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:sputofy_2/main.dart';
+import 'package:audio_service/audio_service.dart';
+
+import 'package:sputofy_2/components/song_menu_button.dart';
+
 import 'package:sputofy_2/models/playlist_model.dart';
 import 'package:sputofy_2/models/song_model.dart';
+
 import 'package:sputofy_2/screens/SongDetailScreen/song_detail_screen.dart';
+
+import 'package:sputofy_2/services/audioPlayer.dart';
+
 import 'package:sputofy_2/theme/palette.dart';
 
 class MiniPlayer extends StatelessWidget {
   const MiniPlayer({Key? key}) : super(key: key);
-  Stream<CurrentPlayingMediaItem> get _playingMediaItemStream =>
-      Rx.combineLatest3<MediaItem?, Duration, PlaybackState,
-              CurrentPlayingMediaItem>(
+  Stream<PlayingMediaItem> get _playingMediaItemStream =>
+      Rx.combineLatest3<MediaItem?, Duration, PlaybackState, PlayingMediaItem>(
           AudioService.currentMediaItemStream,
           AudioService.positionStream,
           AudioService.playbackStateStream,
           (mediaItem, position, playbackState) =>
-              CurrentPlayingMediaItem(mediaItem, position, playbackState));
+              PlayingMediaItem(mediaItem, position, playbackState));
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<CurrentPlayingMediaItem>(
+    return StreamBuilder<PlayingMediaItem>(
       stream: _playingMediaItemStream,
       builder: (context, snapshot) {
         if (!snapshot.hasData) return Container(height: 0.0);
@@ -120,12 +125,4 @@ class MiniPlayer extends StatelessWidget {
       },
     );
   }
-}
-
-//TODO move to audioPlayer
-class CurrentPlayingMediaItem {
-  MediaItem? playingItem;
-  Duration? position;
-  PlaybackState? playbackState;
-  CurrentPlayingMediaItem(this.playingItem, this.position, this.playbackState);
 }

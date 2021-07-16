@@ -28,7 +28,6 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   @override
   Future<void> onStart(Map<String, dynamic>? params) async {
-    print("onStart");
     _prefs = SharedPreferences.getInstance();
     await _setAudioSession();
     _propogateEventsFromAudioPlayerToAudioServiceClients();
@@ -57,7 +56,6 @@ class AudioPlayerTask extends BackgroundAudioTask {
     _audioPlayer.currentIndexStream.listen((index) async {
       if (index != null) {
         if (!File(_queue[index].id).existsSync()) {
-          print("object");
           if (_audioPlayer.hasNext) {
             //* [prev,curr,next]
             onSkipToNext();
@@ -105,7 +103,7 @@ class AudioPlayerTask extends BackgroundAudioTask {
           _skipState = null;
           break;
         default:
-          print("sono del default ");
+          // print("sono del default ");
           break;
       }
     });
@@ -434,4 +432,11 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
 //* ---------------------------------------------------------------------------
 
+}
+
+class PlayingMediaItem {
+  MediaItem? playingItem;
+  Duration? position;
+  PlaybackState? playbackState;
+  PlayingMediaItem(this.playingItem, this.position, this.playbackState);
 }

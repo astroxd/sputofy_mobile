@@ -1,8 +1,8 @@
-import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:audio_service/audio_service.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:sputofy_2/services/audioPlayer.dart';
 
-import 'package:sputofy_2/screens/MiniPlayerScreen/mini_player.dart';
 import 'package:sputofy_2/screens/SongDetailScreen/components/top_bar.dart';
 
 import 'components/bottom_actions.dart';
@@ -13,19 +13,18 @@ import 'components/song_info.dart';
 class SongDetailScreen extends StatelessWidget {
   const SongDetailScreen({Key? key}) : super(key: key);
 
-  Stream<CurrentPlayingMediaItem> get _playingMediaItemStream =>
-      Rx.combineLatest3<MediaItem?, Duration, PlaybackState,
-              CurrentPlayingMediaItem>(
+  Stream<PlayingMediaItem> get _playingMediaItemStream =>
+      Rx.combineLatest3<MediaItem?, Duration, PlaybackState, PlayingMediaItem>(
           AudioService.currentMediaItemStream,
           AudioService.positionStream,
           AudioService.playbackStateStream,
           (mediaItem, position, playbackState) =>
-              CurrentPlayingMediaItem(mediaItem, position, playbackState));
+              PlayingMediaItem(mediaItem, position, playbackState));
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: StreamBuilder<CurrentPlayingMediaItem>(
+      body: StreamBuilder<PlayingMediaItem>(
         stream: _playingMediaItemStream,
         builder: (context, snapshot) {
           if (!snapshot.hasData) return CircularProgressIndicator();

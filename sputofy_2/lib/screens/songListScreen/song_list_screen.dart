@@ -3,6 +3,7 @@ import 'package:rxdart/rxdart.dart';
 import 'package:provider/provider.dart';
 
 import 'package:audio_service/audio_service.dart';
+import 'package:sputofy_2/services/audioPlayer.dart';
 import 'package:sputofy_2/models/song_model.dart';
 import 'package:sputofy_2/providers/provider.dart';
 
@@ -17,12 +18,14 @@ class SongListScreen extends StatefulWidget {
 }
 
 class _SongListScreenState extends State<SongListScreen> {
-  Stream<PlayingMediaItem> get _playingMediaItemStream =>
-      Rx.combineLatest2<MediaItem?, PlaybackState, PlayingMediaItem>(
-          AudioService.currentMediaItemStream,
-          AudioService.playbackStateStream,
-          (playingItem, playbackState) =>
-              PlayingMediaItem(playingItem, playbackState));
+  Stream<PlayingMediaItem> get _playingMediaItemStream => Rx.combineLatest3<
+          MediaItem?, Duration?, PlaybackState?, PlayingMediaItem>(
+      AudioService.currentMediaItemStream,
+      AudioService.positionStream,
+      AudioService.playbackStateStream,
+      (playingItem, position, playbackState) =>
+          PlayingMediaItem(playingItem, position, playbackState));
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -37,7 +40,7 @@ class _SongListScreenState extends State<SongListScreen> {
 
               PlayingMediaItem? playingMediaItem = snapshot.data;
               MediaItem? playingItem = playingMediaItem?.playingItem;
-              PlaybackState playbackState = playingMediaItem!.playbackState;
+              PlaybackState playbackState = playingMediaItem!.playbackState!;
 
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -56,12 +59,4 @@ class _SongListScreenState extends State<SongListScreen> {
       ),
     );
   }
-}
-
-//TODO move to audioPlayer class
-class PlayingMediaItem {
-  MediaItem? playingItem;
-  PlaybackState playbackState;
-
-  PlayingMediaItem(this.playingItem, this.playbackState);
 }

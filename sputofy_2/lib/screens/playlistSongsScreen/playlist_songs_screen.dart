@@ -5,8 +5,8 @@ import 'package:sputofy_2/models/playlist_model.dart';
 import 'package:sputofy_2/models/song_model.dart';
 import 'package:sputofy_2/providers/provider.dart';
 import 'package:sputofy_2/screens/MiniPlayerScreen/mini_player.dart';
-import 'package:sputofy_2/screens/songListScreen/song_list_screen.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:sputofy_2/services/audioPlayer.dart';
 
 import 'components/playlist_info.dart';
 import 'components/playlist_songs_list.dart';
@@ -20,12 +20,13 @@ class PlaylistSongsScreen extends StatefulWidget {
 }
 
 class _PlaylistSongsScreenState extends State<PlaylistSongsScreen> {
-  Stream<PlayingMediaItem> get _playingMediaItemStream =>
-      Rx.combineLatest2<MediaItem?, PlaybackState, PlayingMediaItem>(
-          AudioService.currentMediaItemStream,
-          AudioService.playbackStateStream,
-          (playingItem, playbackState) =>
-              PlayingMediaItem(playingItem, playbackState));
+  Stream<PlayingMediaItem> get _playingMediaItemStream => Rx.combineLatest3<
+          MediaItem?, Duration?, PlaybackState?, PlayingMediaItem>(
+      AudioService.currentMediaItemStream,
+      AudioService.positionStream,
+      AudioService.playbackStateStream,
+      (playingItem, position, playbackState) =>
+          PlayingMediaItem(playingItem, position, playbackState));
   @override
   void initState() {
     Provider.of<DBProvider>(context, listen: false)

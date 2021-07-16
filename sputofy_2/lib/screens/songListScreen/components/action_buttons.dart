@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
 
-import 'package:sputofy_2/models/song_model.dart';
-import 'package:sputofy_2/theme/palette.dart';
+import 'package:sputofy_2/components/load_queue.dart';
 
-import '../../../main.dart';
+import 'package:sputofy_2/models/song_model.dart';
+
+import 'package:sputofy_2/theme/palette.dart';
 
 class ActionButtons extends StatelessWidget {
   final BuildContext context;

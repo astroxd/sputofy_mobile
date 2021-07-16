@@ -84,7 +84,7 @@ class _DownloadSongState extends State<DownloadSong> {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           Text(
-            "Download Songs",
+            'Download Songs',
             style: Theme.of(context).textTheme.headline6,
           ),
           SizedBox(height: 16.0),
@@ -109,7 +109,7 @@ class _DownloadSongState extends State<DownloadSong> {
                 onPressed: () {
                   Navigator.pop(context);
                 },
-                child: Text("Cancel"),
+                child: Text('Cancel'),
               ),
               MaterialButton(
                 onPressed: () async {
@@ -127,7 +127,7 @@ class _DownloadSongState extends State<DownloadSong> {
                         textController.text, scaffoldKey.currentContext!);
                   }
                 },
-                child: Text("Download"),
+                child: Text('Download'),
                 color: kAccentColor,
               ),
             ],
@@ -164,6 +164,9 @@ _downloadPlaylist(String playlistURL, BuildContext context) async {
   _downloadSong(downloadSongs.last, context, playlistName: title);
 }
 
+//! 0 = loading
+//! -1 = finish
+//! -2 = cancel
 _downloadSong(String videoURL, BuildContext context,
     {String? playlistName}) async {
   _downloadStream.add(0);
@@ -184,14 +187,14 @@ _downloadSong(String videoURL, BuildContext context,
         .replaceAll('|', '');
     _downloadVideoTitleStream.add(videoTitle);
 
-    //*Get video manifest
+    //* Get video manifest
     var manifest = await yt.videos.streamsClient.getManifest(videoID);
     var streamInfo = manifest.audioOnly.withHighestBitrate();
     Stream<List<int>> stream = yt.videos.streamsClient.get(streamInfo);
 
     File file = File('/storage/emulated/0/Music/$videoTitle.mp3');
 
-    // Delete the file if exists.
+    //* Delete the file if exists.
     if (file.existsSync()) {
       file.deleteSync();
     }
@@ -206,7 +209,6 @@ _downloadSong(String videoURL, BuildContext context,
       if (!isDownloadCanceled) {
         count += data.length;
         output.add(data);
-        print(count);
         percentage = ((count / fileSizeInBytes) * 100).ceil();
         _downloadStream.add(percentage);
       } else {
@@ -262,7 +264,6 @@ _downloadSong(String videoURL, BuildContext context,
         );
       },
     );
-    print("ERROR IN DOWNLOAD $e");
     downloadSongs.clear();
   }
 }

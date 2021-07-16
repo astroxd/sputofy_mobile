@@ -1,15 +1,15 @@
-import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:audio_service/audio_service.dart';
 import 'package:provider/provider.dart';
-import 'package:sputofy_2/main.dart';
+import 'package:sputofy_2/providers/provider.dart';
+
+import 'package:sputofy_2/components/load_queue.dart';
+import 'package:sputofy_2/components/song_menu_button.dart';
+
 import 'package:sputofy_2/models/playlist_song_model.dart';
 import 'package:sputofy_2/models/song_model.dart';
-import 'package:sputofy_2/providers/provider.dart';
-import 'package:sputofy_2/screens/EditSongScreen/edit_song_screen.dart';
-import 'package:sputofy_2/theme/palette.dart';
-import 'package:share_plus/share_plus.dart';
 
-import '../song_list_screen.dart';
+import 'package:sputofy_2/theme/palette.dart';
 
 class ListSongs extends StatelessWidget {
   final BuildContext context;

@@ -1,14 +1,18 @@
 import 'dart:io';
+import 'package:flutter/material.dart';
+
 import 'package:path/path.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import 'package:audio_service/audio_service.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:provider/provider.dart';
-import 'package:sputofy_2/models/song_model.dart';
+
 import 'package:sputofy_2/providers/provider.dart';
+import 'package:provider/provider.dart';
+
+import 'package:sputofy_2/models/song_model.dart';
+
 import 'package:sputofy_2/services/database.dart';
 
 void loadSongs(BuildContext context) async {
@@ -39,7 +43,9 @@ void _loadFolderItems(String folder_path, BuildContext context) async {
       contentToRemove.add(file);
     }
 
-    if (!file.path.endsWith('mp3') && !file.path.endsWith('ogg')) {
+    if (!file.path.endsWith('mp3') &&
+        !file.path.endsWith('ogg') &&
+        !file.path.endsWith('m4a')) {
       contentToRemove.add(file);
     }
 
@@ -48,13 +54,8 @@ void _loadFolderItems(String folder_path, BuildContext context) async {
     }
   }
 
+  //* Remove all unwanted files/directorys
   folderContent.removeWhere((element) => contentToRemove.contains(element));
-  folderContent.forEach((element) {
-    print("ADD $element");
-  });
-  contentToRemove.forEach((element) {
-    print("DELETE $element");
-  });
 
   for (FileSystemEntity file in folderContent) {
     try {
@@ -68,7 +69,7 @@ void _loadFolderItems(String folder_path, BuildContext context) async {
         Song(null, file.path, fileName, '', null, songDuration, false),
       );
     } catch (e) {
-      print("Error on loading Song from folder $e");
+      // print("Error on loading Song from folder $e");
     }
     //TODO load in DB here?
   }
