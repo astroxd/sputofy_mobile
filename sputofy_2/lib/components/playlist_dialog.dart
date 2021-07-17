@@ -7,6 +7,7 @@ import 'package:sputofy_2/theme/palette.dart';
 void showNewPlaylistDialog(BuildContext context) {
   showModalBottomSheet(
     context: context,
+    isScrollControlled: true,
     builder: (context) {
       return NewPlaylistDialog();
     },
@@ -47,7 +48,7 @@ class _NewPlaylistDialogState extends State<NewPlaylistDialog> {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           Text(
-            "Create Playlist",
+            'Create Playlist',
             style: Theme.of(context).textTheme.headline6,
           ),
           SizedBox(height: 16.0),
@@ -68,11 +69,14 @@ class _NewPlaylistDialogState extends State<NewPlaylistDialog> {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[
               MaterialButton(
-                color: kSecondaryColor,
+                color: kPrimaryColor,
                 onPressed: () {
                   Navigator.pop(context);
                 },
-                child: Text("Cancel"),
+                child: Text(
+                  'Cancel',
+                ),
+                textColor: kThirdColor,
               ),
               MaterialButton(
                 onPressed: () {
@@ -87,8 +91,9 @@ class _NewPlaylistDialogState extends State<NewPlaylistDialog> {
                     _savePlaylist(textController.text, context);
                   }
                 },
-                child: Text("Save"),
+                child: Text('Save'),
                 color: kAccentColor,
+                textColor: kThirdColor,
               ),
             ],
           )
