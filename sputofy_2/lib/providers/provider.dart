@@ -89,6 +89,7 @@ class DBProvider extends ChangeNotifier {
   }
 
   Future<void> updatePlaylist(Playlist playlist) async {
+    _database.updatePlaylist(playlist);
     getPlaylists();
     getPlaylist(playlist.id!);
     notifyListeners();

@@ -64,9 +64,7 @@ class _SelectSongListState extends State<SelectSongList> {
                               .toList();
 
                           toAddSongsIDs.forEach((songID) {
-                            if (hashSongs.containsKey(songID)) {
-                              toAddSongs.add(hashSongs[songID]!);
-                            }
+                            toAddSongs.add(hashSongs[songID]!);
                           });
                         });
                       },
