@@ -98,13 +98,19 @@ class DBHelper {
     return song;
   }
 
-  Future<int> deleteSong(int songID) async {
+  Future<int> deleteSong(int? songID) async {
     var dbClient = await db;
-    //*If song is deleted we have to delete it from all the playlists
-    await dbClient.delete(PLAYLISTSONG_TABLE,
-        where: '$PLAYLISTSONG_SONG_ID = ?', whereArgs: [songID]);
-    return await dbClient
-        .delete(SONG_TABLE, where: '$SONG_ID = ?', whereArgs: [songID]);
+    if (songID == null) {
+      //*If song is deleted we have to delete it from all the playlists
+      await dbClient.delete(PLAYLISTSONG_TABLE);
+      return await dbClient.delete(SONG_TABLE);
+    } else {
+      //*If song is deleted we have to delete it from all the playlists
+      await dbClient.delete(PLAYLISTSONG_TABLE,
+          where: '$PLAYLISTSONG_SONG_ID = ?', whereArgs: [songID]);
+      return await dbClient
+          .delete(SONG_TABLE, where: '$SONG_ID = ?', whereArgs: [songID]);
+    }
   }
 
   Future<int> updateSong(Song song) async {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:provider/provider.dart';
+import 'package:sputofy_2/components/load_song.dart';
 import 'package:sputofy_2/providers/provider.dart';
 
 import 'package:sputofy_2/components/load_queue.dart';
@@ -19,6 +20,21 @@ class ListSongs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (songs.isEmpty)
+      return Expanded(
+        child: Center(
+          child: GestureDetector(
+            onTap: () => loadSongs(context),
+            child: Text(
+              'Load Songs...',
+              style: Theme.of(context).textTheme.subtitle1!.copyWith(
+                    color: kSecondaryColor,
+                    decoration: TextDecoration.underline,
+                  ),
+            ),
+          ),
+        ),
+      );
     return Expanded(
       child: ListView.builder(
         padding:

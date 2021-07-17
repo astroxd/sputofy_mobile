@@ -107,7 +107,7 @@ class DBProvider extends ChangeNotifier {
     return songWithID;
   }
 
-  Future<void> deleteSong(int songID) async {
+  Future<void> deleteSong(int? songID) async {
     await _database.deleteSong(songID);
     getSongs();
     notifyListeners();

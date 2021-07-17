@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
+import 'components/remove_all_songs.dart';
 import 'services/audioPlayer.dart';
 
 import 'package:provider/provider.dart';
@@ -127,7 +128,8 @@ class _MyHomePageState extends State<MyHomePage> {
               ? PopupMenuButton<String>(
                   onSelected: (String choice) => _handleClick(choice, context),
                   itemBuilder: (BuildContext context) {
-                    return {'Download Song', 'Load Songs'}.map((String choice) {
+                    return {'Download Song', 'Load Songs', 'Remove all Songs'}
+                        .map((String choice) {
                       return PopupMenuItem<String>(
                         value: choice,
                         child: Text(choice),
@@ -279,6 +281,9 @@ void _handleClick(String choice, BuildContext context) async {
       break;
     case 'Load Songs':
       loadSongs(context);
+      break;
+    case 'Remove all Songs':
+      removeAllSongs(context);
       break;
   }
 }
