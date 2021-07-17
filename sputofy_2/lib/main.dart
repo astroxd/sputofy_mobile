@@ -76,7 +76,7 @@ class _MyHomePageState extends State<MyHomePage> {
       backgroundTaskEntrypoint: _backgroundTaskEntryPoint,
       androidNotificationChannelName: 'Sputofy',
       androidEnableQueue: true,
-      androidNotificationIcon: 'mipmap/ic_launcher',
+      androidNotificationIcon: 'mipmap/ic_stat_sputofy',
       androidStopForegroundOnPause: true,
     );
   }
