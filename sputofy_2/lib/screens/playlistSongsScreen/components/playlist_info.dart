@@ -91,7 +91,7 @@ class _buildWidgetPlaylistDescription extends StatelessWidget {
                 ),
               ] else ...[
                 Image.asset(
-                  'cover.jpeg',
+                  'missing_image.png',
                   width: 150,
                   height: 150,
                 ),
@@ -251,7 +251,7 @@ class _buildWidgetShuffleButton extends StatelessWidget {
             heightFactor: 2.5,
             alignment: Alignment.bottomLeft,
             child: Text(
-              "${playlistSongs.length} SONGS ${playlist.id}, ${_getPlaylistLength(playlistSongs)}",
+              "${playlistSongs.length} SONGS, ${_getPlaylistLength(playlistSongs)}",
               style: Theme.of(context).textTheme.subtitle2,
             ),
           ),

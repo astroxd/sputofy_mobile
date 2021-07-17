@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -37,6 +39,11 @@ class _SelectSongListState extends State<SelectSongList> {
           builder: (context, snapshot) {
             if (!snapshot.hasData) return CircularProgressIndicator();
             List<Song> songs = snapshot.data ?? [];
+            HashMap<int, Song> hashSongs = HashMap.fromIterable(
+              songs,
+              key: (song) => song.id,
+              value: (song) => song,
+            );
             return Column(
               children: [
                 Row(
@@ -44,11 +51,27 @@ class _SelectSongListState extends State<SelectSongList> {
                   children: <Widget>[
                     MaterialButton(
                       onPressed: () {
-                        //TODO add all songs
-                        setState(() {});
+                        setState(() {
+                          toAddSongs.clear();
+
+                          List<int?> toAddSongsIDs = hashSongs.keys
+                              .where(
+                                (songID) => !playlistSongs
+                                    .map((playlistSong) => playlistSong.id)
+                                    .toList()
+                                    .contains(songID),
+                              )
+                              .toList();
+
+                          toAddSongsIDs.forEach((songID) {
+                            if (hashSongs.containsKey(songID)) {
+                              toAddSongs.add(hashSongs[songID]!);
+                            }
+                          });
+                        });
                       },
                       child: Text(
-                        "ADD ALL",
+                        'ADD ALL',
                         style: Theme.of(context)
                             .textTheme
                             .subtitle2!
@@ -57,7 +80,7 @@ class _SelectSongListState extends State<SelectSongList> {
                     ),
                     MaterialButton(
                       child: Text(
-                        "ADD SONGS",
+                        'ADD SONGS',
                         style: Theme.of(context).textTheme.subtitle2!.copyWith(
                             color: toAddSongs.length > 0 ? kAccentColor : null),
                       ),

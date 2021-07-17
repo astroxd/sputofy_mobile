@@ -230,41 +230,52 @@ class _MyHomePageState extends State<MyHomePage> {
 void _handleClick(String choice, BuildContext context) async {
   switch (choice) {
     case 'Download Song':
-      bool isConnected = false;
-      try {
-        final result = await InternetAddress.lookup('example.com');
-        if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
-          isConnected = true;
+      bool canAccesStorage = await Permission.storage.request().isGranted;
+      if (canAccesStorage) {
+        bool isConnected = false;
+        try {
+          final result = await InternetAddress.lookup('example.com');
+          if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+            isConnected = true;
+          }
+        } on SocketException catch (_) {
+          isConnected = false;
         }
-      } on SocketException catch (_) {
-        isConnected = false;
-      }
-      if (isConnected) {
-        //* Before first download, stream is null
-        if (downloadStream.valueOrNull == -1 ||
-            downloadStream.valueOrNull == -2 ||
-            downloadStream.valueOrNull == null) {
-          showDownloadSongDialog(context, _scaffoldKey);
+        if (isConnected) {
+          //* Before first download, stream is null
+          if (downloadStream.valueOrNull == -1 ||
+              downloadStream.valueOrNull == -2 ||
+              downloadStream.valueOrNull == null) {
+            showDownloadSongDialog(context, _scaffoldKey);
+          } else {
+            showDownloadDialog(context);
+          }
         } else {
-          showDownloadDialog(context);
+          showDialog(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                content: Text('Check your connection before downloading'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context, rootNavigator: true)
+                        .pop('dialog'),
+                    child: Text('OK'),
+                  )
+                ],
+              );
+            },
+          );
         }
-      } else
-        showDialog(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              content: Text('Check your connection before downloading'),
-              actions: [
-                TextButton(
-                  onPressed: () =>
-                      Navigator.of(context, rootNavigator: true).pop('dialog'),
-                  child: Text('OK'),
-                )
-              ],
-            );
-          },
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'In order to load songs you have to grant permission storage'),
+          ),
         );
-      ;
+      }
+
       break;
     case 'Load Songs':
       loadSongs(context);

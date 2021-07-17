@@ -13,7 +13,7 @@ Widget songDescription(
         ),
       ] else ...[
         Image.asset(
-          'cover.jpeg',
+          'missing_image.png',
           width: 250,
           height: 250,
         ),

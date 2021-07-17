@@ -20,10 +20,16 @@ void loadSongs(BuildContext context) async {
   if (canAccesStorage) {
     FilePicker.platform.getDirectoryPath().then((String? folder) {
       if (folder != null) {
-        print(folder);
         _loadFolderItems(folder, context);
       }
     });
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content:
+            Text('In order to load songs you have to grant permission storage'),
+      ),
+    );
   }
 }
 

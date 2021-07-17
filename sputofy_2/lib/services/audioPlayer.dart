@@ -139,7 +139,6 @@ class AudioPlayerTask extends BackgroundAudioTask {
   Future<void> onTaskRemoved() {
     //TODO review
     if (!AudioServiceBackground.state.playing) {
-      print("sto chiudendo #############");
       onStop();
     }
     return super.onTaskRemoved();
@@ -314,7 +313,6 @@ class AudioPlayerTask extends BackgroundAudioTask {
 
   @override
   Future<void> onSetRepeatMode(AudioServiceRepeatMode repeatMode) async {
-    print('reepeate');
     switch (repeatMode) {
       case AudioServiceRepeatMode.none:
         await _audioPlayer.setLoopMode(LoopMode.off);

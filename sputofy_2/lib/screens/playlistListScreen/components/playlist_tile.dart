@@ -59,7 +59,7 @@ class PlaylistTile extends StatelessWidget {
                             height: 70.0,
                           )
                         : Image.asset(
-                            'cover.jpeg',
+                            'missing_image.png',
                             width: 70.0,
                             height: 70.0,
                           ),

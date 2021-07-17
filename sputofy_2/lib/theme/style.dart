@@ -10,7 +10,7 @@ ThemeData appTheme() {
     buttonColor: kAccentColor,
     scaffoldBackgroundColor: kBackgroundColor,
     canvasColor: Colors.black,
-    fontFamily: 'RobotoMono',
+    fontFamily: 'Poppins',
     iconTheme: IconThemeData(color: kPrimaryColor, size: 28.0),
     textTheme: TextTheme(
       subtitle1: TextStyle(color: kThirdColor, fontSize: 16.0),

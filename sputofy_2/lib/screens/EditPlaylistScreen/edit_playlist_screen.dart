@@ -107,7 +107,7 @@ class _EditPlaylistScreenState extends State<EditPlaylistScreen> {
                 }
               },
               child: Image.asset(
-                'cover.jpeg',
+                'missing_image.png',
                 width: 230.0,
                 height: 230.0,
               ),

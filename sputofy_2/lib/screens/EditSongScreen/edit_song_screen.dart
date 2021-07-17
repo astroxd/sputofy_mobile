@@ -135,7 +135,7 @@ class _EditSongScreenState extends State<EditSongScreen> {
                 // }
               },
               child: Image.asset(
-                'cover.jpeg',
+                'missing_image.png',
                 width: 230.0,
                 height: 230.0,
               ),
