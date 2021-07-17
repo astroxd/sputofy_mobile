@@ -11,7 +11,7 @@ import 'package:sputofy_2/models/song_model.dart';
 
 class DBHelper {
   static Database? _db;
-  static const String DB_NAME = 'DDDDDFuckDBSputofy.db';
+  static const String DB_NAME = 'astra.db';
   //* SONG TABLE
   static const String SONG_TABLE = 'song';
   static const String SONG_ID = 'id';
