@@ -12,7 +12,8 @@ Widget playlistMenuButton(
     icon: Icon(Icons.more_vert),
     padding: EdgeInsets.zero,
     itemBuilder: (context) {
-      return {'Delete Playlist', 'Edit Playlist'}.map((String choice) {
+      return {'Delete Playlist', 'Edit Playlist', 'Hide Playlist'}
+          .map((String choice) {
         return PopupMenuItem<List>(
           value: [choice, playlist],
           child: Text(choice),
@@ -52,6 +53,10 @@ playlistMenuHandleClick(List params, BuildContext context, bool shouldPop) {
           builder: (context) => EditPlaylistScreen(playlist),
         ),
       );
+      break;
+    case 'Hide Playlist':
+      Provider.of<DBProvider>(context, listen: false)
+          .updatePlaylist(playlist.copyWith(isHidden: true));
       break;
   }
 }

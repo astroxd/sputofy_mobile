@@ -43,6 +43,7 @@ Widget topBar(BuildContext context, MediaItem playingItem) {
           '',
           null,
           DateTime.now(),
+          false,
         ),
         icon: Icons.more_vert,
         shouldPop: true,

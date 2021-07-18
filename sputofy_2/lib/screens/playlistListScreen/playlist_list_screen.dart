@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sputofy_2/components/playlist_dialog.dart';
 import 'package:sputofy_2/models/playlist_model.dart';
 import 'package:sputofy_2/providers/provider.dart';
+import 'package:sputofy_2/theme/palette.dart';
 
 import 'components/playlist_tile.dart';
 
@@ -40,15 +42,58 @@ class PlaylistList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
-        itemCount: playlists.length,
-        itemBuilder: (context, index) {
-          Playlist playlist = playlists[index];
-          return PlaylistTile(playlist);
-        },
-      ),
-    );
+    if (!playlists
+        .map((playlist) => playlist.isHidden)
+        .toList()
+        .contains(false)) {
+      return Expanded(
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              GestureDetector(
+                onTap: () => showNewPlaylistDialog(context),
+                child: Text(
+                  'Create Playlist...',
+                  style: Theme.of(context).textTheme.subtitle1!.copyWith(
+                        color: kSecondaryColor,
+                        decoration: TextDecoration.underline,
+                      ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  playlists.forEach((playlist) {
+                    Provider.of<DBProvider>(context, listen: false)
+                        .updatePlaylist(playlist.copyWith(isHidden: false));
+                  });
+                },
+                child: Text(
+                  'Show Hidden Playlists...',
+                  style: Theme.of(context).textTheme.subtitle1!.copyWith(
+                        color: kSecondaryColor,
+                        decoration: TextDecoration.underline,
+                      ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    } else {
+      return Expanded(
+        child: ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
+          itemCount: playlists.length,
+          itemBuilder: (context, index) {
+            Playlist playlist = playlists[index];
+            if (!playlist.isHidden)
+              return PlaylistTile(playlist);
+            else
+              return Container(height: 0.0);
+          },
+        ),
+      );
+    }
   }
 }

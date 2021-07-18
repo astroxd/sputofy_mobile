@@ -112,6 +112,7 @@ class MiniPlayer extends StatelessWidget {
                           '',
                           null,
                           DateTime.now(),
+                          false,
                         ),
                         icon: Icons.more_vert,
                       )

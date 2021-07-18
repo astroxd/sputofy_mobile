@@ -11,7 +11,7 @@ import 'package:sputofy_2/models/song_model.dart';
 
 class DBHelper {
   static Database? _db;
-  static const String DB_NAME = 'astra.db';
+  static const String DB_NAME = 'Dastra.db';
   //* SONG TABLE
   static const String SONG_TABLE = 'song';
   static const String SONG_ID = 'id';
@@ -30,6 +30,7 @@ class DBHelper {
   static const String PLAYLIST_COVER = 'cover';
   static const String PLAYLIST_CREATION_DATE = 'creation_date';
   static const String PLAYLIST_DURATION = 'duration';
+  static const String PLAYLIST_HIDDEN = 'is_hidden';
   //* PLAYLIST TABLE
 
   //* PLAYLIST SONG TABLE
@@ -72,7 +73,8 @@ class DBHelper {
         $PLAYLIST_NAME TEXT NOT NULL,
         $PLAYLIST_COVER BLOB,
         $PLAYLIST_CREATION_DATE INTEGER NOT NULL,
-        $PLAYLIST_DURATION INTEGER
+        $PLAYLIST_DURATION INTEGER,
+        $PLAYLIST_HIDDEN INTEGER
       )
      ''');
 
@@ -84,8 +86,8 @@ class DBHelper {
       )
      ''');
 
-    await db.insert(
-        PLAYLIST_TABLE, Playlist(0, 'Favorites', null, DateTime.now()).toMap());
+    await db.insert(PLAYLIST_TABLE,
+        Playlist(0, 'Favorites', null, DateTime.now(), false).toMap());
   }
 
 //*##########################################################################*//
@@ -182,7 +184,8 @@ class DBHelper {
         PLAYLIST_NAME,
         PLAYLIST_COVER,
         PLAYLIST_CREATION_DATE,
-        PLAYLIST_DURATION
+        PLAYLIST_DURATION,
+        PLAYLIST_HIDDEN
       ],
     );
 
@@ -204,7 +207,8 @@ class DBHelper {
         PLAYLIST_NAME,
         PLAYLIST_COVER,
         PLAYLIST_CREATION_DATE,
-        PLAYLIST_DURATION
+        PLAYLIST_DURATION,
+        PLAYLIST_HIDDEN,
       ],
       where: '$PLAYLIST_ID = ?',
       whereArgs: [playlistID],

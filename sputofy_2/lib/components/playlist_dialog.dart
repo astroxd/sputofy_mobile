@@ -105,11 +105,13 @@ class _NewPlaylistDialogState extends State<NewPlaylistDialog> {
 
 _savePlaylist(String playlistName, BuildContext context) {
   Playlist playlist = Playlist(
-      null,
-      playlistName,
-      null,
-      // File('/storage/emulated/0/download/album.jpg').readAsBytesSync(),
-      DateTime.now());
+    null,
+    playlistName,
+    null,
+    // File('/storage/emulated/0/download/album.jpg').readAsBytesSync(),
+    DateTime.now(),
+    false,
+  );
   Provider.of<DBProvider>(context, listen: false).savePlaylist(playlist);
   Navigator.pop(context);
 }

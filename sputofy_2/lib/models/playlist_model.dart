@@ -5,8 +5,9 @@ class Playlist {
   late String name;
   Uint8List? cover;
   late DateTime creationDate;
+  bool isHidden = false;
 
-  Playlist(this.id, this.name, this.cover, this.creationDate);
+  Playlist(this.id, this.name, this.cover, this.creationDate, this.isHidden);
 
   Map<String, dynamic> toMap() {
     var map = <String, dynamic>{
@@ -14,6 +15,7 @@ class Playlist {
       'name': name,
       'cover': cover,
       'creation_date': creationDate.millisecondsSinceEpoch,
+      'is_hidden': isHidden ? 1 : 0,
     };
     return map;
   }
@@ -23,6 +25,7 @@ class Playlist {
     name = map['name'];
     cover = map['cover'];
     creationDate = DateTime.fromMillisecondsSinceEpoch(map['creation_date']);
+    isHidden = map['is_hidden'] == 1 ? true : false;
   }
 
   Playlist copyWith({
@@ -30,11 +33,13 @@ class Playlist {
     String? name,
     Uint8List? cover,
     DateTime? creationDate,
+    bool? isHidden,
   }) =>
       Playlist(
         id ?? this.id,
         name ?? this.name,
         cover ?? this.cover,
         creationDate ?? this.creationDate,
+        isHidden ?? this.isHidden,
       );
 }
