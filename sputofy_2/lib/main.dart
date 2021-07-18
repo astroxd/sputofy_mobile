@@ -5,9 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:sputofy_2/components/get_song_duration.dart';
 import 'package:sputofy_2/components/load_queue.dart';
+import 'package:sputofy_2/screens/playlistSongsScreen/playlist_songs_screen.dart';
 import 'package:sputofy_2/theme/palette.dart';
 import 'components/remove_all_songs.dart';
 import 'components/show_hidden_playlists.dart';
+import 'models/playlist_model.dart';
 import 'models/song_model.dart';
 import 'services/audioPlayer.dart';
 
@@ -67,9 +69,6 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int tabIndex = 0;
-  //! SearchBar related
-  bool isSearching = false;
-  Widget appBarTitle = Text('Sputofy');
   @override
   void initState() {
     Permission.storage.request();
@@ -99,17 +98,11 @@ class _MyHomePageState extends State<MyHomePage> {
           case 0:
             setState(() {
               tabIndex = 0;
-              //! SearchBar related
-              // isSearching = false;
-              // appBarTitle = Text('Sputofy');
             });
             break;
           case 1:
             setState(() {
               tabIndex = 1;
-              //! SearchBar related
-              // isSearching = false;
-              // appBarTitle = Text('Sputofy');
             });
             break;
         }
@@ -118,16 +111,14 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
-        title: appBarTitle,
+        title: Text('Sputofy'),
         actions: <Widget>[
           IconButton(
             onPressed: () {
-              showSearch(context: context, delegate: DataSearch(context));
-              // ScaffoldMessenger.of(context).showSnackBar(
-              //   SnackBar(
-              //     content: Text('Not implemented yet'),
-              //   ),
-              // );
+              showSearch(
+                context: context,
+                delegate: DataSearch(context, tabIndex),
+              );
             },
             icon: Icon(Icons.search),
           ),
@@ -144,14 +135,11 @@ class _MyHomePageState extends State<MyHomePage> {
                     }).toList();
                   },
                 )
-              // : IconButton(
-              //     onPressed: () => showNewPlaylistDialog(context),
-              //     icon: Icon(Icons.add),
-              //   ),
               : PopupMenuButton<String>(
                   onSelected: (String choice) => _handleClick(choice, context),
                   itemBuilder: (BuildContext context) {
-                    return {'Show hidden Playlists'}.map((String choice) {
+                    return {'Create Playlist', 'Show hidden Playlists'}
+                        .map((String choice) {
                       return PopupMenuItem<String>(
                         value: choice,
                         child: Text(choice),
@@ -159,46 +147,6 @@ class _MyHomePageState extends State<MyHomePage> {
                     }).toList();
                   },
                 )
-          //! Uncomment for enabling search bar (needs to be implemented)
-          // if (!isSearching) ...[
-          //   IconButton(
-          //     onPressed: () {
-          //       setState(() {
-          //         isSearching = true;
-          //         appBarTitle = TextField();
-          //       });
-          //     },
-          //     icon: Icon(Icons.search),
-          //   ),
-          //   tabIndex == 0
-          //       ? PopupMenuButton<String>(
-          //           onSelected: (String choice) =>
-          //               _handleClick(choice, context),
-          //           itemBuilder: (BuildContext context) {
-          //             return {'Download Song', 'Load Songs'}
-          //                 .map((String choice) {
-          //               return PopupMenuItem<String>(
-          //                 value: choice,
-          //                 child: Text(choice),
-          //               );
-          //             }).toList();
-          //           },
-          //         )
-          //       : IconButton(
-          //           onPressed: () => showNewPlaylistDialog(context),
-          //           icon: Icon(Icons.add),
-          //         ),
-          // ] else ...[
-          //   GestureDetector(
-          //     onTap: () {
-          //       setState(() {
-          //         isSearching = false;
-          //         appBarTitle = Text('Sputofy');
-          //       });
-          //     },
-          //     child: Text("cancel"),
-          //   )
-          // ],
         ],
         bottom: TabBar(
           tabs: [
@@ -303,6 +251,9 @@ void _handleClick(String choice, BuildContext context) async {
     case 'Remove all Songs':
       removeAllSongs(context);
       break;
+    case 'Create Playlist':
+      showNewPlaylistDialog(context);
+      break;
     case 'Show hidden Playlists':
       showHiddenPlaylist(context);
       break;
@@ -310,16 +261,28 @@ void _handleClick(String choice, BuildContext context) async {
 }
 
 class DataSearch extends SearchDelegate<String> {
-  BuildContext context;
-  late List<Song> songs;
-  late HashMap<String, Song> hashSongs;
-  DataSearch(this.context) {
-    songs = Provider.of<DBProvider>(context, listen: false).songs;
-    hashSongs = HashMap.fromIterable(
-      songs,
-      key: (song) => song.title,
-      value: (song) => song,
-    );
+  final BuildContext context;
+  final int tabIndex;
+
+  late final items;
+  late HashMap<String, dynamic> hashItems;
+
+  DataSearch(this.context, this.tabIndex) {
+    if (tabIndex == 0) {
+      items = Provider.of<DBProvider>(context, listen: false).songs;
+      hashItems = HashMap.fromIterable(
+        items,
+        key: (song) => song.title,
+        value: (song) => song,
+      );
+    } else {
+      items = Provider.of<DBProvider>(context, listen: false).playlists;
+      hashItems = HashMap.fromIterable(
+        items,
+        key: (playlist) => playlist.name,
+        value: (playlist) => playlist,
+      );
+    }
   }
 
   @override
@@ -370,55 +333,73 @@ class DataSearch extends SearchDelegate<String> {
 
   @override
   Widget buildResults(BuildContext context) {
-    //* Never used
+    //* Not used
     throw UnimplementedError();
   }
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    final suggestionList = hashSongs.keys
+    final suggestionList = hashItems.keys
         .where((element) => element.toLowerCase().contains(query))
         .toList();
     // final suggestionList = hashSongs.keys
     //     .map((e) => e.toLowerCase().allMatches(query).toString())
     //     .toList();
+
     return ListView.builder(
       itemCount: suggestionList.length,
       itemBuilder: (context, index) {
-        Song song = hashSongs[suggestionList[index]]!;
-        return ListTile(
-          onTap: () {
-            if (AudioService.currentMediaItem?.album != '-2') {
-              loadQueue(-2, songs, songPath: song.path);
-            } else {
-              AudioService.skipToQueueItem(song.path);
-            }
-            close(context, suggestionList[index]);
-          },
-          title: RichText(
-            text: TextSpan(
-              text: suggestionList[index].substring(0, query.length),
-              style: Theme.of(context)
-                  .textTheme
-                  .subtitle1!
-                  .copyWith(color: kAccentColor),
-              children: [
-                TextSpan(
-                  text: suggestionList[index].substring(query.length),
-                  style: Theme.of(context).textTheme.subtitle1,
-                ),
-              ],
+        if (tabIndex == 0) {
+          Song song = hashItems[suggestionList[index]]!;
+          return ListTile(
+            onTap: () {
+              if (AudioService.currentMediaItem?.album != '-2') {
+                loadQueue(-2, items, songPath: song.path);
+              } else {
+                AudioService.skipToQueueItem(song.path);
+              }
+              close(context, suggestionList[index]);
+            },
+            title: RichText(
+              text: TextSpan(
+                text: suggestionList[index].substring(0, query.length),
+                style: Theme.of(context)
+                    .textTheme
+                    .subtitle1!
+                    .copyWith(color: kAccentColor),
+                children: [
+                  TextSpan(
+                    text: suggestionList[index].substring(query.length),
+                    style: Theme.of(context).textTheme.subtitle1,
+                  ),
+                ],
+              ),
             ),
-          ),
-          subtitle: Text(
-            getSongDuration(song.duration),
-            style: Theme.of(context).textTheme.subtitle2,
-          ),
-          trailing: Icon(
-            Icons.play_arrow_outlined,
-            color: kPrimaryColor,
-          ),
-        );
+            subtitle: Text(
+              getSongDuration(song.duration),
+              style: Theme.of(context).textTheme.subtitle2,
+            ),
+            trailing: Icon(
+              Icons.play_arrow_outlined,
+              color: kPrimaryColor,
+            ),
+          );
+        } else {
+          Playlist playlist = hashItems[suggestionList[index]];
+          return ListTile(
+            onTap: () {
+              Provider.of<DBProvider>(context, listen: false)
+                  .getPlaylist(playlist.id!);
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => PlaylistSongsScreen(playlist),
+                ),
+              );
+            },
+            title: Text(playlist.name),
+          );
+        }
       },
     );
   }

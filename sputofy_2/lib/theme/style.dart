@@ -31,7 +31,11 @@ ThemeData appTheme() {
       backgroundColor: kSecondaryBackgroundColor,
       elevation: 0.0,
     ),
-    snackBarTheme: SnackBarThemeData(behavior: SnackBarBehavior.floating),
+    snackBarTheme: SnackBarThemeData(
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: Color(0xFF323232),
+      contentTextStyle: TextStyle(color: kThirdColor),
+    ),
     inputDecorationTheme: InputDecorationTheme(
       hintStyle: TextStyle(color: kThirdColor),
       fillColor: kAccentColor,
