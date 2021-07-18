@@ -32,5 +32,25 @@ ThemeData appTheme() {
       elevation: 0.0,
     ),
     snackBarTheme: SnackBarThemeData(behavior: SnackBarBehavior.floating),
+    inputDecorationTheme: InputDecorationTheme(
+      hintStyle: TextStyle(color: kThirdColor),
+      fillColor: kAccentColor,
+    ),
+    //! Made in a hurry
+    colorScheme: ColorScheme(
+      primary: kAccentColor,
+      primaryVariant: kSecondAccentColor,
+      secondary: kAccentColor,
+      secondaryVariant: kSecondAccentColor,
+      surface: kSecondaryBackgroundColor,
+      background: kBackgroundColor,
+      error: Colors.red,
+      onPrimary: kThirdColor,
+      onSecondary: kThirdColor,
+      onSurface: kThirdColor,
+      onBackground: kThirdColor,
+      onError: Colors.black,
+      brightness: Brightness.dark,
+    ),
   );
 }

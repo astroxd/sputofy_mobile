@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:provider/provider.dart';
+import 'package:sputofy_2/components/get_song_duration.dart';
 import 'package:sputofy_2/components/load_song.dart';
 import 'package:sputofy_2/providers/provider.dart';
 
@@ -83,7 +84,7 @@ class ListSongs extends StatelessWidget {
                                       : null),
                           overflow: TextOverflow.ellipsis,
                         ),
-                        Text(_getSongDuration(song.duration),
+                        Text(getSongDuration(song.duration),
                             style: Theme.of(context).textTheme.subtitle2),
                       ],
                     ),
@@ -137,12 +138,5 @@ class ListSongs extends StatelessWidget {
         },
       ),
     );
-  }
-
-  String _getSongDuration(Duration? songDuration) {
-    String twoDigits(int n) => n.toString().padLeft(2, "0");
-
-    String twoDigitSeconds = twoDigits(songDuration!.inSeconds.remainder(60));
-    return "${songDuration.inMinutes}:$twoDigitSeconds";
   }
 }

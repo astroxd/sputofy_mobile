@@ -1,9 +1,14 @@
+import 'dart:collection';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
+import 'package:sputofy_2/components/get_song_duration.dart';
+import 'package:sputofy_2/components/load_queue.dart';
+import 'package:sputofy_2/theme/palette.dart';
 import 'components/remove_all_songs.dart';
 import 'components/show_hidden_playlists.dart';
+import 'models/song_model.dart';
 import 'services/audioPlayer.dart';
 
 import 'package:provider/provider.dart';
@@ -117,11 +122,12 @@ class _MyHomePageState extends State<MyHomePage> {
         actions: <Widget>[
           IconButton(
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Not implemented yet'),
-                ),
-              );
+              showSearch(context: context, delegate: DataSearch(context));
+              // ScaffoldMessenger.of(context).showSnackBar(
+              //   SnackBar(
+              //     content: Text('Not implemented yet'),
+              //   ),
+              // );
             },
             icon: Icon(Icons.search),
           ),
@@ -300,5 +306,120 @@ void _handleClick(String choice, BuildContext context) async {
     case 'Show hidden Playlists':
       showHiddenPlaylist(context);
       break;
+  }
+}
+
+class DataSearch extends SearchDelegate<String> {
+  BuildContext context;
+  late List<Song> songs;
+  late HashMap<String, Song> hashSongs;
+  DataSearch(this.context) {
+    songs = Provider.of<DBProvider>(context, listen: false).songs;
+    hashSongs = HashMap.fromIterable(
+      songs,
+      key: (song) => song.title,
+      value: (song) => song,
+    );
+  }
+
+  @override
+  ThemeData appBarTheme(BuildContext context) {
+    return Theme.of(context).copyWith(
+      colorScheme: ColorScheme(
+        primary: kThirdColor,
+        primaryVariant: kSecondAccentColor,
+        secondary: kAccentColor,
+        secondaryVariant: kSecondAccentColor,
+        surface: kSecondaryBackgroundColor,
+        background: kBackgroundColor,
+        error: Colors.red,
+        onPrimary: kThirdColor,
+        onSecondary: kThirdColor,
+        onSurface: kThirdColor,
+        onBackground: kThirdColor,
+        onError: Colors.black,
+        brightness: Brightness.dark,
+      ),
+    );
+  }
+
+  @override
+  List<Widget> buildActions(BuildContext context) {
+    return [
+      IconButton(
+        onPressed: () {
+          query = '';
+        },
+        icon: Icon(Icons.clear),
+      )
+    ];
+  }
+
+  @override
+  Widget buildLeading(BuildContext context) {
+    return IconButton(
+      onPressed: () {
+        close(context, '');
+      },
+      icon: AnimatedIcon(
+        icon: AnimatedIcons.menu_arrow,
+        progress: transitionAnimation,
+      ),
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    //* Never used
+    throw UnimplementedError();
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    final suggestionList = hashSongs.keys
+        .where((element) => element.toLowerCase().contains(query))
+        .toList();
+    // final suggestionList = hashSongs.keys
+    //     .map((e) => e.toLowerCase().allMatches(query).toString())
+    //     .toList();
+    return ListView.builder(
+      itemCount: suggestionList.length,
+      itemBuilder: (context, index) {
+        Song song = hashSongs[suggestionList[index]]!;
+        return ListTile(
+          onTap: () {
+            if (AudioService.currentMediaItem?.album != '-2') {
+              loadQueue(-2, songs, songPath: song.path);
+            } else {
+              AudioService.skipToQueueItem(song.path);
+            }
+            close(context, suggestionList[index]);
+          },
+          title: RichText(
+            text: TextSpan(
+              text: suggestionList[index].substring(0, query.length),
+              style: Theme.of(context)
+                  .textTheme
+                  .subtitle1!
+                  .copyWith(color: kAccentColor),
+              children: [
+                TextSpan(
+                  text: suggestionList[index].substring(query.length),
+                  style: Theme.of(context).textTheme.subtitle1,
+                ),
+              ],
+            ),
+          ),
+          subtitle: Text(
+            getSongDuration(song.duration),
+            style: Theme.of(context).textTheme.subtitle2,
+          ),
+          trailing: Icon(
+            Icons.play_arrow_outlined,
+            color: kPrimaryColor,
+          ),
+        );
+      },
+    );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:sputofy_2/components/get_song_duration.dart';
 
 import 'package:sputofy_2/components/load_queue.dart';
 import 'package:sputofy_2/components/song_menu_button.dart';
@@ -72,11 +73,4 @@ class SongTile extends StatelessWidget {
       ),
     );
   }
-}
-
-String getSongDuration(Duration? songDuration) {
-  String twoDigits(int n) => n.toString().padLeft(2, "0");
-
-  String twoDigitSeconds = twoDigits(songDuration!.inSeconds.remainder(60));
-  return "${songDuration.inMinutes}:$twoDigitSeconds";
 }
