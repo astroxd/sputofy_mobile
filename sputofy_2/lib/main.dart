@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
 import 'components/remove_all_songs.dart';
+import 'components/show_hidden_playlists.dart';
 import 'services/audioPlayer.dart';
 
 import 'package:provider/provider.dart';
@@ -137,10 +138,21 @@ class _MyHomePageState extends State<MyHomePage> {
                     }).toList();
                   },
                 )
-              : IconButton(
-                  onPressed: () => showNewPlaylistDialog(context),
-                  icon: Icon(Icons.add),
-                ),
+              // : IconButton(
+              //     onPressed: () => showNewPlaylistDialog(context),
+              //     icon: Icon(Icons.add),
+              //   ),
+              : PopupMenuButton<String>(
+                  onSelected: (String choice) => _handleClick(choice, context),
+                  itemBuilder: (BuildContext context) {
+                    return {'Show hidden Playlists'}.map((String choice) {
+                      return PopupMenuItem<String>(
+                        value: choice,
+                        child: Text(choice),
+                      );
+                    }).toList();
+                  },
+                )
           //! Uncomment for enabling search bar (needs to be implemented)
           // if (!isSearching) ...[
           //   IconButton(
@@ -284,6 +296,9 @@ void _handleClick(String choice, BuildContext context) async {
       break;
     case 'Remove all Songs':
       removeAllSongs(context);
+      break;
+    case 'Show hidden Playlists':
+      showHiddenPlaylist(context);
       break;
   }
 }

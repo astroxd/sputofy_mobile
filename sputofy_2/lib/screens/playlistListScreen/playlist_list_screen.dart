@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sputofy_2/components/playlist_dialog.dart';
+import 'package:sputofy_2/components/show_hidden_playlists.dart';
 import 'package:sputofy_2/models/playlist_model.dart';
 import 'package:sputofy_2/providers/provider.dart';
 import 'package:sputofy_2/theme/palette.dart';
@@ -22,12 +23,18 @@ class _PlaylistListScreenState extends State<PlaylistListScreen> {
         builder: (context, database, child) {
           List<Playlist> playlists = database.playlists;
           return Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: <Widget>[
               PlaylistList(context, playlists),
               SizedBox(height: 32.0),
             ],
           );
         },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => showNewPlaylistDialog(context),
+        child: Icon(Icons.add),
+        elevation: 4.0,
       ),
     );
   }
@@ -63,10 +70,7 @@ class PlaylistList extends StatelessWidget {
               ),
               GestureDetector(
                 onTap: () {
-                  playlists.forEach((playlist) {
-                    Provider.of<DBProvider>(context, listen: false)
-                        .updatePlaylist(playlist.copyWith(isHidden: false));
-                  });
+                  showHiddenPlaylist(context, importedPlaylists: playlists);
                 },
                 child: Text(
                   'Show Hidden Playlists...',
