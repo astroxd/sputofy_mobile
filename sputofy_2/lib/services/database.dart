@@ -11,7 +11,7 @@ import 'package:sputofy_2/models/song_model.dart';
 
 class DBHelper {
   static Database? _db;
-  static const String DB_NAME = 'DDastra.db';
+  static const String DB_NAME = 'unity.db';
   //* SONG TABLE
   static const String SONG_TABLE = 'song';
   static const String SONG_ID = 'id';
@@ -51,7 +51,8 @@ class DBHelper {
   initDb() async {
     Directory documentsDirectory = await getApplicationDocumentsDirectory();
     String path = join(documentsDirectory.path, DB_NAME);
-    var db = await openDatabase(path, version: 1, onCreate: _onCreate);
+    var db = await openDatabase(path,
+        version: 1, onCreate: _onCreate, singleInstance: true);
     return db;
   }
 
@@ -289,7 +290,7 @@ class DBHelper {
   }
 
   Future close() async {
-    var dbClient = await (db);
+    var dbClient = await db;
     dbClient.close();
   }
 }

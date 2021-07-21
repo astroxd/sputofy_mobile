@@ -68,9 +68,12 @@ class _MyHomePageState extends State<MyHomePage> {
   int tabIndex = 0;
   @override
   void initState() {
-    Permission.storage.request();
-    _createCoverDir(songPath()); //* Folder for songs cover
-    _createCoverDir(playlistPath()); //* Folder for playlists cover
+    Permission.storage.request().then((value) {
+      if (value.isGranted) {
+        _createCoverDir(songPath()); //* Folder for songs cover
+        _createCoverDir(playlistPath()); //* Folder for playlists cover
+      }
+    });
     _start();
     super.initState();
   }

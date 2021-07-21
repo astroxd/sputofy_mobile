@@ -14,8 +14,7 @@ Future<void> loadQueue(int playlistID, List<Song> songs,
   for (Song song in songs) {
     mediaItems.add(
       song
-          .toMediaItem(
-              playlistTitle: playlistTitle != null ? playlistTitle : null)
+          .toMediaItem(playlistTitle: playlistTitle)
           .copyWith(album: '$playlistID'),
     );
   }

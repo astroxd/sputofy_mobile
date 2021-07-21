@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:provider/provider.dart';
+import 'package:sputofy_2/providers/provider.dart';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:sputofy_2/services/audioPlayer.dart';
+
 import 'package:sputofy_2/models/song_model.dart';
-import 'package:sputofy_2/providers/provider.dart';
 
 import 'components/action_buttons.dart';
 import 'components/list_songs.dart';
