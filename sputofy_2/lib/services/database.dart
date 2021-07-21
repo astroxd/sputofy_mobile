@@ -11,7 +11,7 @@ import 'package:sputofy_2/models/song_model.dart';
 
 class DBHelper {
   static Database? _db;
-  static const String DB_NAME = 'Dastra.db';
+  static const String DB_NAME = 'DDastra.db';
   //* SONG TABLE
   static const String SONG_TABLE = 'song';
   static const String SONG_ID = 'id';
@@ -62,7 +62,7 @@ class DBHelper {
         $SONG_PATH TEXT UNIQUE,
         $SONG_TITLE TEXT NOT NULL,
         $SONG_AUTHOR TEXT,
-        $SONG_COVER BLOB,
+        $SONG_COVER TEXT,
         $SONG_DURATION INTEGER,
         $SONG_FAVORITE INTEGER
       )
@@ -71,7 +71,7 @@ class DBHelper {
       CREATE TABLE $PLAYLIST_TABLE (
         $PLAYLIST_ID INTEGER PRIMARY KEY,
         $PLAYLIST_NAME TEXT NOT NULL,
-        $PLAYLIST_COVER BLOB,
+        $PLAYLIST_COVER TEXT,
         $PLAYLIST_CREATION_DATE INTEGER NOT NULL,
         $PLAYLIST_DURATION INTEGER,
         $PLAYLIST_HIDDEN INTEGER

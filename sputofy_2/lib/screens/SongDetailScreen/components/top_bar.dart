@@ -8,7 +8,7 @@ import 'package:sputofy_2/models/song_model.dart';
 
 import 'package:sputofy_2/theme/palette.dart';
 
-Widget topBar(BuildContext context, MediaItem playingItem) {
+Widget topBar(BuildContext context, MediaItem? playingItem) {
   return Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: <Widget>[
@@ -35,19 +35,21 @@ Widget topBar(BuildContext context, MediaItem playingItem) {
           ),
         ),
       ),
-      songMenuButton(
-        Song.fromMediaItem(playingItem),
-        context,
-        playlist: Playlist(
-          (int.parse(playingItem.album)),
-          '',
-          null,
-          DateTime.now(),
-          false,
-        ),
-        icon: Icons.more_vert,
-        shouldPop: true,
-      ),
+      playingItem == null
+          ? Icon(Icons.more_vert)
+          : songMenuButton(
+              Song.fromMediaItem(playingItem),
+              context,
+              playlist: Playlist(
+                (int.parse(playingItem.album)),
+                '',
+                null,
+                DateTime.now(),
+                false,
+              ),
+              icon: Icons.more_vert,
+              shouldPop: true,
+            ),
     ],
   );
 }

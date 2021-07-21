@@ -1,13 +1,19 @@
-import 'dart:typed_data';
+import 'package:flutter/material.dart';
+import 'dart:io';
+import 'package:path/path.dart' as path;
 
 import 'package:audio_service/audio_service.dart';
-// ignore: unused_import
-import 'package:file_picker/file_picker.dart';
-import 'package:flutter/material.dart';
+
 import 'package:provider/provider.dart';
+import 'package:sputofy_2/providers/provider.dart';
+
 import 'package:sputofy_2/models/playlist_model.dart';
 import 'package:sputofy_2/models/song_model.dart';
-import 'package:sputofy_2/providers/provider.dart';
+
+import 'package:sputofy_2/routes/folders.dart' as routes;
+
+import 'components/move_image.dart';
+import 'components/pick_image.dart';
 
 class EditSongScreen extends StatefulWidget {
   final Song song;
@@ -19,8 +25,8 @@ class EditSongScreen extends StatefulWidget {
 }
 
 class _EditSongScreenState extends State<EditSongScreen> {
+  File? selectedImage;
   TextEditingController controller = TextEditingController();
-  Uint8List? selectedImage;
   Song get song => widget.song;
   Playlist? get playlist => widget.playlist == null
       ? null
@@ -41,10 +47,10 @@ class _EditSongScreenState extends State<EditSongScreen> {
   }
 
   Widget widgetEdit(Song song) {
-    Uint8List? songImage = song.cover;
+    Uri? songImage = song.cover;
 
     if (selectedImage != null) {
-      songImage = selectedImage;
+      songImage = selectedImage?.uri;
     }
 
     return Padding(
@@ -63,11 +69,25 @@ class _EditSongScreenState extends State<EditSongScreen> {
                 style: Theme.of(context).textTheme.subtitle1,
               ),
               IconButton(
-                onPressed: () {
-                  Song updatedSong = song.copyWith(
-                    cover: selectedImage,
-                    title: controller.text,
-                  );
+                onPressed: () async {
+                  Song updatedSong;
+
+                  if (selectedImage != null) {
+                    String songPath =
+                        path.join(await routes.songPath(), '${song.id}.jpg');
+
+                    File newFile = await moveImage(selectedImage!, songPath);
+
+                    updatedSong = song.copyWith(
+                      cover: newFile.uri,
+                      title: controller.text,
+                    );
+                  } else {
+                    updatedSong = song.copyWith(
+                      title: controller.text,
+                    );
+                  }
+
                   Provider.of<DBProvider>(context, listen: false).updateSong(
                     updatedSong,
                     playlist: playlist,
@@ -80,71 +100,34 @@ class _EditSongScreenState extends State<EditSongScreen> {
             ],
           ),
           SizedBox(height: 16.0),
-          if (songImage != null) ...[
-            GestureDetector(
-              onTap: () async {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text("Not implemented yet"),
-                    action: SnackBarAction(
-                        label: 'HIDE',
-                        onPressed: () => ScaffoldMessenger.of(context)
-                            .hideCurrentSnackBar()),
+          GestureDetector(
+            onTap: () async {
+              pickImage().then((pickedImage) {
+                if (pickedImage != null) {
+                  setState(() {
+                    imageCache?.clear();
+                    imageCache?.clearLiveImages();
+                    selectedImage = pickedImage;
+                  });
+                }
+              });
+            },
+            child: songImage != null
+                ? Image.file(
+                    File.fromUri(songImage),
+                    width: 230.0,
+                    height: 230.0,
+                  )
+                : Image.asset(
+                    'missing_image.png',
+                    width: 230.0,
+                    height: 230.0,
                   ),
-                );
-                // FilePickerResult? result = await FilePicker.platform.pickFiles(
-                //   withData: true,
-                //   type: FileType.custom,
-                //   allowedExtensions: ['jpg', 'jpeg', 'png'],
-                // );
-                // if (result != null) {
-                //   Uint8List? imageBytes = result.files.single.bytes;
-                //   setState(() {
-                //     selectedImage = imageBytes;
-                //   });
-                // }
-              },
-              child: Image.memory(
-                songImage,
-                width: 230.0,
-                height: 230.0,
-              ),
-            )
-          ] else ...[
-            GestureDetector(
-              onTap: () async {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text("Not implemented yet"),
-                    action: SnackBarAction(
-                        label: 'HIDE',
-                        onPressed: () => ScaffoldMessenger.of(context)
-                            .hideCurrentSnackBar()),
-                  ),
-                );
-                // FilePickerResult? result = await FilePicker.platform.pickFiles(
-                //   withData: true,
-                //   type: FileType.custom,
-                //   allowedExtensions: ['jpg', 'jpeg', 'png'],
-                // );
-                // if (result != null) {
-                //   Uint8List? imageBytes = result.files.single.bytes;
-                //   setState(() {
-                //     selectedImage = imageBytes;
-                //   });
-                // }
-              },
-              child: Image.asset(
-                'missing_image.png',
-                width: 230.0,
-                height: 230.0,
-              ),
-            ),
-          ],
+          ),
           SizedBox(height: 16.0),
           TextField(
             controller: controller..text = song.title,
-          )
+          ),
         ],
       ),
     );

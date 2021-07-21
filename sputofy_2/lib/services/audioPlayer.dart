@@ -234,11 +234,10 @@ class AudioPlayerTask extends BackgroundAudioTask {
     int _index = _queue.indexWhere((element) => element.id == _mediaItem.id);
 
     if (_index == -1) return;
-
     _queue[_index] = _mediaItem;
 
-    await AudioServiceBackground.setQueue(_queue);
-    await AudioServiceBackground.setMediaItem(mediaItem!);
+    AudioServiceBackground.setMediaItem(mediaItem!);
+    AudioServiceBackground.setQueue(_queue);
     await _broadcastState();
   }
 

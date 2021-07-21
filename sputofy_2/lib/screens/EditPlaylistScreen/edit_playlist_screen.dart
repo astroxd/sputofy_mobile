@@ -1,10 +1,17 @@
-import 'dart:typed_data';
-
-import 'package:file_picker/file_picker.dart';
+import 'dart:io';
 import 'package:flutter/material.dart';
+
 import 'package:provider/provider.dart';
-import 'package:sputofy_2/models/playlist_model.dart';
 import 'package:sputofy_2/providers/provider.dart';
+
+import 'package:sputofy_2/models/playlist_model.dart';
+
+import 'package:path/path.dart' as path;
+
+import 'package:sputofy_2/routes/folders.dart' as routes;
+
+import 'package:sputofy_2/screens/EditSongScreen/components/move_image.dart';
+import 'package:sputofy_2/screens/EditSongScreen/components/pick_image.dart';
 
 class EditPlaylistScreen extends StatefulWidget {
   final Playlist playlist;
@@ -16,7 +23,7 @@ class EditPlaylistScreen extends StatefulWidget {
 
 class _EditPlaylistScreenState extends State<EditPlaylistScreen> {
   TextEditingController controller = TextEditingController();
-  Uint8List? selectedImage;
+  File? selectedImage;
   Playlist get playlist => widget.playlist;
   @override
   void dispose() {
@@ -34,10 +41,10 @@ class _EditPlaylistScreenState extends State<EditPlaylistScreen> {
   }
 
   Widget widgetEdit(Playlist playlist) {
-    Uint8List? playlistImage = playlist.cover;
+    Uri? playlistImage = playlist.cover;
 
     if (selectedImage != null) {
-      playlistImage = selectedImage;
+      playlistImage = selectedImage?.uri;
     }
 
     return Padding(
@@ -56,11 +63,23 @@ class _EditPlaylistScreenState extends State<EditPlaylistScreen> {
                 style: Theme.of(context).textTheme.subtitle1,
               ),
               IconButton(
-                onPressed: () {
-                  Playlist updatedPlaylist = playlist.copyWith(
-                    cover: selectedImage,
-                    name: controller.text,
-                  );
+                onPressed: () async {
+                  Playlist updatedPlaylist;
+                  if (selectedImage != null) {
+                    String playlistPath = path.join(
+                        await routes.playlistPath(), '${playlist.id}.jpg');
+
+                    File newFile =
+                        await moveImage(selectedImage!, playlistPath);
+
+                    updatedPlaylist = playlist.copyWith(
+                      cover: newFile.uri,
+                      name: controller.text,
+                    );
+                  } else {
+                    updatedPlaylist = playlist.copyWith(name: controller.text);
+                  }
+
                   Provider.of<DBProvider>(context, listen: false)
                       .updatePlaylist(updatedPlaylist);
                   Navigator.of(context).pop();
@@ -70,49 +89,30 @@ class _EditPlaylistScreenState extends State<EditPlaylistScreen> {
             ],
           ),
           SizedBox(height: 16.0),
-          if (playlistImage != null) ...[
-            GestureDetector(
-              onTap: () async {
-                FilePickerResult? result = await FilePicker.platform.pickFiles(
-                  withData: true,
-                  type: FileType.custom,
-                  allowedExtensions: ['jpg', 'jpeg', 'png'],
-                );
-                if (result != null) {
-                  Uint8List? imageBytes = result.files.single.bytes;
+          GestureDetector(
+            onTap: () async {
+              pickImage().then((pickedImage) {
+                if (pickedImage != null) {
                   setState(() {
-                    selectedImage = imageBytes;
+                    imageCache?.clear();
+                    imageCache?.clearLiveImages();
+                    selectedImage = pickedImage;
                   });
                 }
-              },
-              child: Image.memory(
-                playlistImage,
-                width: 230.0,
-                height: 230.0,
-              ),
-            )
-          ] else ...[
-            GestureDetector(
-              onTap: () async {
-                FilePickerResult? result = await FilePicker.platform.pickFiles(
-                  withData: true,
-                  type: FileType.custom,
-                  allowedExtensions: ['jpg', 'jpeg', 'png'],
-                );
-                if (result != null) {
-                  Uint8List? imageBytes = result.files.single.bytes;
-                  setState(() {
-                    selectedImage = imageBytes;
-                  });
-                }
-              },
-              child: Image.asset(
-                'missing_image.png',
-                width: 230.0,
-                height: 230.0,
-              ),
-            ),
-          ],
+              });
+            },
+            child: playlistImage != null
+                ? Image.file(
+                    File.fromUri(playlistImage),
+                    width: 230.0,
+                    height: 230.0,
+                  )
+                : Image.asset(
+                    'missing_image.png',
+                    width: 230.0,
+                    height: 230.0,
+                  ),
+          ),
           SizedBox(height: 16.0),
           Tooltip(
             message: 'Favorite playlist title can\'t be changed',

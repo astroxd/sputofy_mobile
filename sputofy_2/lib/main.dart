@@ -1,10 +1,13 @@
 import 'dart:collection';
 import 'dart:io';
+import 'package:path/path.dart';
 
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:sputofy_2/components/get_song_duration.dart';
 import 'package:sputofy_2/components/load_queue.dart';
+import 'package:sputofy_2/routes/folders.dart';
 import 'package:sputofy_2/screens/playlistSongsScreen/playlist_songs_screen.dart';
 import 'package:sputofy_2/theme/palette.dart';
 import 'components/remove_all_songs.dart';
@@ -72,7 +75,8 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     Permission.storage.request();
-
+    _createCoverDir(songPath()); //* Folder for songs cover
+    _createCoverDir(playlistPath()); //* Folder for playlists cover
     _start();
     super.initState();
   }
@@ -85,6 +89,13 @@ class _MyHomePageState extends State<MyHomePage> {
       androidNotificationIcon: 'mipmap/ic_stat_sputofy',
       androidStopForegroundOnPause: true,
     );
+  }
+
+  _createCoverDir(Future<String> dirPath) async {
+    Directory directory = Directory(await dirPath);
+    if (!directory.existsSync()) {
+      directory.createSync(recursive: true);
+    }
   }
 
   @override

@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -18,7 +18,7 @@ class PlaylistTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Uint8List? playlistCover = playlist.cover;
+    Uri? playlistCover = playlist.cover;
     return Tooltip(
       message: playlist.name,
       padding: const EdgeInsets.all(16.0),
@@ -53,8 +53,8 @@ class PlaylistTile extends StatelessWidget {
                       bottomLeft: Radius.circular(10.0),
                     ),
                     child: playlistCover != null
-                        ? Image.memory(
-                            playlistCover,
+                        ? Image.file(
+                            File.fromUri(playlistCover),
                             width: 70.0,
                             height: 70.0,
                           )

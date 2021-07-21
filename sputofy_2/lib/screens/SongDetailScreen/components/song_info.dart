@@ -1,13 +1,15 @@
+import 'dart:io';
+
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 
 Widget songDescription(
-    BuildContext context, Uri? cover, MediaItem playingItem) {
+    BuildContext context, Uri? cover, MediaItem? playingItem) {
   return Column(
     children: <Widget>[
       if (cover != null) ...[
-        Image.network(
-          cover.toString(),
+        Image.file(
+          File.fromUri(cover),
           width: 250,
           height: 250,
         ),
@@ -20,7 +22,7 @@ Widget songDescription(
       ],
       SizedBox(height: 24.0),
       Text(
-        playingItem.title,
+        playingItem?.title ?? 'Unknown Title',
         maxLines: 3,
         overflow: TextOverflow.ellipsis,
         style: Theme.of(context).textTheme.headline6,
@@ -28,7 +30,7 @@ Widget songDescription(
       ),
       SizedBox(height: 8.0),
       Text(
-        playingItem.artist ?? 'Unknown Artist',
+        playingItem?.artist ?? 'Unknown Artist',
         style: Theme.of(context).textTheme.subtitle2!.copyWith(fontSize: 16.0),
         textAlign: TextAlign.center,
       ),

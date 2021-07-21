@@ -45,6 +45,9 @@ dependencies:
   youtube_explode_dart: ^1.9.9
   share_plus: ^2.1.4
 
+  image_picker: ^0.8.2
+  image_cropper: ^1.4.1
+
 
 dev_dependencies:
   flutter_test:

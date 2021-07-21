@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+import 'dart:io';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
@@ -73,7 +73,7 @@ class _buildWidgetPlaylistDescription extends StatelessWidget {
     return Consumer<DBProvider>(
       builder: (context, database, child) {
         Playlist playlist = database.watchingPlaylist!;
-        Uint8List? playlistCover = playlist.cover;
+        Uri? playlistCover = playlist.cover;
         return Container(
           padding: const EdgeInsets.only(right: 16.0),
           height: 150,
@@ -84,8 +84,8 @@ class _buildWidgetPlaylistDescription extends StatelessWidget {
                 icon: Icon(Icons.arrow_back_ios),
               ),
               if (playlistCover != null) ...[
-                Image.memory(
-                  playlistCover,
+                Image.file(
+                  File.fromUri(playlistCover),
                   width: 150,
                   height: 150,
                 ),

@@ -1,6 +1,3 @@
-import 'dart:io';
-import 'dart:typed_data';
-
 import 'package:audio_service/audio_service.dart';
 
 class Song {
@@ -8,7 +5,7 @@ class Song {
   late String path;
   late String title;
   String? author;
-  Uint8List? cover;
+  Uri? cover;
   Duration? duration;
   bool isFavorite = true;
 
@@ -28,7 +25,7 @@ class Song {
       'path': path,
       'title': title,
       'author': author ?? '',
-      'cover': cover,
+      'cover': cover?.toString() ?? null,
       'duration': duration?.inMilliseconds ?? 0,
       'is_favorite': isFavorite ? 1 : 0,
     };
@@ -40,7 +37,7 @@ class Song {
     path = map['path'];
     title = map['title'];
     author = map['author'];
-    cover = map['cover'];
+    cover = map['cover'] == null ? null : Uri.parse(map['cover']);
     duration = Duration(milliseconds: map['duration']);
     isFavorite = map['is_favorite'] == 1 ? true : false;
   }
@@ -51,15 +48,8 @@ class Song {
       album: '${-2}',
       title: title,
       duration: duration,
-      //TODO fix bug Uint8List to Uri
-
-      // artUri: cover != null
-      //     ? Uri.file('/storage/emulated/0/Download/album.jpg')
-      //     : null,
-      // File.fromRawPath(cover!).uri
-      // artUri: cover != null ? Uri(path: File.fromRawPath(cover!).path) : null,
+      artUri: cover != null ? cover : null,
       rating: Rating.newHeartRating(isFavorite),
-
       displayDescription: playlistTitle != null ? playlistTitle : null,
       displaySubtitle: 'Unknown Author',
       displayTitle: title,
@@ -76,9 +66,7 @@ class Song {
     title = mediaItem.title;
     author = mediaItem.artist;
 
-    cover = mediaItem.artUri != null
-        ? File.fromUri(mediaItem.artUri!).readAsBytesSync()
-        : null;
+    cover = mediaItem.artUri != null ? mediaItem.artUri : null;
     duration = mediaItem.duration;
     isFavorite = mediaItem.rating?.hasHeart() ?? false;
   }
@@ -88,7 +76,7 @@ class Song {
     String? path,
     String? title,
     String? author,
-    Uint8List? cover,
+    Uri? cover,
     Duration? duration,
     bool? isFavorite,
   }) =>

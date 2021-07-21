@@ -1,9 +1,7 @@
-import 'dart:typed_data';
-
 class Playlist {
   int? id;
   late String name;
-  Uint8List? cover;
+  Uri? cover;
   late DateTime creationDate;
   bool isHidden = false;
 
@@ -13,7 +11,7 @@ class Playlist {
     var map = <String, dynamic>{
       'id': id,
       'name': name,
-      'cover': cover,
+      'cover': cover?.toString() ?? null,
       'creation_date': creationDate.millisecondsSinceEpoch,
       'is_hidden': isHidden ? 1 : 0,
     };
@@ -23,7 +21,7 @@ class Playlist {
   Playlist.fromMap(Map<String, dynamic> map) {
     id = map['id'];
     name = map['name'];
-    cover = map['cover'];
+    cover = map['cover'] == null ? null : Uri.parse(map['cover']);
     creationDate = DateTime.fromMillisecondsSinceEpoch(map['creation_date']);
     isHidden = map['is_hidden'] == 1 ? true : false;
   }
@@ -31,7 +29,7 @@ class Playlist {
   Playlist copyWith({
     int? id,
     String? name,
-    Uint8List? cover,
+    Uri? cover,
     DateTime? creationDate,
     bool? isHidden,
   }) =>

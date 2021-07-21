@@ -30,18 +30,18 @@ class SongDetailScreen extends StatelessWidget {
           if (!snapshot.hasData) return CircularProgressIndicator();
 
           final playingMediaItem = snapshot.data;
-          MediaItem playingItem = playingMediaItem!.playingItem!;
+          MediaItem? playingItem = playingMediaItem?.playingItem;
           Duration? position =
-              playingMediaItem.position ?? Duration(seconds: 1);
-          PlaybackState? playbackState = playingMediaItem.playbackState;
-          Duration duration = playingItem.duration ?? Duration(seconds: 1);
+              playingMediaItem?.position ?? Duration(seconds: 1);
+          PlaybackState? playbackState = playingMediaItem?.playbackState;
+          Duration duration = playingItem?.duration ?? Duration(seconds: 1);
 
           AudioServiceShuffleMode shuffleMode =
               playbackState?.shuffleMode ?? AudioServiceShuffleMode.none;
           AudioServiceRepeatMode repeatMode =
               playbackState?.repeatMode ?? AudioServiceRepeatMode.none;
 
-          Uri? cover = playingItem.artUri;
+          Uri? cover = playingItem?.artUri;
 
           return GestureDetector(
             behavior: HitTestBehavior.translucent,

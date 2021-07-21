@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sputofy_2/providers/provider.dart';
+
 import 'package:sputofy_2/components/playlist_dialog.dart';
 import 'package:sputofy_2/components/show_hidden_playlists.dart';
+
 import 'package:sputofy_2/models/playlist_model.dart';
-import 'package:sputofy_2/providers/provider.dart';
-import 'package:sputofy_2/screens/MiniPlayerScreen/mini_player.dart';
+
 import 'package:sputofy_2/theme/palette.dart';
 
 import 'components/playlist_tile.dart';
@@ -19,19 +21,15 @@ class PlaylistListScreen extends StatefulWidget {
 class _PlaylistListScreenState extends State<PlaylistListScreen> {
   @override
   Widget build(BuildContext context) {
-    double bottomPadding = MediaQuery.of(context).viewPadding.bottom;
     return Scaffold(
       body: Consumer<DBProvider>(
         builder: (context, database, child) {
           List<Playlist> playlists = database.playlists;
-          return Padding(
-            padding: EdgeInsets.only(bottom: 0.0),
-            child: Column(
-              children: <Widget>[
-                PlaylistList(context, playlists),
-                SizedBox(height: 32.0),
-              ],
-            ),
+          return Column(
+            children: <Widget>[
+              PlaylistList(context, playlists),
+              SizedBox(height: 32.0),
+            ],
           );
         },
       ),
