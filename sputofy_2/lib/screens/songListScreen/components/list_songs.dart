@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:provider/provider.dart';
 import 'package:sputofy_2/components/get_song_duration.dart';
-import 'package:sputofy_2/components/load_song.dart';
+import 'package:sputofy_2/components/songsPage/load_song.dart';
 import 'package:sputofy_2/providers/provider.dart';
 
 import 'package:sputofy_2/components/load_queue.dart';

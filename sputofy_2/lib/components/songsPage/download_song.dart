@@ -1,9 +1,11 @@
 import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:rxdart/rxdart.dart';
+
 import 'package:youtube_explode_dart/youtube_explode_dart.dart'
     as youtubeExplode;
-import 'package:flutter/material.dart';
+
 import 'package:sputofy_2/theme/palette.dart';
-import 'package:rxdart/rxdart.dart';
 
 bool isDownloadCanceled = false;
 

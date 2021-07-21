@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sputofy_2/providers/provider.dart';
 
-import 'package:sputofy_2/components/playlist_dialog.dart';
-import 'package:sputofy_2/components/show_hidden_playlists.dart';
+import 'package:sputofy_2/components/playlistsPage/playlist_dialog.dart';
+import 'package:sputofy_2/components/playlistsPage/show_hidden_playlists.dart';
 
 import 'package:sputofy_2/models/playlist_model.dart';
 

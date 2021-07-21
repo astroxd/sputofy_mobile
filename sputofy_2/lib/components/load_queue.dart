@@ -2,8 +2,9 @@ import 'package:audio_service/audio_service.dart';
 import 'package:sputofy_2/models/song_model.dart';
 
 /// Update queue with given [songs] adding [playlistID] as album of [mediaItem].
+/// Default [playlistID] is -2 representing song list screen songs.
 ///
-/// If [songPath] is passed once queue is updated skip to that item.
+/// If [songPath] is passed, once queue is updated skip to that item.
 ///
 /// If [playlistTitle] is passed notification shows [playlistTitle].
 Future<void> loadQueue(int playlistID, List<Song> songs,

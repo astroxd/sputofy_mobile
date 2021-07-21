@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+
 import 'package:provider/provider.dart';
-import 'package:sputofy_2/models/playlist_model.dart';
 import 'package:sputofy_2/providers/provider.dart';
+
+import 'package:sputofy_2/models/playlist_model.dart';
+
 import 'package:sputofy_2/theme/palette.dart';
 
 void showNewPlaylistDialog(BuildContext context) {
@@ -108,7 +111,6 @@ _savePlaylist(String playlistName, BuildContext context) {
     null,
     playlistName,
     null,
-    // File('/storage/emulated/0/download/album.jpg').readAsBytesSync(),
     DateTime.now(),
     false,
   );

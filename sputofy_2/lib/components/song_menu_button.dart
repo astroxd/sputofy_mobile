@@ -1,12 +1,15 @@
-import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:audio_service/audio_service.dart';
+
 import 'package:provider/provider.dart';
+import 'package:sputofy_2/providers/provider.dart';
+
 import 'package:share_plus/share_plus.dart';
+
 import 'package:sputofy_2/models/playlist_model.dart';
 import 'package:sputofy_2/models/song_model.dart';
-import 'package:sputofy_2/providers/provider.dart';
+
 import 'package:sputofy_2/screens/EditSongScreen/edit_song_screen.dart';
-import 'package:sputofy_2/screens/testScreen.dart';
 
 Widget songMenuButton(Song song, BuildContext context,
     {Playlist? playlist, IconData? icon, bool? shouldPop}) {
@@ -16,8 +19,7 @@ Widget songMenuButton(Song song, BuildContext context,
     icon: icon == null ? Icon(Icons.more_horiz) : Icon(icon),
     padding: EdgeInsets.zero,
     itemBuilder: (context) {
-      return {'Delete Song', 'Edit Song', 'Share Song', 'test'}
-          .map((String choice) {
+      return {'Delete Song', 'Edit Song', 'Share Song'}.map((String choice) {
         return PopupMenuItem<List>(
           value: [choice, song],
           child: Text(choice),
@@ -48,13 +50,6 @@ songMenuHandleClick(List params, BuildContext context,
     case 'Share Song':
       Share.shareFiles([song.path]);
       break;
-    case 'test':
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => testPage(),
-        ),
-      );
   }
 }
 
