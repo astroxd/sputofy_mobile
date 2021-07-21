@@ -1,12 +1,16 @@
-import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+
+import 'package:audio_service/audio_service.dart';
+import 'package:sputofy_2/services/audioPlayer.dart';
+import 'package:rxdart/rxdart.dart';
+
 import 'package:provider/provider.dart';
+import 'package:sputofy_2/providers/provider.dart';
+
 import 'package:sputofy_2/models/playlist_model.dart';
 import 'package:sputofy_2/models/song_model.dart';
-import 'package:sputofy_2/providers/provider.dart';
+
 import 'package:sputofy_2/screens/MiniPlayerScreen/mini_player.dart';
-import 'package:rxdart/rxdart.dart';
-import 'package:sputofy_2/services/audioPlayer.dart';
 
 import 'components/playlist_info.dart';
 import 'components/playlist_songs_list.dart';

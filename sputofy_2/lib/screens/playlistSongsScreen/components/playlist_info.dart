@@ -49,8 +49,8 @@ class _buildWidgetTopBar extends StatelessWidget {
       children: <Widget>[
         IconButton(
           onPressed: () {
-            ScaffoldMessenger.of(context)
-                .showSnackBar(SnackBar(content: Text("Not implemented yet")));
+            Provider.of<DBProvider>(context, listen: false)
+                .sortPlaylistSongs(playlist.id!);
           },
           icon: Icon(Icons.sort),
           color: kThirdColor,

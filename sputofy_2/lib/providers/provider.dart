@@ -9,6 +9,7 @@ class DBProvider extends ChangeNotifier {
 
   List<Song> _playlistSongs = [];
   List<Song> get playlistSongs => _playlistSongs;
+  bool playlistSongsAlphabeticalOrder = false;
 
   List<Playlist> _playlists = [];
   List<Playlist> get playlists => _playlists;
@@ -28,8 +29,19 @@ class DBProvider extends ChangeNotifier {
   }
 
   Future<void> getPlaylistSongs(int playlistID) async {
-    _playlistSongs = await _database.getPlaylistSongs(playlistID);
+    List<Song> songs = await _database.getPlaylistSongs(playlistID);
+    if (playlistSongsAlphabeticalOrder) {
+      songs.sort((a, b) => a.title.compareTo(b.title));
+    } else {
+      songs.sort((a, b) => b.title.compareTo(a.title));
+    }
+    _playlistSongs = songs;
     notifyListeners();
+  }
+
+  void sortPlaylistSongs(int playlistID) {
+    playlistSongsAlphabeticalOrder = !playlistSongsAlphabeticalOrder;
+    getPlaylistSongs(playlistID);
   }
 
   Future<List<Song>> retrievePlaylistSongs(int playlistID) async {
