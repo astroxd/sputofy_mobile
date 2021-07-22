@@ -1,20 +1,29 @@
-import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'dart:io';
 
-import 'package:rxdart/rxdart.dart';
+import 'package:audio_service/audio_service.dart';
+import 'components/search_bar.dart';
+import 'services/audioPlayer.dart';
 
-import 'package:sputofy_2/model/SongModel.dart';
-
-import 'package:sputofy_2/pages/FouthPage.dart';
-import 'package:sputofy_2/pages/MiniPlayerPage.dart';
-import 'package:sputofy_2/pages/PaginaPerFarVedereLeCanzoni.dart';
-import 'package:sputofy_2/pages/PlaylistListPage.dart';
 import 'package:provider/provider.dart';
-import 'package:sputofy_2/pages/SongListPage.dart';
-import 'package:sputofy_2/provider/provider.dart';
-import 'package:sputofy_2/utils/AudioPlayer.dart';
-import 'package:sputofy_2/utils/Database.dart';
-import 'package:sputofy_2/utils/palette.dart';
+import 'providers/provider.dart';
+
+import 'package:permission_handler/permission_handler.dart';
+
+import 'screens/MiniPlayerScreen/mini_player.dart';
+import 'screens/playlistListScreen/playlist_list_screen.dart';
+import 'screens/songListScreen/song_list_screen.dart';
+
+import 'routes/folders.dart';
+
+import 'theme/style.dart';
+
+import 'components/songsPage/download_song.dart';
+import 'components/songsPage/load_song.dart';
+import 'components/songsPage/remove_all_songs.dart';
+
+import 'components/playlistsPage/playlist_dialog.dart';
+import 'components/playlistsPage/show_hidden_playlists.dart';
 
 void main() {
   runApp(MyApp());
@@ -29,12 +38,13 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-            primarySwatch: Colors.orange,
-            bottomSheetTheme: BottomSheetThemeData(backgroundColor: mainColor)),
-        title: "Test",
+        title: 'Sputofy',
+        theme: appTheme(),
         home: AudioServiceWidget(
-          child: DefaultTabController(length: 4, child: MainScreen()),
+          child: DefaultTabController(
+            length: 2,
+            child: MyHomePage(),
+          ),
         ),
       ),
     );
@@ -42,285 +52,218 @@ class MyApp extends StatelessWidget {
 }
 
 _backgroundTaskEntryPoint() {
-  print("entrypoint");
   AudioServiceBackground.run(() => AudioPlayerTask());
 }
 
-class MainScreen extends StatefulWidget {
+final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({Key? key}) : super(key: key);
+
   @override
-  _MainScreenState createState() => _MainScreenState();
+  _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _MyHomePageState extends State<MyHomePage> {
+  int tabIndex = 0;
   @override
   void initState() {
-    start();
+    Permission.storage.request().then((value) {
+      if (value.isGranted) {
+        _createCoverDir(songPath()); //* Folder for songs cover
+        _createCoverDir(playlistPath()); //* Folder for playlists cover
+      }
+    });
+    _start();
     super.initState();
   }
 
+  _start() {
+    AudioService.start(
+      backgroundTaskEntrypoint: _backgroundTaskEntryPoint,
+      androidNotificationChannelName: 'Sputofy',
+      androidEnableQueue: true,
+      androidNotificationIcon: 'mipmap/ic_stat_sputofy',
+      androidStopForegroundOnPause: true,
+    );
+  }
+
+  _createCoverDir(Future<String> dirPath) async {
+    Directory directory = Directory(await dirPath);
+    if (!directory.existsSync()) {
+      directory.createSync(recursive: true);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    DBHelper _database = DBHelper();
+    final TabController _tabController = DefaultTabController.of(context)!;
+    Provider.of<DBProvider>(context, listen: false).getSongs();
+
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        switch (_tabController.index) {
+          case 0:
+            setState(() {
+              tabIndex = 0;
+            });
+            break;
+          case 1:
+            setState(() {
+              tabIndex = 1;
+            });
+            break;
+        }
+      }
+    });
     return Scaffold(
-      backgroundColor: mainColor,
+      key: _scaffoldKey,
       appBar: AppBar(
-        title: Text("test"),
+        title: Text('Sputofy'),
+        actions: <Widget>[
+          IconButton(
+            onPressed: () {
+              showSearch(
+                context: context,
+                delegate: DataSearch(context, tabIndex),
+              );
+            },
+            icon: Icon(Icons.search),
+          ),
+          tabIndex == 0
+              ? PopupMenuButton<String>(
+                  onSelected: (String choice) => _handleClick(choice, context),
+                  itemBuilder: (BuildContext context) {
+                    return {'Download Song', 'Load Songs', 'Remove all Songs'}
+                        .map((String choice) {
+                      return PopupMenuItem<String>(
+                        value: choice,
+                        child: Text(choice),
+                      );
+                    }).toList();
+                  },
+                )
+              : PopupMenuButton<String>(
+                  onSelected: (String choice) => _handleClick(choice, context),
+                  itemBuilder: (BuildContext context) {
+                    return {'Create Playlist', 'Show hidden Playlists'}
+                        .map((String choice) {
+                      return PopupMenuItem<String>(
+                        value: choice,
+                        child: Text(choice),
+                      );
+                    }).toList();
+                  },
+                )
+        ],
         bottom: TabBar(
           tabs: [
             Tab(
-              icon: Icon(
-                Icons.home,
-              ),
+              text: 'Songs',
             ),
             Tab(
-              icon: Icon(
-                Icons.playlist_add,
-              ),
-            ),
-            Tab(
-              icon: Icon(
-                Icons.playlist_add,
-              ),
-            ),
-            Tab(
-              icon: Icon(
-                Icons.playlist_add,
-              ),
-            ),
+              text: 'Playlist',
+            )
           ],
         ),
       ),
-      body: TabBarView(
-        children: [
-          PrimaPagina(context),
-          SongList(),
-          PlaylistsList(),
-          FourthPage(),
-        ],
+      body: StreamBuilder<bool>(
+        stream: AudioService.runningStream,
+        builder: (context, snapshot) {
+          final isRunning = snapshot.data ?? false;
+          if (!isRunning) _start();
+          return TabBarView(
+            children: [
+              SongListScreen(),
+              PlaylistListScreen(),
+              //! Uncomment if you want to display something while is loading AudioService Isolate
+              // if (snapshot.connectionState != ConnectionState.active) ...[
+              //   // SizedBox(),
+              //   Container(
+              //     color: Colors.red,
+              //   ),
+              //   SizedBox()
+              // ] else ...[
+              //   if (!isRunning) ...[
+              //     Container(
+              //       color: Colors.red,
+              //     ),
+              //     Container()
+              //   ] else ...[
+              //     SongListScreen(),
+              //     PlaylistListScreen(),
+              //   ]
+              // ]
+            ],
+          );
+        },
       ),
-      // bottomSheet: MiniPlayer(),
+      bottomSheet: MiniPlayer(),
     );
   }
-
-  //* AudioService lo usi per parlare con la background task
-
-  start() async {
-    // final mediaList = [];
-    // for (var song in playlist) {
-    //   print(song);
-    //   final mediaItem = MediaItem(
-    //     id: song.id,
-    //     album: song.album,
-    //     title: song.title,
-    //     duration: song.duration,
-    //     artUri: song.artUri,
-    //   );
-    //   mediaList.add(mediaItem.toJson());
-    // }
-    // if (mediaList.isEmpty) return;
-    // final params = {'data': mediaList};
-    AudioService.start(
-        backgroundTaskEntrypoint: _backgroundTaskEntryPoint,
-        // params: ,
-        // androidEnableQueue: true,
-        androidNotificationColor: 0x0000ff);
-  }
 }
 
-class QueueState {
-  final List<MediaItem> queue;
-  final MediaItem mediaItem;
+void _handleClick(String choice, BuildContext context) async {
+  switch (choice) {
+    case 'Download Song':
+      bool canAccesStorage = await Permission.storage.request().isGranted;
+      if (canAccesStorage) {
+        bool isConnected = false;
+        try {
+          final result = await InternetAddress.lookup('example.com');
+          if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+            isConnected = true;
+          }
+        } on SocketException catch (_) {
+          isConnected = false;
+        }
+        if (isConnected) {
+          //* Before first download, stream is null
+          if (downloadStream.valueOrNull == -1 ||
+              downloadStream.valueOrNull == -2 ||
+              downloadStream.valueOrNull == null) {
+            showDownloadSongDialog(context, _scaffoldKey);
+          } else {
+            showDownloadDialog(context);
+          }
+        } else {
+          showDialog(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                content: Text('Check your connection before downloading'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context, rootNavigator: true)
+                        .pop('dialog'),
+                    child: Text('OK'),
+                  )
+                ],
+              );
+            },
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'In order to load songs you have to grant permission storage'),
+          ),
+        );
+      }
 
-  QueueState(this.queue, this.mediaItem);
-}
-
-class PlayingMediaItem {
-  final MediaItem mediaItem;
-  final Duration position;
-  final PlaybackState playbackState;
-
-  PlayingMediaItem(this.mediaItem, this.position, this.playbackState);
-}
-
-class PrimaPagina extends StatelessWidget {
-  PrimaPagina(this.context);
-  final BuildContext context;
-
-  final List<Song> playlist = [
-    Song(
-      null,
-      '/data/user/0/com.example.sputofy_2/cache/file_picker/「Rock」 Hatsuki Yura (葉月ゆら) - 少女と黄金竜の物語 (Shoujo to Ougon Ryuu no Monogatari).mp3',
-      'oregairu',
-      'tanta',
-      "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
-      Duration(milliseconds: 273057),
-    ),
-  ];
-
-  Stream<QueueState> get _queueStateStream =>
-      Rx.combineLatest2<List<MediaItem>, MediaItem, QueueState>(
-          AudioService.queueStream,
-          AudioService.currentMediaItemStream,
-          (queue, mediaItem) => QueueState(queue, mediaItem));
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            StreamBuilder<PlaybackState>(
-              stream: AudioService.playbackStateStream,
-              builder: (context, snapshot) {
-                final playing = snapshot.data?.playing ?? false;
-                final processingState = snapshot.data?.processingState ??
-                    AudioProcessingState.stopped;
-                print("playing var = $playing");
-                print("processingstate var = $processingState");
-                return Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    if (playing)
-                      MaterialButton(
-                        child: Text("Pause"),
-                        onPressed: pause,
-                        color: Colors.green,
-                      )
-                    else
-                      MaterialButton(
-                        child: Text("Play"),
-                        onPressed: () {
-                          // showDialogWindow(context);
-                          play();
-                        },
-                        color: Colors.green,
-                      ),
-                    if (processingState != AudioProcessingState.stopped &&
-                        processingState != AudioProcessingState.none)
-                      MaterialButton(
-                        child: Text("Stop"),
-                        onPressed: stop,
-                        color: Colors.red,
-                      ),
-                  ],
-                );
-              },
-            ),
-            MaterialButton(
-                child: Text("ADD"),
-                color: Colors.blue,
-                onPressed: () {
-                  openPlaylist();
-                }),
-            StreamBuilder(
-              stream: _queueStateStream,
-              builder: (context, snapshot) {
-                if (snapshot.data != null) {
-                  final queueStateStream = snapshot.data;
-                  return Container(
-                    width: double.infinity,
-                    height: 300,
-                    child: ListView.builder(
-                      itemCount: queueStateStream.queue.length,
-                      itemBuilder: (context, index) {
-                        final mediaItem = queueStateStream.queue[index];
-                        final currentMediaItem = queueStateStream.mediaItem;
-                        return MaterialButton(
-                          onPressed: () => seek(mediaItem.id),
-                          child: mediaItem == currentMediaItem
-                              ? Text(
-                                  "${currentMediaItem.title}---${currentMediaItem.duration.toString()}",
-                                  style: TextStyle(color: Colors.blue),
-                                )
-                              : Text(
-                                  "${mediaItem.title}----${mediaItem.duration.toString()}"),
-                        );
-                      },
-                    ),
-                  );
-                } else {
-                  return CircularProgressIndicator();
-                }
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  start() async {
-    // final mediaList = [];
-    // for (var song in playlist) {
-    //   print(song);
-    //   final mediaItem = MediaItem(
-    //     id: song.id,
-    //     album: song.album,
-    //     title: song.title,
-    //     duration: song.duration,
-    //     artUri: song.artUri,
-    //   );
-    //   mediaList.add(mediaItem.toJson());
-    // }
-    // if (mediaList.isEmpty) return;
-    // final params = {'data': mediaList};
-    AudioService.start(
-        backgroundTaskEntrypoint: _backgroundTaskEntryPoint,
-        // params: params,
-        androidEnableQueue: true,
-        androidNotificationColor: 0x0000ff);
-  }
-
-  openPlaylist() {
-    final mediaList = [];
-    for (var song in playlist) {
-      print(song);
-      final mediaItem = MediaItem(
-        id: song.path,
-        album: song.author,
-        title: song.title,
-        duration: song.duration,
-        artUri: song.cover,
-      );
-      mediaList.add(mediaItem.toJson());
-    }
-    if (mediaList.isEmpty) return;
-    // final params = {'data': mediaList};
-    AudioService.customAction('openPlaylist', mediaList);
-    // Navigator.push(
-    //     context,
-    //     MaterialPageRoute(
-    //       builder: (context) => PlaylistScreen(),
-    //     ));
-  }
-
-  pause() {
-    print("Pause");
-    AudioService.pause();
-  }
-
-  stop() {
-    print("stop");
-    AudioService.stop();
-  }
-
-  play() async {
-    if (AudioService.running) {
-      AudioService.play();
-    } else {
-      start();
-    }
-  }
-
-  add(MediaItem mediaItem) {
-    AudioService.addQueueItem(mediaItem);
-    // AudioService.setRating(Rating.newHeartRating(true));
-  }
-
-  seek(String mediaId) {
-    AudioService.skipToQueueItem(mediaId);
+      break;
+    case 'Load Songs':
+      loadSongs(context);
+      break;
+    case 'Remove all Songs':
+      removeAllSongs(context);
+      break;
+    case 'Create Playlist':
+      showNewPlaylistDialog(context);
+      break;
+    case 'Show hidden Playlists':
+      showHiddenPlaylist(context);
+      break;
   }
 }
